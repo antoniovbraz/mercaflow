@@ -52,15 +52,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       // Verificar se é super admin
-      const { data: platformOwnerData } = await supabase
+      console.log('🔍 Checking super admin for email:', user.email)
+      const { data: platformOwnerData, error } = await supabase
         .from('platform_owners')
         .select('*')
         .eq('email', user.email)
         .single()
 
+      console.log('🔍 Platform owner query result:', { platformOwnerData, error })
+
       if (platformOwnerData) {
+        console.log('✅ Found platform owner:', platformOwnerData)
         setPlatformOwner(platformOwnerData)
-        setIsSuperAdmin(platformOwnerData.role === 'super_admin')
+        const isSuper = platformOwnerData.role === 'super_admin'
+        console.log('👑 Is super admin?', isSuper)
+        setIsSuperAdmin(isSuper)
 
         // Se é super admin, buscar todos os tenants
         const { data: allTenants } = await supabase
