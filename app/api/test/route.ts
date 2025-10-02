@@ -1,7 +1,30 @@
 import { NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET() {
   try {
+    // Verificar se super admin foi criado
+    let superAdminCheck = null
+    
+    try {
+      const { data: superAdmin, error: superAdminError } = await supabaseAdmin
+        .from('platform_owners')
+        .select('email, role, personal_tenant_enabled')
+        .eq('email', 'peepers.shop@gmail.com')
+        .single()
+
+      superAdminCheck = {
+        exists: !!superAdmin,
+        email: superAdmin?.email,
+        role: superAdmin?.role,
+        personalTenantEnabled: superAdmin?.personal_tenant_enabled,
+        error: superAdminError?.message
+      }
+
+    } catch (dbError) {
+      superAdminCheck = { error: `Database connection failed: ${dbError}` }
+    }
+
     const status = {
       timestamp: new Date().toISOString(),
       status: 'OK',
@@ -24,6 +47,9 @@ export async function GET() {
           configured: !!process.env.NEXTAUTH_SECRET,
           urlConfigured: !!process.env.NEXTAUTH_URL,
         }
+      },
+      database: {
+        superAdmin: superAdminCheck
       },
       message: 'Merca Flow API is running successfully!'
     }

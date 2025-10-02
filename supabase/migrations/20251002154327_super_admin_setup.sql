@@ -112,9 +112,35 @@ CREATE TABLE tenant_users (
   UNIQUE(tenant_id, email)
 );
 
--- 5. ATUALIZAR TABELA ML_USERS para suportar multi-tenancy
-ALTER TABLE ml_users ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
-ALTER TABLE ml_users ADD CONSTRAINT ml_users_tenant_ml_unique UNIQUE(tenant_id, ml_user_id);
+-- 5. RECRIAR TABELA ML_USERS com multi-tenancy
+CREATE TABLE IF NOT EXISTS ml_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  
+  -- MercadoLibre Data
+  ml_user_id BIGINT NOT NULL,
+  ml_nickname VARCHAR(255),
+  ml_email VARCHAR(255),
+  
+  -- OAuth Tokens
+  access_token TEXT NOT NULL,
+  refresh_token TEXT,
+  expires_in INTEGER,
+  token_expires_at TIMESTAMP,
+  
+  -- User Info from ML
+  user_info JSONB DEFAULT '{}'::jsonb,
+  
+  -- Status & Sync
+  status VARCHAR(20) DEFAULT 'active',
+  last_sync TIMESTAMP,
+  sync_enabled BOOLEAN DEFAULT true,
+  
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  
+  UNIQUE(tenant_id, ml_user_id)
+);
 
 -- 6. INSERIR VOCÊ COMO SUPER ADMIN
 INSERT INTO platform_owners (
