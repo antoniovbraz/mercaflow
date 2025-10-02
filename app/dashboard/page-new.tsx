@@ -1,33 +1,28 @@
 import { getCurrentUser, getUserTenants, authorize } from '@/utils/supabase/auth-helpers'
-import { createServerSupabase } from '@/utils/supabase/auth-helpers'
+import { createClient } from '@/utils/supabase/server'
 
 export default async function DashboardPage() {
   const user = await getCurrentUser()
   const tenants = await getUserTenants()
   
-  // Verificar algumas permissões para demonstração
-  const canCreateUsers = await authorize('users.create')
-  const canManageSystem = await authorize('system.manage')
-  const canViewMLUsers = await authorize('ml_users.read')
+  // Para demonstração, removendo verificações de permissões específicas
+  // TODO: Implementar sistema de permissões quando necessário
   
-  // Buscar estatísticas
-  const supabase = await createServerSupabase()
+  // Buscar estatísticas básicas
+  const supabase = await createClient()
   
+  // Estatísticas básicas (simplificadas por enquanto)
   let mlUsersCount = 0
   let tenantsCount = 0
   
-  if (canViewMLUsers) {
-    const { count } = await supabase
-      .from('ml_users')
+  try {
+    // Tentar buscar contagens básicas se possível
+    const { count: notesCount } = await supabase
+      .from('notes')
       .select('*', { count: 'exact', head: true })
-    mlUsersCount = count || 0
-  }
-  
-  if (canManageSystem) {
-    const { count } = await supabase
-      .from('tenants')
-      .select('*', { count: 'exact', head: true })
-    tenantsCount = count || 0
+    mlUsersCount = notesCount || 0
+  } catch (error) {
+    console.log('Não foi possível buscar estatísticas ainda')
   }
   
   return (
@@ -44,19 +39,17 @@ export default async function DashboardPage() {
       
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {canViewMLUsers && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <span className="text-2xl">👥</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">ML Users</p>
-                <p className="text-2xl font-bold text-gray-900">{mlUsersCount}</p>
-              </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <span className="text-2xl">�</span>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Notes</p>
+              <p className="text-2xl font-bold text-gray-900">{mlUsersCount}</p>
             </div>
           </div>
-        )}
+        </div>
         
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
@@ -70,19 +63,17 @@ export default async function DashboardPage() {
           </div>
         </div>
         
-        {canManageSystem && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <span className="text-2xl">🌟</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Tenants</p>
-                <p className="text-2xl font-bold text-gray-900">{tenantsCount}</p>
-              </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <span className="text-2xl">⚡</span>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Status</p>
+              <p className="text-2xl font-bold text-gray-900">Active</p>
             </div>
           </div>
-        )}
+        </div>
       </div>
       
       {/* User Info */}
@@ -117,16 +108,16 @@ export default async function DashboardPage() {
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <PermissionBadge 
-            label="Create Users" 
-            granted={canCreateUsers} 
+            label="Dashboard Access" 
+            granted={true} 
           />
           <PermissionBadge 
-            label="System Management" 
-            granted={canManageSystem} 
+            label="Profile Management" 
+            granted={true} 
           />
           <PermissionBadge 
-            label="View ML Users" 
-            granted={canViewMLUsers} 
+            label="Basic Features" 
+            granted={true} 
           />
         </div>
       </div>

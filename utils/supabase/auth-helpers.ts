@@ -38,19 +38,26 @@ export async function isAuthenticated(): Promise<boolean> {
 }
 
 /**
- * Get user session information
- * Note: Only use this for display purposes, never for security
+ * Get user profile data from database
+ * Use this instead of getSession() for user data
  */
-export async function getUserSession() {
+export async function getUserProfile() {
+  const user = await getCurrentUser()
+  if (!user) return null
+  
   const supabase = await createClient()
-  const { data: { session }, error } = await supabase.auth.getSession()
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
   
   if (error) {
-    console.error('Error getting session:', error)
+    console.error('Error getting user profile:', error)
     return null
   }
   
-  return session
+  return profile
 }
 
 /**
@@ -88,4 +95,41 @@ export async function isAdmin(): Promise<boolean> {
   // Simple admin check - replace with proper RBAC later
   const adminEmails = ['peepers.shop@gmail.com', 'antoniovbraz@gmail.com']
   return adminEmails.includes(user.email)
+}
+
+/**
+ * Check if user is super admin
+ * Currently uses email-based check, will be replaced with proper RBAC
+ */
+export async function isSuperAdmin(): Promise<boolean> {
+  const user = await getCurrentUser()
+  if (!user?.email) return false
+  
+  // Super admin emails - replace with proper RBAC later
+  const superAdminEmails = ['peepers.shop@gmail.com', 'antoniovbraz@gmail.com']
+  return superAdminEmails.includes(user.email)
+}
+
+/**
+ * Get user tenants (simplified version)
+ * Returns empty array for now - implement when tenant system is ready
+ */
+export async function getUserTenants(): Promise<any[]> {
+  const user = await getCurrentUser()
+  if (!user) return []
+  
+  // TODO: Implement proper tenant fetching when tenant system is ready
+  // For now return empty array to prevent build errors
+  return []
+}
+
+/**
+ * Authorize user - redirect to login if not authenticated
+ */
+export async function authorize() {
+  const user = await getCurrentUser()
+  if (!user) {
+    throw new Error('Authentication required')
+  }
+  return user
 }

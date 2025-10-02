@@ -39,7 +39,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
               <div className="text-sm">
                 <p className="text-gray-900 font-medium">{user.email}</p>
                 <p className="text-gray-500 capitalize">
-                  Role: {user.role || 'user'}
+                  Role: user
                 </p>
               </div>
               
