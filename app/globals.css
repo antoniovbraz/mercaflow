@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+/* MercadoLibre Brand Colors */
+.ml-yellow { background-color: #FFF159; }
+.ml-blue { background-color: #3483FA; }
+.ml-green { background-color: #00A650; }
+.ml-orange { background-color: #FF6600; }
+
+/* Custom components */
+.card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+}
+
+.btn-primary {
+  @apply bg-ml-blue text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors;
+}
+
+.btn-secondary {
+  @apply bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors;
+}
