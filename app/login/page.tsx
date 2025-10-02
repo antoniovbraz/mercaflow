@@ -7,17 +7,15 @@ async function handleLogin(formData: FormData) {
   const { createClient } = await import('@/utils/supabase/server')
   const { redirect } = await import('next/navigation')
   
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+
+  if (!email || !password) {
+    return redirect('/login?message=Email%20e%20senha%20são%20obrigatórios')
+  }
+
   try {
     const supabase = await createClient()
-
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-
-    // Validação dos dados
-    if (!email || !password) {
-      redirect('/login?message=Email%20e%20senha%20são%20obrigatórios')
-      return
-    }
 
     const { error } = await supabase.auth.signInWithPassword({
       email: email.toLowerCase().trim(),
@@ -25,35 +23,19 @@ async function handleLogin(formData: FormData) {
     })
 
     if (error) {
-      console.error('Login error:', error)
-      let errorMessage = 'Erro ao fazer login'
+      const errorMessage = error.message.includes('Invalid login credentials') 
+        ? 'Email ou senha incorretos'
+        : error.message.includes('Email not confirmed')
+        ? 'Email não foi confirmado. Verifique sua caixa de entrada.'
+        : `Erro: ${error.message}`
       
-      switch (error.message) {
-        case 'Invalid login credentials':
-          errorMessage = 'Email ou senha incorretos'
-          break
-        case 'Email not confirmed':
-          errorMessage = 'Email ainda não foi confirmado. Verifique sua caixa de entrada ou solicite um novo email de confirmação.'
-          break
-        case 'Too many requests':
-          errorMessage = 'Muitas tentativas de login. Tente novamente em alguns minutos.'
-          break
-        case 'Signup is disabled':
-          errorMessage = 'Login temporariamente desabilitado'
-          break
-        default:
-          errorMessage = `Erro: ${error.message}`
-      }
-      
-      redirect(`/login?message=${encodeURIComponent(errorMessage)}`)
-      return
+      return redirect(`/login?message=${encodeURIComponent(errorMessage)}`)
     }
 
-    redirect('/dashboard')
+    return redirect('/dashboard')
   } catch (error) {
-    console.error('Unexpected login error:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Erro interno do servidor'
-    redirect(`/login?message=${encodeURIComponent(errorMessage)}`)
+    console.error('Login error:', error)
+    return redirect('/login?message=Erro%20interno%20do%20servidor')
   }
 }
 

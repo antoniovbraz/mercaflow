@@ -7,32 +7,26 @@ async function handleSignup(formData: FormData) {
   const { createClient } = await import('@/utils/supabase/server')
   const { redirect } = await import('next/navigation')
   
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+  const fullName = formData.get('fullName') as string
+
+  // Validação básica
+  if (!email || !password || !fullName) {
+    return redirect('/register?message=Todos%20os%20campos%20são%20obrigatórios')
+  }
+
+  if (password.length < 6) {
+    return redirect('/register?message=A%20senha%20deve%20ter%20pelo%20menos%206%20caracteres')
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    return redirect('/register?message=Por%20favor,%20insira%20um%20email%20válido')
+  }
+
   try {
     const supabase = await createClient()
-
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const fullName = formData.get('fullName') as string
-
-    // Validação dos dados
-    if (!email || !password || !fullName) {
-      redirect('/register?message=Todos%20os%20campos%20são%20obrigatórios')
-      return
-    }
-
-    if (password.length < 6) {
-      redirect('/register?message=A%20senha%20deve%20ter%20pelo%20menos%206%20caracteres')
-      return
-    }
-
-    // Validação de email básica
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      redirect('/register?message=Por%20favor,%20insira%20um%20email%20válido')
-      return
-    }
-
-    console.log('Attempting signup for email:', email)
 
     const { data, error } = await supabase.auth.signUp({
       email: email.toLowerCase().trim(),
@@ -46,50 +40,24 @@ async function handleSignup(formData: FormData) {
     })
 
     if (error) {
-      console.error('Supabase signup error:', error)
-      let errorMessage = 'Erro ao criar conta'
+      const errorMessage = error.message.includes('already registered') 
+        ? 'Este email já está cadastrado. Tente fazer login.'
+        : `Erro: ${error.message}`
       
-      switch (error.message) {
-        case 'User already registered':
-          errorMessage = 'Este email já está cadastrado. Tente fazer login ou recuperar sua senha.'
-          break
-        case 'Invalid email':
-          errorMessage = 'Email inválido'
-          break
-        case 'Password should be at least 6 characters':
-          errorMessage = 'A senha deve ter pelo menos 6 caracteres'
-          break
-        case 'Signup is disabled':
-          errorMessage = 'Cadastro temporariamente desabilitado'
-          break
-        case 'To signup, please provide your email':
-          errorMessage = 'Email é obrigatório'
-          break
-        default:
-          errorMessage = `Erro: ${error.message}`
-      }
-      
-      redirect(`/register?message=${encodeURIComponent(errorMessage)}`)
-      return
+      return redirect(`/register?message=${encodeURIComponent(errorMessage)}`)
     }
 
-    console.log('Signup successful:', data)
-
-    // Verificar se o usuário precisa confirmar email
+    // Redirect baseado no resultado
     if (data.user && !data.session) {
-      // Email confirmation é necessário
-      redirect('/register?message=Conta%20criada%20com%20sucesso!%20Verifique%20seu%20email%20e%20clique%20no%20link%20de%20confirmação%20para%20ativar%20sua%20conta.')
+      return redirect('/register?message=Conta%20criada!%20Verifique%20seu%20email%20para%20confirmar.')
     } else if (data.session) {
-      // Usuário foi autenticado imediatamente (email confirmation desabilitada)
-      redirect('/dashboard?message=Conta%20criada%20e%20login%20realizado%20com%20sucesso!')
+      return redirect('/dashboard')
     } else {
-      // Caso edge
-      redirect('/login?message=Conta%20criada.%20Tente%20fazer%20login.')
+      return redirect('/login?message=Conta%20criada.%20Faça%20login.')
     }
   } catch (error) {
-    console.error('Unexpected signup error:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Erro interno do servidor'
-    redirect(`/register?message=${encodeURIComponent(errorMessage)}`)
+    console.error('Signup error:', error)
+    return redirect('/register?message=Erro%20interno%20do%20servidor')
   }
 }
 
