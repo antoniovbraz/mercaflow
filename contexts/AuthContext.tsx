@@ -48,18 +48,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [tenantUser, setTenantUser] = useState<TenantUser | null>(null)
 
   const refreshUserData = async () => {
-    if (!user) return
+    if (!user) {
+      console.log('❌ No user found in refreshUserData')
+      return
+    }
 
     try {
       // Verificar se é super admin
       console.log('🔍 Checking super admin for email:', user.email)
+      console.log('🔍 User ID:', user.id)
+      
+      // Primeira tentativa: buscar por email
       const { data: platformOwnerData, error } = await supabase
         .from('platform_owners')
         .select('*')
         .eq('email', user.email)
-        .single()
+        .maybeSingle() // Use maybeSingle instead of single to avoid errors
 
       console.log('🔍 Platform owner query result:', { platformOwnerData, error })
+      
+      // Segunda tentativa: buscar por ID se não encontrou por email
+      if (!platformOwnerData && !error) {
+        console.log('🔍 Trying by user ID...')
+        const { data: platformOwnerByIdData, error: idError } = await supabase
+          .from('platform_owners')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle()
+        
+        console.log('🔍 Platform owner by ID result:', { platformOwnerByIdData, idError })
+        
+        if (platformOwnerByIdData) {
+          console.log('✅ Found platform owner by ID:', platformOwnerByIdData)
+          setPlatformOwner(platformOwnerByIdData)
+          const isSuper = platformOwnerByIdData.role === 'super_admin'
+          console.log('👑 Is super admin?', isSuper)
+          setIsSuperAdmin(isSuper)
+          return // Exit early if found
+        }
+      }
 
       if (platformOwnerData) {
         console.log('✅ Found platform owner:', platformOwnerData)
