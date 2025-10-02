@@ -1,31 +1,26 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { jwtDecode } from 'jwt-decode'
 
 export async function createServerSupabase() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
+        getAll() {
+          return cookieStore.getAll()
         },
-        set(name: string, value: string, options: CookieOptions) {
+        setAll(cookiesToSet) {
           try {
-            cookieStore.set({ name, value, ...options })
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
           } catch {
-            // The `set` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: '', ...options })
-          } catch {
-            // The `delete` method was called from a Server Component.
+            // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
           }
@@ -35,105 +30,201 @@ export async function createServerSupabase() {
   )
 }
 
-// 🔐 Verificar se usuário tem permissão específica
-export async function authorize(permission: string): Promise<boolean> {
+// ==========================================
+// MERCAFLOW RBAC AUTH HELPERS
+// ==========================================
+// Baseado na documentação oficial do Supabase Custom Claims & RBAC
+
+export type AppRole = 'user' | 'admin' | 'super_admin'
+export type AppPermission = 'users.read' | 'users.write' | 'users.delete' | 
+                           'tenants.read' | 'tenants.write' | 'tenants.delete' |
+                           'platform.admin' | 'platform.super_admin'
+
+interface JwtPayload {
+  user_role?: AppRole
+  [key: string]: any
+}
+
+// 👤 Pegar usuário atual
+export async function getCurrentUser() {
+  const supabase = await createServerSupabase()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  
+  if (error || !user) {
+    return null
+  }
+  
+  return user
+}
+
+// 🎫 Pegar sessão atual
+export async function getCurrentSession() {
+  const supabase = await createServerSupabase()
+  const { data: { session }, error } = await supabase.auth.getSession()
+  
+  if (error || !session) {
+    return null
+  }
+  
+  return session
+}
+
+// 🏷️ Pegar role do usuário atual do JWT
+export async function getCurrentUserRole(): Promise<AppRole> {
+  const session = await getCurrentSession()
+  
+  if (!session?.access_token) {
+    return 'user'
+  }
+  
+  try {
+    const jwt = jwtDecode<JwtPayload>(session.access_token)
+    return jwt.user_role || 'user'
+  } catch (error) {
+    console.error('Error decoding JWT:', error)
+    return 'user'
+  }
+}
+
+// � Verificar se é super admin
+export async function isSuperAdmin(): Promise<boolean> {
+  const role = await getCurrentUserRole()
+  return role === 'super_admin'
+}
+
+// 🛡️ Verificar se é admin (admin ou super_admin)
+export async function isAdmin(): Promise<boolean> {
+  const role = await getCurrentUserRole()
+  return role === 'admin' || role === 'super_admin'
+}
+
+// 🔐 Verificar permissão específica
+export async function hasPermission(permission: AppPermission): Promise<boolean> {
   const supabase = await createServerSupabase()
   
   try {
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) return false
-    
-    // Verificar no banco usando nossa função authorize
-    const { data, error } = await supabase
-      .rpc('authorize', { requested_permission: permission })
+    const { data, error } = await supabase.rpc('authorize', {
+      requested_permission: permission
+    })
     
     if (error) {
-      console.error('Error checking authorization:', error)
+      console.error('Error checking permission:', error)
       return false
     }
     
     return data === true
   } catch (error) {
-    console.error('Authorization check failed:', error)
+    console.error('Error checking permission:', error)
     return false
   }
 }
 
-// 👤 Pegar usuário atual com role do JWT
-export async function getCurrentUser() {
-  const supabase = await createServerSupabase()
+// 🚪 Autorizar usuário (redireciona se não logado)
+export async function authorize() {
+  const user = await getCurrentUser()
   
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser()
-    
-    if (error || !user) return null
-    
-    return {
-      ...user,
-      role: user.app_metadata?.app_role || null
-    }
-  } catch (error) {
-    console.error('Failed to get current user:', error)
-    return null
+  if (!user) {
+    redirect('/login')
   }
+  
+  return user
 }
 
-// 🏢 Pegar tenants do usuário atual
-export async function getUserTenants() {
+// 👑 Autorizar super admin (redireciona se não for)
+export async function authorizeSuperAdmin() {
+  const user = await authorize()
+  const isSuperAdminUser = await isSuperAdmin()
+  
+  if (!isSuperAdminUser) {
+    redirect('/dashboard?message=Acesso%20negado.%20Você%20precisa%20ser%20super%20admin.')
+  }
+  
+  return user
+}
+
+// 🛡️ Autorizar admin (redireciona se não for)
+export async function authorizeAdmin() {
+  const user = await authorize()
+  const isAdminUser = await isAdmin()
+  
+  if (!isAdminUser) {
+    redirect('/dashboard?message=Acesso%20negado.%20Você%20precisa%20ser%20admin.')
+  }
+  
+  return user
+}
+
+// 🏢 Pegar tenants do usuário
+export async function getUserTenants(userId: string) {
   const supabase = await createServerSupabase()
   
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) return []
-    
-    const { data: tenants, error } = await supabase
-      .from('tenants')
-      .select(`
-        *,
-        tenant_users!inner(
-          role,
-          status,
-          joined_at
-        )
-      `)
-      .eq('tenant_users.user_id', user.id)
-      .eq('tenant_users.status', 'active')
-    
-    if (error) {
-      console.error('Error fetching user tenants:', error)
-      return []
-    }
-    
-    return tenants || []
-  } catch (error) {
-    console.error('Failed to get user tenants:', error)
+  const { data: tenants, error } = await supabase
+    .from('user_tenants')
+    .select(`
+      tenant_id,
+      role,
+      tenants:tenant_id (
+        id,
+        name,
+        subdomain,
+        settings
+      )
+    `)
+    .eq('user_id', userId)
+  
+  if (error) {
+    console.error('Error fetching user tenants:', error)
     return []
   }
+  
+  return tenants || []
 }
 
-// ⚡ Helper para verificar se é super admin
-export async function isSuperAdmin(): Promise<boolean> {
-  return await authorize('system.manage')
-}
-
-// 📊 Helper para verificar múltiplas permissões
-export async function hasAnyPermission(permissions: string[]): Promise<boolean> {
-  for (const permission of permissions) {
-    if (await authorize(permission)) {
-      return true
+// 📊 Pegar estatísticas do usuário (para super admin)
+export async function getUserStats() {
+  const supabase = await createServerSupabase()
+  
+  try {
+    // Total de usuários
+    const { count: usersCount } = await supabase
+      .from('user_roles')
+      .select('*', { count: 'exact', head: true })
+    
+    // Total de tenants
+    const { count: tenantsCount } = await supabase
+      .from('tenants')
+      .select('*', { count: 'exact', head: true })
+    
+    return {
+      totalUsers: usersCount || 0,
+      totalTenants: tenantsCount || 0
+    }
+  } catch (error) {
+    console.error('Error fetching user stats:', error)
+    return {
+      totalUsers: 0,
+      totalTenants: 0
     }
   }
-  return false
 }
 
-// 🔒 Helper para verificar todas as permissões
-export async function hasAllPermissions(permissions: string[]): Promise<boolean> {
-  for (const permission of permissions) {
-    if (!(await authorize(permission))) {
+// � Promover usuário para super admin (função auxiliar)
+export async function promoteToSuperAdmin(userEmail: string) {
+  const supabase = await createServerSupabase()
+  
+  try {
+    const { data, error } = await supabase.rpc('promote_to_super_admin', {
+      user_email: userEmail
+    })
+    
+    if (error) {
+      console.error('Error promoting user to super admin:', error)
       return false
     }
+    
+    return true
+  } catch (error) {
+    console.error('Error promoting user to super admin:', error)
+    return false
   }
-  return true
 }
