@@ -38,10 +38,11 @@ export default function RegisterPage() {
     
     try {
       await signUp(email, password, fullName)
+      // Se chegou aqui, o signup foi bem-sucedido
       // O redirecionamento será tratado pelo AuthContext
     } catch (err: any) {
+      console.error('Registration error:', err)
       setError(err.message || 'Erro ao criar conta')
-    } finally {
       setLoading(false)
     }
   }

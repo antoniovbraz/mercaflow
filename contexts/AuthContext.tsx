@@ -107,10 +107,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
+    
+    if (!error && data.user) {
+      console.log('✅ SignIn successful, refreshing user data for:', data.user.email)
+      // Forçar atualização dos dados do usuário após login
+      setTimeout(() => {
+        refreshUserData()
+      }, 1000) // Delay para garantir que o trigger teve tempo de executar
+    }
+    
     setIsLoading(false)
     return { error }
   }
