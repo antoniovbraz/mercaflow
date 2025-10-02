@@ -1,39 +1,19 @@
-'use client'
-
-import { useAuth } from '@/contexts/AuthContext'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { getCurrentUser, getUserTenants, isSuperAdmin } from '@/utils/supabase/auth-helpers'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user, isLoading, isSuperAdmin, userTenants } = useAuth()
-  const router = useRouter()
+export default async function DashboardLayout({ children }: DashboardLayoutProps) {
+  const user = await getCurrentUser()
   
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login')
-    }
-  }, [user, isLoading, router])
-  
-  // Show loading while checking auth
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Carregando...</p>
-        </div>
-      </div>
-    )
-  }
-  
-  // Don't render anything if not authenticated
+  // Se não autenticado, renderiza uma div vazia (deixa o AuthContext gerenciar redirect)
   if (!user) {
-    return null
+    return <div></div>
   }
+  
+  const tenants = await getUserTenants()
+  const isSuper = await isSuperAdmin()
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -46,7 +26,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <h1 className="text-xl font-semibold text-gray-900">
                 🚀 MercaFlow
               </h1>
-              {isSuperAdmin && (
+              {isSuper && (
                 <span className="ml-2 px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
                   SUPER ADMIN
                 </span>
@@ -89,7 +69,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 ML Users
               </NavLink>
               
-              {isSuperAdmin && (
+              {isSuper && (
                 <>
                   <div className="pt-4 pb-2">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
@@ -110,13 +90,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
             
             {/* Tenants */}
-            {userTenants.length > 0 && (
+            {tenants.length > 0 && (
               <div className="mt-6">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
                   Your Tenants
                 </p>
                 <div className="space-y-1">
-                  {userTenants.map((tenant: any) => (
+                  {tenants.map((tenant: any) => (
                     <div 
                       key={tenant.id}
                       className="text-sm text-gray-600 p-2 rounded-md bg-gray-50"
