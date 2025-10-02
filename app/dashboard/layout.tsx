@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/utils/supabase/auth-helpers'
+import { getCurrentUser, getUserTenants, isSuperAdmin } from '@/utils/supabase/auth-helpers'
 import { redirect } from 'next/navigation'
 import DashboardClient from './dashboard-client'
 
@@ -13,5 +13,18 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     redirect('/login')
   }
 
-  return <DashboardClient user={user}>{children}</DashboardClient>
+  const [tenants, isSuper] = await Promise.all([
+    getUserTenants(),
+    isSuperAdmin()
+  ])
+
+  return (
+    <DashboardClient 
+      user={user} 
+      isSuperAdmin={isSuper}
+      userTenants={tenants}
+    >
+      {children}
+    </DashboardClient>
+  )
 }

@@ -1,17 +1,17 @@
 'use client'
 
 import { User } from '@supabase/supabase-js'
-import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 interface DashboardClientProps {
   user: User
+  isSuperAdmin: boolean
+  userTenants: any[]
   children: React.ReactNode
 }
 
-export default function DashboardClient({ user, children }: DashboardClientProps) {
-  const { isSuperAdmin, userTenants } = useAuth()
+export default function DashboardClient({ user, isSuperAdmin, userTenants, children }: DashboardClientProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
