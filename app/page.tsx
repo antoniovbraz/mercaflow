@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ShoppingCart, TrendingUp, Bell, Settings } from 'lucide-react'
 
+// Updated MVP Homepage with registration flow - v2.0
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-yellow-50">

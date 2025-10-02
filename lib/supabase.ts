@@ -1,6 +1,5 @@
 // Configuração do cliente Supabase
 import { createClient } from '@supabase/supabase-js'
-import { createClientComponentClient, createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -13,13 +12,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 })
 
-// Cliente para componentes do lado do cliente
-export const createSupabaseClient = () => createClientComponentClient()
-
-// Cliente com service role para operações server-side
+// Cliente com service role para operações server-side (se necessário)
 export const supabaseAdmin = createClient(
   supabaseUrl,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey,
   {
     auth: {
       autoRefreshToken: false,
