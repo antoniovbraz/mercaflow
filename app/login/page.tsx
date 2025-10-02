@@ -10,21 +10,50 @@ async function handleLogin(formData: FormData) {
   try {
     const supabase = await createClient()
 
-    const data = {
-      email: formData.get('email') as string,
-      password: formData.get('password') as string,
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    // Validação dos dados
+    if (!email || !password) {
+      redirect('/login?message=Email%20e%20senha%20são%20obrigatórios')
+      return
     }
 
-    const { error } = await supabase.auth.signInWithPassword(data)
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.toLowerCase().trim(),
+      password,
+    })
 
     if (error) {
-      redirect('/login?message=Could not authenticate user')
+      console.error('Login error:', error)
+      let errorMessage = 'Erro ao fazer login'
+      
+      switch (error.message) {
+        case 'Invalid login credentials':
+          errorMessage = 'Email ou senha incorretos'
+          break
+        case 'Email not confirmed':
+          errorMessage = 'Email ainda não foi confirmado. Verifique sua caixa de entrada ou solicite um novo email de confirmação.'
+          break
+        case 'Too many requests':
+          errorMessage = 'Muitas tentativas de login. Tente novamente em alguns minutos.'
+          break
+        case 'Signup is disabled':
+          errorMessage = 'Login temporariamente desabilitado'
+          break
+        default:
+          errorMessage = `Erro: ${error.message}`
+      }
+      
+      redirect(`/login?message=${encodeURIComponent(errorMessage)}`)
+      return
     }
 
     redirect('/dashboard')
   } catch (error) {
-    console.error('Login error:', error)
-    redirect('/login?message=An error occurred')
+    console.error('Unexpected login error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Erro interno do servidor'
+    redirect(`/login?message=${encodeURIComponent(errorMessage)}`)
   }
 }
 
@@ -99,12 +128,32 @@ export default function LoginPage({
               </button>
             </div>
 
-            {/* Error Message */}
+            {/* Messages */}
             {searchParams?.message && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="text-sm text-red-800">
-                  {searchParams.message}
+              <div className={`rounded-md p-4 ${
+                searchParams.message.includes('sucesso') || searchParams.message.includes('confirmado')
+                  ? 'bg-green-50 border border-green-200'
+                  : 'bg-red-50 border border-red-200'
+              }`}>
+                <div className={`text-sm ${
+                  searchParams.message.includes('sucesso') || searchParams.message.includes('confirmado')
+                    ? 'text-green-800'
+                    : 'text-red-800'
+                }`}>
+                  {decodeURIComponent(searchParams.message)}
                 </div>
+              </div>
+            )}
+
+            {/* Email confirmation help */}
+            {searchParams?.message && searchParams.message.includes('confirmado') && (
+              <div className="text-center">
+                <Link 
+                  href="/auth/resend" 
+                  className="inline-block text-sm font-medium text-blue-600 hover:text-blue-500 bg-blue-50 px-3 py-2 rounded-md"
+                >
+                  Reenviar email de confirmação
+                </Link>
               </div>
             )}
 
@@ -114,6 +163,12 @@ export default function LoginPage({
                 Não tem uma conta?{' '}
                 <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
                   Criar conta
+                </Link>
+              </p>
+              <p className="text-sm text-gray-600">
+                Esqueceu sua senha?{' '}
+                <Link href="/auth/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+                  Recuperar senha
                 </Link>
               </p>
               <p className="text-sm">
