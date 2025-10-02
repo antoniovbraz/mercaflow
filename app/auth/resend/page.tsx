@@ -20,7 +20,7 @@ async function handleResendConfirmation(formData: FormData) {
       type: 'signup',
       email: email.toLowerCase().trim(),
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/confirm`
       }
     })
 

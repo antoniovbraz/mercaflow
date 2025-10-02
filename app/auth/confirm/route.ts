@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
       token_hash,
     })
     if (!error) {
-      // redirect user to specified redirect URL or root of app
-      redirect(next)
+      // redirect user to specified redirect URL or dashboard with success message
+      redirect('/dashboard?message=Email%20confirmado%20com%20sucesso!%20Bem-vindo%20ao%20MercaFlow!')
     }
   }
 
-  // redirect the user to an error page with some instructions
-  redirect('/error')
+  // redirect the user to login with error message
+  redirect('/login?message=Erro%20ao%20confirmar%20email.%20Link%20inválido%20ou%20expirado.')
 }
