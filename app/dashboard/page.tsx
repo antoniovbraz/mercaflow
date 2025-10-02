@@ -66,17 +66,6 @@ export default function DashboardPage() {
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">
-              {/* Debug Button (temporary) */}
-              <button 
-                onClick={() => {
-                  console.log('🔄 Manual refresh triggered')
-                  refreshUserData?.()
-                }}
-                className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs"
-              >
-                Debug Refresh
-              </button>
-
               {/* Super Admin Badge */}
               {isSuperAdmin && (
                 <div className="flex items-center space-x-1 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
@@ -84,11 +73,6 @@ export default function DashboardPage() {
                   <span>Super Admin</span>
                 </div>
               )}
-              
-              {/* Debug Info */}
-              <div className="text-xs text-gray-500">
-                Email: {user?.email} | Super: {isSuperAdmin ? 'YES' : 'NO'}
-              </div>
 
               {/* Tenant Selector */}
               {currentTenant && (

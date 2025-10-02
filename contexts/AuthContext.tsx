@@ -48,43 +48,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [tenantUser, setTenantUser] = useState<TenantUser | null>(null)
 
   const refreshUserData = async () => {
-    if (!user) {
-      console.log('❌ No user found in refreshUserData')
+    if (!user?.email || !user?.id) {
+      console.log('❌ No user or missing email/id in refreshUserData')
       return
     }
 
+    console.log('🔄 RefreshUserData starting for:', user.email)
+    
     try {
-      // Verificar se é super admin
-      console.log('🔍 Checking super admin for email:', user.email)
-      console.log('🔍 User ID:', user.id)
-      
-      // Primeira tentativa: buscar por email
-      const { data: platformOwnerData, error } = await supabase
+      // Reset states first to avoid stale data
+      setPlatformOwner(null)
+      setIsSuperAdmin(false)
+      setCurrentTenant(null)
+      setUserTenants([])
+      setTenantUser(null)
+
+      // Buscar por ID primeiro (mais confiável)
+      console.log('🔍 Searching platform_owners by ID:', user.id)
+      const { data: platformOwnerData, error: platformError } = await supabase
         .from('platform_owners')
         .select('*')
-        .eq('email', user.email)
-        .maybeSingle() // Use maybeSingle instead of single to avoid errors
+        .eq('id', user.id)
+        .maybeSingle()
 
-      console.log('🔍 Platform owner query result:', { platformOwnerData, error })
-      
-      // Segunda tentativa: buscar por ID se não encontrou por email
-      if (!platformOwnerData && !error) {
-        console.log('🔍 Trying by user ID...')
-        const { data: platformOwnerByIdData, error: idError } = await supabase
+      console.log('🔍 Platform owner result:', { data: platformOwnerData, error: platformError })
+
+      // Se não encontrou por ID, tentar por email
+      if (!platformOwnerData && !platformError) {
+        console.log('🔍 Trying by email:', user.email)
+        const { data: platformOwnerByEmail, error: emailError } = await supabase
           .from('platform_owners')
           .select('*')
-          .eq('id', user.id)
+          .eq('email', user.email)
           .maybeSingle()
         
-        console.log('🔍 Platform owner by ID result:', { platformOwnerByIdData, idError })
+        console.log('🔍 Platform owner by email result:', { data: platformOwnerByEmail, error: emailError })
         
-        if (platformOwnerByIdData) {
-          console.log('✅ Found platform owner by ID:', platformOwnerByIdData)
-          setPlatformOwner(platformOwnerByIdData)
-          const isSuper = platformOwnerByIdData.role === 'super_admin'
-          console.log('👑 Is super admin?', isSuper)
+        if (platformOwnerByEmail) {
+          console.log('✅ Found platform owner by email')
+          setPlatformOwner(platformOwnerByEmail)
+          const isSuper = platformOwnerByEmail.role === 'super_admin'
           setIsSuperAdmin(isSuper)
-          return // Exit early if found
+          console.log('👑 Super admin status:', isSuper)
+          return
         }
       }
 
