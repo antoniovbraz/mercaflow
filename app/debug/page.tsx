@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/utils/supabase/client'
 
 export default function DebugPage() {
   const { user, isSuperAdmin, platformOwner } = useAuth()
@@ -13,6 +13,7 @@ export default function DebugPage() {
       if (!user) return
 
       try {
+        const supabase = createClient()
         // Verificar diretamente no banco
         const { data: platformOwnerData, error } = await supabase
           .from('platform_owners')
