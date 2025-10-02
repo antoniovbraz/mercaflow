@@ -1,24 +1,8 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { type NextRequest } from 'next/server'
+import { updateSession } from '@/utils/supabase/middleware'
 
-export async function middleware(req: NextRequest) {
-  // Public routes that don't need authentication
-  const publicRoutes = [
-    '/',
-    '/login',
-    '/register', 
-    '/api/auth',
-    '/api/test'
-  ]
-
-  // Check if the current path is public
-  const isPublicRoute = publicRoutes.some(route => 
-    req.nextUrl.pathname === route || req.nextUrl.pathname.startsWith(route)
-  )
-
-  // For now, let all routes through since we handle auth in components
-  // Protected routes like /dashboard and /admin will be handled by AuthContext
-  return NextResponse.next()
+export async function middleware(request: NextRequest) {
+  return await updateSession(request)
 }
 
 export const config = {
