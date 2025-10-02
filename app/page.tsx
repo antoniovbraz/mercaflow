@@ -14,10 +14,16 @@ export default function HomePage() {
             </div>
             <div className="flex items-center space-x-4">
               <Link
-                href="/api/auth/ml/login"
+                href="/login"
+                className="text-gray-600 hover:text-gray-900 px-4 py-2 text-sm font-medium transition-colors"
+              >
+                Entrar
+              </Link>
+              <Link
+                href="/register"
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
               >
-                Conectar MercadoLibre
+                Criar Conta
               </Link>
             </div>
           </div>
@@ -36,7 +42,7 @@ export default function HomePage() {
           </p>
           <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
             <Link
-              href="/api/auth/ml/login"
+              href="/register"
               className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
             >
               Começar Agora - Grátis

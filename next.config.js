@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   env: {
     ML_CLIENT_ID: process.env.ML_CLIENT_ID,
     ML_CLIENT_SECRET: process.env.ML_CLIENT_SECRET,

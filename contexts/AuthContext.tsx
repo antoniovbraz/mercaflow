@@ -17,7 +17,7 @@ interface UserContext {
 
 interface AuthContextType extends UserContext {
   signIn: (email: string, password: string) => Promise<{ error: any }>
-  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
   switchTenant: (tenantId: string) => Promise<void>
   refreshUserData: () => Promise<void>
@@ -109,15 +109,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return { error }
   }
 
-  const signUp = async (email: string, password: string, metadata?: any) => {
+  const signUp = async (email: string, password: string, fullName?: string) => {
     setIsLoading(true)
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: metadata
+        data: {
+          full_name: fullName
+        }
       }
     })
+    
+    if (!error) {
+      // Redirect to login with success message
+      window.location.href = '/login?message=Cadastro realizado! Faça login para continuar.'
+    }
+    
     setIsLoading(false)
     return { error }
   }
