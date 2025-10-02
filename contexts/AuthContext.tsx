@@ -117,7 +117,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     setIsLoading(true)
-    const { error } = await supabase.auth.signUp({
+    console.log('🚀 Starting signUp for:', email)
+    
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -127,13 +129,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     })
     
-    if (!error) {
+    console.log('📝 SignUp result:', { data, error })
+    
+    if (error) {
+      console.error('❌ SignUp error:', error)
+      setIsLoading(false)
+      throw new Error(error.message)
+    }
+    
+    if (data?.user) {
+      console.log('✅ User created successfully:', data.user.email)
       // Redirect to login with success message
       window.location.href = '/login?message=Cadastro realizado! Faça login para continuar.'
     }
     
     setIsLoading(false)
-    return { error }
+    return { error: null }
   }
 
   const signOut = async () => {
