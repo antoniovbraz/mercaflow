@@ -7,7 +7,6 @@ export const metadata = {
   title: 'Merca Flow - Intelligence Comercial para Mercado Livre',
   description: 'Plataforma SaaS de análise e automação para vendedores do Mercado Livre Brasil',
   keywords: 'mercadolibre, ecommerce, vendas, automação, inteligência comercial, saas',
-  // Updated: 2025-10-02 - MVP v2.0
 }
 
 export default function RootLayout({
