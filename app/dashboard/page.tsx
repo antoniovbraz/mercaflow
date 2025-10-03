@@ -1,4 +1,4 @@
-import { getCurrentUser, requireAuth } from '@/utils/supabase/server'
+import { requireAuth } from '@/utils/supabase/server'
 import { signOutAction } from '../login/actions'
 import { redirect } from 'next/navigation'
 
