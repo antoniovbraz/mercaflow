@@ -40,6 +40,7 @@ export async function isAuthenticated(): Promise<boolean> {
 /**
  * Get user profile data from database
  * Use this instead of getSession() for user data
+ * For role-based operations, use getUserProfileWithRole() from './roles'
  */
 export async function getUserProfile() {
   const user = await getCurrentUser()
