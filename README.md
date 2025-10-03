@@ -1,135 +1,148 @@
-# 🚀 MercaFlow
+# 🚀 Merca Flow
 
-> World-class Mercado Livre integration platform with enterprise-grade multi-tenancy
+**Plataforma world-class de integração com Mercado Livre**
 
-[![Deploy Status](https://img.shields.io/badge/Deploy-Production-success)](https://mercaflow.vercel.app)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-14.0-black)](https://nextjs.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-SSR-green)](https://supabase.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow)](./LICENSE)
+Solução SaaS enterprise para vendedores do Mercado Livre com multi-tenancy, RBAC avançado e IA integrada.
 
-## 🌟 Overview
+## 🌟 Características
 
-MercaFlow is a **world-class SaaS platform** that provides enterprise-grade integration with Mercado Livre's ecosystem. Built with modern architecture patterns and security-first principles, specifically designed for the **Brazilian market**.
+- **🏢 Multi-Tenancy**: Arquitetura multi-tenant completa com isolamento de dados
+- **🔐 Autenticação Avançada**: Sistema RBAC com 3 níveis (super_admin, admin, user)
+- **🛡️ Segurança Enterprise**: Row Level Security (RLS) + JWT claims customizados
+- **🤖 IA Integrada**: Otimização de preços e títulos com OpenAI
+- **📊 Analytics Real-time**: Dashboards com métricas em tempo real
+- **🔄 Sincronização ML**: Integração completa com APIs do Mercado Livre
+- **🌐 Multi-idioma**: Suporte completo ao português brasileiro
 
-### ✨ Key Features
+## 🛠️ Tecnologias
 
-- 🔐 **Enterprise RBAC** - 5 hierarchical roles with 64 granular permissions
-- 🏢 **Multi-Tenant Architecture** - Complete tenant isolation and security  
-- 🚀 **Modern Stack** - Next.js 14, TypeScript, Supabase SSR
-- 🔒 **Security First** - Row Level Security, Custom JWT Claims
-- 📊 **Real-time Analytics** - Advanced ML user insights
-- 🇧🇷 **Brazil Focused** - Localized for Brazilian market
+### Core Stack
+- **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS
+- **Backend**: Supabase (PostgreSQL + Auth + RLS)
+- **Deploy**: Vercel + Edge Functions
+- **Autenticação**: Supabase SSR + Custom JWT Claims
 
-## 🚀 Quick Start
+### Integrações
+- **APIs**: Mercado Livre REST API
+- **IA**: OpenAI GPT-4 para otimizações
+- **Cache**: Redis (Upstash)
+- **Monitoramento**: Sentry + Analytics
+
+## 🚀 Instalação
+
+### Pré-requisitos
+- Node.js 18+
+- npm ou yarn
+- Conta Supabase
+- Conta Vercel (opcional)
+
+### 1. Clone o repositório
 
 ```bash
-# Clone repository
 git clone https://github.com/antoniovbraz/mercaflow.git
 cd mercaflow
+```
 
-# Install dependencies
+### 2. Instale as dependências
+
+```bash
 npm install
+```
 
-# Setup environment
+### 3. Configure as variáveis de ambiente
+
+```bash
 cp .env.example .env.local
-# Add your Supabase credentials to .env.local
+```
 
-# Run development server
+Edite `.env.local` com suas credenciais:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=sua-url-supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anonima
+SUPABASE_SERVICE_ROLE_KEY=sua-chave-service-role
+
+# API Mercado Livre
+MERCADOLIBRE_CLIENT_ID=seu-client-id
+MERCADOLIBRE_CLIENT_SECRET=seu-client-secret
+
+# OpenAI (opcional)
+OPENAI_API_KEY=sua-chave-openai
+
+# Redis (opcional)
+UPSTASH_REDIS_REST_URL=sua-url-redis
+UPSTASH_REDIS_REST_TOKEN=seu-token-redis
+```
+
+### 4. Configure o banco de dados
+
+```bash
+npx supabase link --project-ref seu-project-ref
+npx supabase db pull
+npx supabase db push
+```
+
+### 5. Execute o projeto
+
+```bash
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) to see the application.
+Acesse [http://localhost:3000](http://localhost:3000)
 
-## 📚 Documentation
+## 📦 Deploy
 
-### 🇧🇷 Portuguese Documentation
+### Deploy no Vercel (Recomendado)
 
-All technical documentation is available in Portuguese to better serve our Brazilian market:
+1. **Conecte o repositório ao Vercel**
+2. **Configure as variáveis de ambiente** no dashboard
+3. **Deploy automático** a cada push na branch main
 
-- [📖 Guias Completos](./docs/pt/) - Complete guides in Portuguese
-- [🏗️ Arquitetura](./docs/pt/arquitetura/) - System architecture
-- [🔐 Segurança](./docs/pt/seguranca/) - Security and RBAC
-- [⚙️ Desenvolvimento](./docs/pt/desenvolvimento/) - Development guides
-- [🚀 Deploy](./docs/pt/deploy/) - Deployment guides
-
-### 🌍 International
-
-- [Contributing](./CONTRIBUTING.md) - How to contribute to the project
-
-## 🏗️ Architecture
-
-```mermaid
-graph TB
-    A[Next.js 14 Frontend] --> B[Supabase Auth]
-    A --> C[Supabase Database]
-    B --> D[Custom JWT Claims]
-    C --> E[Row Level Security]
-    C --> F[Multi-Tenant Data]
-    F --> G[ML Users]
-    F --> H[Tenant Management]
+```bash
+npx vercel --prod
 ```
 
-### Tech Stack
+## 🏗️ Arquitetura
 
-- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
-- **Backend**: Supabase (PostgreSQL, Auth, Realtime)
-- **Authentication**: Supabase SSR with Custom Claims
-- **Security**: RLS Policies, RBAC System
-- **Deployment**: Vercel (Frontend), Supabase (Backend)
+### Estrutura de Pastas
 
-## 🔐 Security
+```
+merca-flow/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Rotas de autenticação
+│   ├── dashboard/         # Dashboard multi-tenant
+│   ├── admin/            # Painel super admin
+│   └── api/              # API routes
+├── components/           # Componentes reutilizáveis
+│   ├── ui/               # shadcn/ui components
+│   └── providers/        # Context providers
+├── lib/                  # Utilitários e configurações
+│   ├── supabase/         # Clientes Supabase
+│   └── utils/            # Helpers
+├── utils/               # Utilitários do Supabase
+│   └── supabase/        # Configurações Supabase
+└── docs/               # Documentação completa
+```
 
-- **Row Level Security (RLS)** - 17+ policies protecting all data
-- **Role-Based Access Control** - Granular permission system
-- **Multi-tenant Isolation** - Complete data separation
-- **Custom JWT Claims** - Role-based authorization
-- **Audit Trail** - Complete action logging
+### Fluxo de Dados
 
-## 🌍 Multi-Tenancy
+1. **Autenticação**: Supabase Auth → JWT Claims → RLS
+2. **Multi-tenancy**: Tenant isolation via RLS policies
+3. **API ML**: Background sync → Edge Functions → Database
+4. **Real-time**: Supabase subscriptions → UI updates
 
-MercaFlow supports **complete multi-tenancy** with:
+## 🤝 Contribuição
 
-- **Tenant Isolation** - Data completely separated by tenant
-- **Custom Branding** - Per-tenant logos and colors
-- **Subscription Plans** - Free, Starter, Professional, Enterprise
-- **User Management** - Per-tenant user roles and permissions
+1. Fork o projeto
+2. Crie uma branch: `git checkout -b feature/nova-funcionalidade`
+3. Commit: `git commit -m 'Adiciona nova funcionalidade'`
+4. Push: `git push origin feature/nova-funcionalidade`
+5. Abra um Pull Request
 
-## 📊 Performance
+## 📄 Licença
 
-- **First Load JS**: 87.7 kB
-- **Build Time**: ~30 seconds
-- **Lighthouse Score**: 95+ (Performance, Accessibility, SEO)
-- **Database Queries**: Optimized with indexes and RLS
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details.
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- 📖 [Documentation](./docs/pt/)
-- 🐛 [Issues](https://github.com/antoniovbraz/mercaflow/issues)
-- 💬 [Discussions](https://github.com/antoniovbraz/mercaflow/discussions)
-
-## 🏆 Status
-
-**Production Ready** ✅  
-**World-Class Standards** ✅  
-**Enterprise Grade** ✅  
+Este projeto está sob a licença MIT.
 
 ---
 
-Built with ❤️ for the Brazilian market by [Antonio Braz](https://github.com/antoniovbraz)
+**Desenvolvido com ❤️ para o ecossistema Mercado Livre brasileiro**
