@@ -18,8 +18,6 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister'
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,7 +26,6 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased`}>
-        <ServiceWorkerRegister />
         {children}
       </body>
     </html>
