@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { determineUserRole } from '@/utils/auth'
 
 export async function signInAction(formData: FormData) {
   const email = formData.get('email') as string
@@ -39,7 +40,10 @@ export async function signUpAction(formData: FormData) {
 
   const supabase = await createClient()
 
-  const { error } = await supabase.auth.signUp({
+  // Determine user role based on environment configuration
+  const userRole = determineUserRole(email)
+
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -54,7 +58,26 @@ export async function signUpAction(formData: FormData) {
     redirect(`/register?error=${encodeURIComponent(error.message)}`)
   }
 
-  redirect('/login?success=Conta criada! Verifique seu email para confirmar.')
+  // If user needs super admin role and registration was successful, update the profile
+  if (userRole === 'super_admin' && data.user) {
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ role: 'super_admin' })
+      .eq('id', data.user.id)
+
+    if (updateError) {
+      console.error('Super admin promotion error:', updateError)
+      // Continue with normal flow even if promotion fails
+    } else {
+      console.log(`Super admin role granted to: ${email}`)
+    }
+  }
+
+  const successMessage = userRole === 'super_admin' 
+    ? 'Conta de Super Admin criada! Verifique seu email para confirmar.'
+    : 'Conta criada! Verifique seu email para confirmar.'
+
+  redirect(`/login?success=${encodeURIComponent(successMessage)}`)
 }
 
 export async function signOutAction() {
