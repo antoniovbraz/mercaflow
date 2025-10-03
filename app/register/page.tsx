@@ -7,25 +7,31 @@ async function handleSignup(formData: FormData) {
   const { createClient } = await import('@/utils/supabase/server')
   const { redirect } = await import('next/navigation')
   
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-  const fullName = formData.get('fullName') as string
-
-  // Validação básica
-  if (!email || !password || !fullName) {
-    return redirect('/register?message=Todos%20os%20campos%20são%20obrigatórios')
-  }
-
-  if (password.length < 6) {
-    return redirect('/register?message=A%20senha%20deve%20ter%20pelo%20menos%206%20caracteres')
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email)) {
-    return redirect('/register?message=Por%20favor,%20insira%20um%20email%20válido')
-  }
-
   try {
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+    const fullName = formData.get('fullName') as string
+
+    // Validação básica
+    if (!email || !password || !fullName) {
+      return redirect('/register?message=Todos%20os%20campos%20são%20obrigatórios')
+    }
+
+    if (password.length < 6) {
+      return redirect('/register?message=A%20senha%20deve%20ter%20pelo%20menos%206%20caracteres')
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return redirect('/register?message=Por%20favor,%20insira%20um%20email%20válido')
+    }
+
+    // Verificar se as variáveis de ambiente estão disponíveis
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error('Missing Supabase environment variables')
+      return redirect('/register?message=Configuração%20do%20servidor%20incompleta')
+    }
+
     const supabase = await createClient()
 
     const { data, error } = await supabase.auth.signUp({
@@ -35,14 +41,17 @@ async function handleSignup(formData: FormData) {
         data: {
           full_name: fullName.trim(),
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/confirm`
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://mercaflow.vercel.app'}/auth/confirm`
       }
     })
 
     if (error) {
+      console.error('Supabase signup error:', error)
       const errorMessage = error.message.includes('already registered') 
         ? 'Este email já está cadastrado. Tente fazer login.'
-        : `Erro: ${error.message}`
+        : error.message.includes('Invalid login credentials')
+        ? 'Credenciais inválidas. Verifique seus dados.'
+        : `Erro na autenticação: ${error.message}`
       
       return redirect(`/register?message=${encodeURIComponent(errorMessage)}`)
     }
@@ -56,8 +65,9 @@ async function handleSignup(formData: FormData) {
       return redirect('/login?message=Conta%20criada.%20Faça%20login.')
     }
   } catch (error) {
-    console.error('Signup error:', error)
-    return redirect('/register?message=Erro%20interno%20do%20servidor')
+    console.error('Server Action error:', error)
+    const errorMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+    return redirect(`/register?message=${encodeURIComponent(`Erro interno: ${errorMsg}`)}`)
   }
 }
 

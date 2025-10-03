@@ -21,7 +21,7 @@ SELECT
     hastriggers,
     rowsecurity
 FROM pg_tables 
-WHERE tablename IN ('user_roles', 'role_permissions', 'platform_owners', 'tenants', 'tenant_users', 'ml_users')
+WHERE tablename IN ('profiles', 'notes', 'platform_owners', 'tenants', 'tenant_users', 'ml_users')
 ORDER BY tablename;
 
 -- 3. Verificar se as funções existem
@@ -45,7 +45,7 @@ BEGIN
         SELECT tablename 
         FROM pg_tables 
         WHERE schemaname = 'public' 
-        AND tablename IN ('user_roles', 'role_permissions', 'platform_owners', 'tenants', 'tenant_users', 'ml_users')
+        AND tablename IN ('profiles', 'notes', 'platform_owners', 'tenants', 'tenant_users', 'ml_users')
     LOOP
         sql_text := format('SELECT COUNT(*) FROM %I', rec.tablename);
         EXECUTE sql_text INTO table_count;
@@ -56,23 +56,22 @@ END $$;
 -- 5. Verificar Auth Hook configurado (se possível)
 -- Nota: Esta informação geralmente não é visível via SQL, precisa verificar no Dashboard
 
--- 6. Se user_roles existir, mostrar usuários com roles
+-- 6. Se profiles existir, mostrar usuários
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'user_roles' AND schemaname = 'public') THEN
-        RAISE NOTICE '=== USUÁRIOS COM ROLES ===';
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'profiles' AND schemaname = 'public') THEN
+        RAISE NOTICE '=== PERFIS DE USUÁRIOS ===';
         FOR rec IN 
             SELECT 
-                ur.role,
-                u.email,
-                ur.created_at
-            FROM user_roles ur
-            JOIN auth.users u ON ur.user_id = u.id
-            ORDER BY ur.role, u.email
+                p.email,
+                p.full_name,
+                p.created_at
+            FROM profiles p
+            ORDER BY p.email
         LOOP
-            RAISE NOTICE 'Role: % | Email: % | Criado: %', rec.role, rec.email, rec.created_at;
+            RAISE NOTICE 'Email: % | Nome: % | Criado: %', rec.email, COALESCE(rec.full_name, 'N/A'), rec.created_at;
         END LOOP;
     ELSE
-        RAISE NOTICE 'Tabela user_roles não encontrada - RBAC não foi configurado ainda';
+        RAISE NOTICE 'Tabela profiles não encontrada - Sistema de perfis não foi configurado ainda';
     END IF;
 END $$;

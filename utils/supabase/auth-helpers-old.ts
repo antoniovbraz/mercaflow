@@ -187,7 +187,7 @@ export async function getUserStats() {
   try {
     // Total de usuários
     const { count: usersCount } = await supabase
-      .from('user_roles')
+      .from('profiles')
       .select('*', { count: 'exact', head: true })
     
     // Total de tenants

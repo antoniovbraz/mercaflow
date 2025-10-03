@@ -1,8 +1,8 @@
 -- RESET SIMPLES PARA EXECUTAR NO SQL EDITOR DO SUPABASE
 -- Execute este script diretamente no SQL Editor: https://supabase.com/dashboard/project/pnzbnciiokgiadkfgrcn/sql
 
--- Dropar tabelas em ordem segura
-DROP TABLE IF EXISTS user_roles CASCADE;
+-- Dropar tabelas em ordem segura (mantendo apenas profiles como padrão SSR)
+-- user_roles foi removido - usando apenas profiles
 DROP TABLE IF EXISTS role_permissions CASCADE;
 DROP TABLE IF EXISTS ml_users CASCADE;
 DROP TABLE IF EXISTS tenant_users CASCADE;

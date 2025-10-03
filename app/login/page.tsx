@@ -7,14 +7,20 @@ async function handleLogin(formData: FormData) {
   const { createClient } = await import('@/utils/supabase/server')
   const { redirect } = await import('next/navigation')
   
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-
-  if (!email || !password) {
-    return redirect('/login?message=Email%20e%20senha%20são%20obrigatórios')
-  }
-
   try {
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    if (!email || !password) {
+      return redirect('/login?message=Email%20e%20senha%20são%20obrigatórios')
+    }
+
+    // Verificar se as variáveis de ambiente estão disponíveis
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error('Missing Supabase environment variables')
+      return redirect('/login?message=Configuração%20do%20servidor%20incompleta')
+    }
+
     const supabase = await createClient()
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -23,19 +29,23 @@ async function handleLogin(formData: FormData) {
     })
 
     if (error) {
+      console.error('Supabase login error:', error)
       const errorMessage = error.message.includes('Invalid login credentials') 
         ? 'Email ou senha incorretos'
         : error.message.includes('Email not confirmed')
         ? 'Email não foi confirmado. Verifique sua caixa de entrada.'
-        : `Erro: ${error.message}`
+        : error.message.includes('too_many_requests')
+        ? 'Muitas tentativas. Tente novamente em alguns minutos.'
+        : `Erro na autenticação: ${error.message}`
       
       return redirect(`/login?message=${encodeURIComponent(errorMessage)}`)
     }
 
     return redirect('/dashboard')
   } catch (error) {
-    console.error('Login error:', error)
-    return redirect('/login?message=Erro%20interno%20do%20servidor')
+    console.error('Server Action error:', error)
+    const errorMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+    return redirect(`/login?message=${encodeURIComponent(`Erro interno: ${errorMsg}`)}`)
   }
 }
 
