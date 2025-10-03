@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Mail } from 'lucide-react'
+import { getAuthRedirectUrl } from '@/lib/config'
 
 async function handleResendConfirmation(formData: FormData) {
   'use server'
@@ -20,7 +21,7 @@ async function handleResendConfirmation(formData: FormData) {
       type: 'signup',
       email: email.toLowerCase().trim(),
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/confirm`
+        emailRedirectTo: getAuthRedirectUrl()
       }
     })
 
@@ -32,6 +33,10 @@ async function handleResendConfirmation(formData: FormData) {
 
     redirect('/auth/resend?message=Email%20de%20confirmação%20reenviado!%20Verifique%20sua%20caixa%20de%20entrada.')
   } catch (error) {
+    // Re-throw NEXT_REDIRECT errors (normal Next.js behavior)
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error
+    }
     console.error('Unexpected resend error:', error)
     redirect('/auth/resend?message=Erro%20inesperado.%20Tente%20novamente.')
   }

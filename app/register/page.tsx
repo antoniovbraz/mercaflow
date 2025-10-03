@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ShoppingCart } from 'lucide-react'
+import { getAuthRedirectUrl } from '@/lib/config'
 
 async function handleSignup(formData: FormData) {
   'use server'
@@ -41,7 +42,7 @@ async function handleSignup(formData: FormData) {
         data: {
           full_name: fullName.trim(),
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://mercaflow.vercel.app'}/auth/confirm`
+        emailRedirectTo: getAuthRedirectUrl()
       }
     })
 
@@ -65,6 +66,10 @@ async function handleSignup(formData: FormData) {
       return redirect('/login?message=Conta%20criada.%20Faça%20login.')
     }
   } catch (error) {
+    // Re-throw NEXT_REDIRECT errors (normal Next.js behavior)
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error
+    }
     console.error('Server Action error:', error)
     const errorMsg = error instanceof Error ? error.message : 'Erro desconhecido'
     return redirect(`/register?message=${encodeURIComponent(`Erro interno: ${errorMsg}`)}`)

@@ -1,12 +1,11 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
-import { getCurrentUser } from '@/utils/supabase/auth-helpers'
+import { getUserProfileWithRole } from '@/utils/supabase/roles'
 
 export default async function PrivatePage() {
-  const user = await getCurrentUser()
+  const profile = await getUserProfileWithRole()
   
-  if (!user) {
-    redirect('/login')
+  if (!profile) {
+    redirect('/login?message=Você%20precisa%20estar%20logado%20para%20acessar%20esta%20página')
   }
 
   return (
@@ -19,29 +18,32 @@ export default async function PrivatePage() {
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-gray-500">Email:</label>
-            <p className="text-gray-900">{user.email}</p>
+            <p className="text-gray-900">{profile.email}</p>
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium text-gray-500">Nome:</label>
+            <p className="text-gray-900">{profile.full_name || 'Não informado'}</p>
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium text-gray-500">Role:</label>
+            <p className="text-gray-900 font-medium capitalize">{profile.role}</p>
           </div>
           
           <div>
             <label className="text-sm font-medium text-gray-500">ID:</label>
-            <p className="text-gray-900 text-xs font-mono">{user.id}</p>
+            <p className="text-gray-900 text-xs font-mono">{profile.id}</p>
           </div>
           
           <div>
             <label className="text-sm font-medium text-gray-500">Criado em:</label>
-            <p className="text-gray-900">{new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium text-gray-500">Email confirmado:</label>
-            <p className={`font-medium ${user.email_confirmed_at ? 'text-green-600' : 'text-red-600'}`}>
-              {user.email_confirmed_at ? 'Sim' : 'Não'}
-            </p>
+            <p className="text-gray-900">{new Date(profile.created_at).toLocaleDateString('pt-BR')}</p>
           </div>
         </div>
         
         <div className="mt-6 pt-6 border-t border-gray-200">
-          <form action="/auth/signout" method="post">
+          <form action="/auth/logout" method="post">
             <button
               type="submit"
               className="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"

@@ -43,6 +43,10 @@ async function handleLogin(formData: FormData) {
 
     return redirect('/dashboard')
   } catch (error) {
+    // Re-throw NEXT_REDIRECT errors (normal Next.js behavior)
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error
+    }
     console.error('Server Action error:', error)
     const errorMsg = error instanceof Error ? error.message : 'Erro desconhecido'
     return redirect(`/login?message=${encodeURIComponent(`Erro interno: ${errorMsg}`)}`)
