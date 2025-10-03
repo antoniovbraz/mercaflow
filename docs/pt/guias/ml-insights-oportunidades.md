@@ -1,7 +1,7 @@
-# Oportunidades de Insights Exclusivos - Merca Flow com MercadoLibre APIs
+# Oportunidades de Insights Exclusivos - Merca Flow com Mercado Livre APIs
 *Identificação de vantagens competitivas baseadas no estudo completo das APIs ML*
 
-## 🎯 Insights Exclusivos Possíveis com as APIs Reais do MercadoLibre
+## 🎯 Insights Exclusivos Possíveis com as APIs Reais do Mercado Livre
 
 ### **1. Intelligence de Competição em Tempo Real**
 
@@ -24,7 +24,7 @@
 ### **2. Otimização Inteligente de Preços**
 
 #### **API price_suggestion**
-**Fonte Real**: Sugestões do próprio algoritmo do MercadoLibre
+**Fonte Real**: Sugestões do próprio algoritmo do Mercado Livre
 ```json
 {
   "resource": "suggestions/items/$ITEM_ID/details",
@@ -222,4 +222,4 @@ O Merca Flow pode ser o **único sistema no mercado** que oferece:
 
 ---
 
-*Oportunidades identificadas através do estudo audacioso e completo das APIs MercadoLibre em todos os países LATAM*
+*Oportunidades identificadas através do estudo audacioso e completo das APIs Mercado Livre em todos os países LATAM*

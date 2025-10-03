@@ -1,6 +1,6 @@
 # 📚 Documentação MercaFlow
 
-Bem-vindo à documentação completa do MercaFlow - plataforma world-class de integração com MercadoLibre.
+Bem-vindo à documentação completa do MercaFlow - plataforma world-class de integração com Mercado Livre.
 
 ## 🚀 Início Rápido
 

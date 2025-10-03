@@ -1,9 +1,9 @@
-// Configuração da API do MercadoLibre
+// Configuração da API do Mercado Livre
 import axios from 'axios'
 
 const ML_API_BASE_URL = 'https://api.mercadolibre.com'
 
-// Cliente HTTP para MercadoLibre
+// Cliente HTTP para Mercado Livre
 export const mlApi = axios.create({
   baseURL: ML_API_BASE_URL,
   timeout: 10000,

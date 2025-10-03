@@ -3,7 +3,7 @@
 
 ## 🎯 ORDEM DE EXECUÇÃO (CRÍTICA)
 
-### **PASSO 1: Criar Aplicação MercadoLibre** ⚡ PRIMEIRO
+### **PASSO 1: Criar Aplicação Mercado Livre** ⚡ PRIMEIRO
 **Por quê primeiro?** Sem o Client ID/Secret, nada funciona.
 
 #### Acesse:
@@ -15,7 +15,7 @@ https://developers.mercadolivre.com.br/devcenter
 ```yaml
 Nome: "Merca Flow Brasil"
 URL da aplicação: "https://mercaflow.vercel.app" 
-Breve descrição: "Plataforma de Intelligence Comercial para vendedores MercadoLibre"
+Breve descrição: "Plataforma de Intelligence Comercial para vendedores Mercado Livre"
 URL de callback: "https://mercaflow.vercel.app/api/auth/callback"
 URL de notificações: "https://mercaflow.vercel.app/api/webhooks/ml"
 Tópicos: 
@@ -144,7 +144,7 @@ Root Directory: "./"
 
 #### Adicione Environment Variables:
 ```env
-# MercadoLibre
+# Mercado Livre
 ML_CLIENT_ID=123456789123456789
 ML_CLIENT_SECRET=AbCdEf123456789
 ML_REDIRECT_URI=https://mercaflow.vercel.app/api/auth/callback
@@ -177,7 +177,7 @@ npm install axios
 
 #### 2. Criar .env.local:
 ```env
-# MercadoLibre API
+# Mercado Livre API
 ML_CLIENT_ID=123456789123456789
 ML_CLIENT_SECRET=AbCdEf123456789  
 ML_REDIRECT_URI=http://localhost:3000/api/auth/callback
@@ -276,7 +276,7 @@ http://localhost:3000/api/test
 ## 🎯 PRÓXIMOS PASSOS APÓS SETUP
 
 ### **1. Implementar OAuth Flow**
-- Rota de login com MercadoLibre
+- Rota de login com Mercado Livre
 - Callback para receber authorization code  
 - Troca por access token
 - Salvar no Supabase
@@ -325,7 +325,7 @@ App URL: https://mercaflow.vercel.app
 
 **Ordem de execução (não pule passos):**
 
-1. ⚡ **5 min**: Criar aplicação MercadoLibre
+1. ⚡ **5 min**: Criar aplicação Mercado Livre
 2. ⚡ **5 min**: Criar repositório GitHub  
 3. ⚡ **10 min**: Configurar Supabase (criar projeto + SQL)
 4. ⚡ **10 min**: Configurar Vercel (conectar GitHub)
@@ -336,4 +336,4 @@ App URL: https://mercaflow.vercel.app
 
 ---
 
-*Pronto para começar a implementar o Merca Flow com intelligence real do MercadoLibre!* 🚀
+*Pronto para começar a implementar o Merca Flow com intelligence real do Mercado Livre!* 🚀

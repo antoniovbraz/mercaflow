@@ -33,7 +33,7 @@ export default async function DashboardPage() {
           Bem-vindo ao MercaFlow! 🚀
         </h1>
         <p className="mt-2 text-gray-600">
-          Sistema world-class de integração com MercadoLibre
+          Sistema world-class de integração com Mercado Livre
         </p>
       </div>
       

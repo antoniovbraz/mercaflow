@@ -4,8 +4,8 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Merca Flow - Intelligence Comercial para MercadoLibre',
-  description: 'Plataforma SaaS de análise e automação para vendedores do MercadoLibre Brasil',
+  title: 'Merca Flow - Intelligence Comercial para Mercado Livre',
+  description: 'Plataforma SaaS de análise e automação para vendedores do Mercado Livre Brasil',
   keywords: 'mercadolibre, ecommerce, vendas, automação, inteligência comercial, saas',
   // Updated: 2025-10-02 - MVP v2.0
 }

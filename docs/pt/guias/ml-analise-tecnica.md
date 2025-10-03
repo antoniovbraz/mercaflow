@@ -1,5 +1,5 @@
-# MercadoLibre API - Análise Técnica Avançada
-*Estudo audacioso e minucioso das APIs do MercadoLibre em todos os países LATAM*
+# Mercado Livre API - Análise Técnica Avançada
+*Estudo audacioso e minucioso das APIs do Mercado Livre em todos os países LATAM*
 
 ## 🔐 Sistema de Autenticação e Rate Limits
 
@@ -48,7 +48,7 @@ Os access tokens podem ser invalidados antes das 6 horas por:
 - **Permissões Insuficientes**: Scopes inadequados
 - **Access Token Incorreto**: Token de outro usuário
 
-#### **IPs das Notificações do MercadoLibre**
+#### **IPs das Notificações do Mercado Livre**
 Para filtros de firewall, as notificações vêm dos IPs:
 - `54.88.218.97`
 - `18.215.140.160`
@@ -236,4 +236,4 @@ Todos os países LATAM mantêm estrutura idêntica:
 
 ---
 
-*Análise baseada no estudo completo das documentações oficiais do MercadoLibre em todos os países LATAM*
+*Análise baseada no estudo completo das documentações oficiais do Mercado Livre em todos os países LATAM*

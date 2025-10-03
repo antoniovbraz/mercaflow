@@ -359,7 +359,7 @@ graph TB
 
 ### Integrações Externas
 
-**MERCADO LIBRE API**
+**MERCADO LIVRE API**
 - **Produtos**: GET /items, POST /items, PUT /items/:id
 - **Usuário**: GET /users/me, GET /users/:id
 - **Pedidos**: GET /orders/search, GET /orders/:id

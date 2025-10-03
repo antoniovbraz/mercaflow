@@ -1,6 +1,6 @@
 # 🚀 MercaFlow
 
-> World-class MercadoLibre integration platform with enterprise-grade multi-tenancy
+> World-class Mercado Livre integration platform with enterprise-grade multi-tenancy
 
 [![Deploy Status](https://img.shields.io/badge/Deploy-Production-success)](https://mercaflow.vercel.app)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
@@ -10,7 +10,7 @@
 
 ## 🌟 Overview
 
-MercaFlow is a **world-class SaaS platform** that provides enterprise-grade integration with MercadoLibre's ecosystem. Built with modern architecture patterns and security-first principles, specifically designed for the **Brazilian market**.
+MercaFlow is a **world-class SaaS platform** that provides enterprise-grade integration with Mercado Livre's ecosystem. Built with modern architecture patterns and security-first principles, specifically designed for the **Brazilian market**.
 
 ### ✨ Key Features
 

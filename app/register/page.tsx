@@ -88,7 +88,7 @@ export default function RegisterPage({
             Criar conta no MercaFlow
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Gerencie seus usuários do MercadoLibre
+            Gerencie seus usuários do Mercado Livre
           </p>
         </div>
       </div>

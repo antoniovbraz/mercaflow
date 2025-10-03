@@ -2,7 +2,7 @@
   "name": "mercaflow",
   "version": "0.1.0",
   "private": true,
-  "description": "Plataforma de Intelligence Comercial para MercadoLibre Brasil",
+  "description": "Plataforma de Intelligence Comercial para Mercado Livre Brasil",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

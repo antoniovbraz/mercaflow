@@ -66,7 +66,7 @@ export default function LoginPage({
             Entre no MercaFlow
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Gerencie seus usuários do MercadoLibre
+            Gerencie seus usuários do Mercado Livre
           </p>
         </div>
       </div>

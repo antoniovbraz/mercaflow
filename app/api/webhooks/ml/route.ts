@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // Log do webhook recebido
-    console.log('Webhook recebido do MercadoLibre:', {
+    console.log('Webhook recebido do Mercado Livre:', {
       timestamp: new Date().toISOString(),
       topic: body.topic,
       resource: body.resource,

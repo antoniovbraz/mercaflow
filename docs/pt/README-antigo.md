@@ -1,6 +1,6 @@
 # 🚀 MercaFlow
 
-> World-class MercadoLibre integration platform with enterprise-grade multi-tenancy
+> World-class Mercado Livre integration platform with enterprise-grade multi-tenancy
 
 [![Deploy Status](https://img.shields.io/badge/Deploy-Production-success)](https://mercaflow.vercel.app)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
@@ -10,7 +10,7 @@
 
 ## 🌟 Overview
 
-MercaFlow is a **world-class SaaS platform** that provides enterprise-grade integration with MercadoLibre's ecosystem. Built with modern architecture patterns and security-first principles, specifically designed for the **Brazilian market**.
+MercaFlow is a **world-class SaaS platform** that provides enterprise-grade integration with Mercado Livre's ecosystem. Built with modern architecture patterns and security-first principles, specifically designed for the **Brazilian market**.
 
 ### ✨ Key Features
 
@@ -19,13 +19,13 @@ MercaFlow is a **world-class SaaS platform** that provides enterprise-grade inte
 - 🚀 **Modern Stack** - Next.js 14, TypeScript, Supabase SSR
 - 🔒 **Security First** - Row Level Security, Custom JWT Claims
 - 📊 **Real-time Analytics** - Advanced ML user insights
-- 🇧🇷 **Brazil Focused** - Localized for Brazilian marketFlow - Intelligence Comercial para MercadoLibre
+- 🇧🇷 **Brazil Focused** - Localized for Brazilian marketFlow - Intelligence Comercial para Mercado Livre
 
-Plataforma de análise e automação para vendedores do MercadoLibre Brasil, baseada em dados reais das APIs oficiais.
+Plataforma de análise e automação para vendedores do Mercado Livre Brasil, baseada em dados reais das APIs oficiais.
 
 ## ✨ Funcionalidades Principais
 
-- 🎯 **Otimização de Preços**: Sugestões diretas do algoritmo MercadoLibre
+- 🎯 **Otimização de Preços**: Sugestões diretas do algoritmo Mercado Livre
 - 📊 **Intelligence de Competição**: Monitoramento em tempo real da concorrência  
 - 🔔 **Alertas Inteligentes**: Notificações instantâneas sobre vendas, feedbacks e mudanças
 - 🤖 **Automação Completa**: Ajustes automáticos baseados em dados reais
@@ -37,14 +37,14 @@ Plataforma de análise e automação para vendedores do MercadoLibre Brasil, bas
 - **Database**: Supabase (PostgreSQL)
 - **Deploy**: Vercel  
 - **Styling**: Tailwind CSS
-- **Auth**: OAuth 2.0 MercadoLibre
-- **APIs**: MercadoLibre REST APIs + Webhooks (25+ tópicos)
+- **Auth**: OAuth 2.0 Mercado Livre
+- **APIs**: Mercado Livre REST APIs + Webhooks (25+ tópicos)
 
 ## 🚀 Quick Start
 
 ### Pré-requisitos
 - Node.js 18+
-- Conta MercadoLibre (vendedor)
+- Conta Mercado Livre (vendedor)
 - Aplicação ML criada no DevCenter
 - Contas Supabase e Vercel
 

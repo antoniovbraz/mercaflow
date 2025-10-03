@@ -5,14 +5,14 @@
 - [x] **Vercel** - Conta criada ✓
 - [x] **Supabase** - Conta criada ✓ 
 - [x] **GitHub** - Conta criada ✓
-- [x] **MercadoLibre** - Conta criada ✓
+- [x] **Mercado Livre** - Conta criada ✓
 - [ ] **Aplicação ML** - A criar
 - [ ] **Projeto Vercel** - A criar
 - [ ] **Projeto Supabase** - A criar
 
 ---
 
-## 🏗️ 1. APLICAÇÃO MERCADOLIBRE (CRÍTICO)
+## 🏗️ 1. APLICAÇÃO MERCADO LIVRE (CRÍTICO)
 
 ### **Criar Aplicação no DevCenter**
 📍 **URL**: https://developers.mercadolivre.com.br/devcenter
@@ -20,7 +20,7 @@
 #### **Configurações da Aplicação**
 ```yaml
 Nome da Aplicação: "Merca Flow Brasil"
-Descrição: "Plataforma de Intelligence Comercial para Vendedores MercadoLibre"
+Descrição: "Plataforma de Intelligence Comercial para Vendedores Mercado Livre"
 Website: "https://mercaflow.vercel.app"
 Callback URLs:
   - "https://mercaflow.vercel.app/api/auth/callback"
@@ -175,7 +175,7 @@ Domínio Customizado: "mercaflow.com.br" (se adquirir)
 
 #### **Variáveis de Ambiente** (Vercel Dashboard)
 ```env
-# MercadoLibre API
+# Mercado Livre API
 ML_CLIENT_ID=123456789
 ML_CLIENT_SECRET=xxxxxxxxxxx
 ML_REDIRECT_URI=https://mercaflow.vercel.app/api/auth/callback
@@ -205,7 +205,7 @@ NEXT_PUBLIC_APP_ENV=production
 #### **Configurações do Repositório**
 ```yaml
 Nome: "mercaflow"
-Descrição: "Plataforma de Intelligence Comercial para MercadoLibre Brasil"
+Descrição: "Plataforma de Intelligence Comercial para Mercado Livre Brasil"
 Visibilidade: "Private" (recomendado inicialmente)
 Template: "None"
 README: "Yes"
@@ -286,7 +286,7 @@ Aplicação ML: "Merca Flow Brasil"
 ### **Variáveis de Ambiente Consistentes**
 ```env
 # Prefixos padronizados
-ML_*          # Tudo relacionado ao MercadoLibre
+ML_*          # Tudo relacionado ao Mercado Livre
 SUPABASE_*    # Tudo relacionado ao Supabase  
 NEXTAUTH_*    # Tudo relacionado à autenticação
 NEXT_PUBLIC_* # Variáveis públicas do Next.js
@@ -296,7 +296,7 @@ NEXT_PUBLIC_* # Variáveis públicas do Next.js
 
 ## 🚨 PRÓXIMOS PASSOS OBRIGATÓRIOS
 
-### **1. Criar Aplicação MercadoLibre** (PRIMEIRO)
+### **1. Criar Aplicação Mercado Livre** (PRIMEIRO)
 - Acesse https://developers.mercadolivre.com.br/devcenter
 - Crie a aplicação com as configurações acima
 - **SALVE** Client ID e Secret em local seguro
@@ -321,7 +321,7 @@ NEXT_PUBLIC_* # Variáveis públicas do Next.js
 ## 🔍 VALIDAÇÃO FINAL
 
 Após todas as configurações, deve ser possível:
-1. ✅ **Login com MercadoLibre**: OAuth flow funcionando
+1. ✅ **Login com Mercado Livre**: OAuth flow funcionando
 2. ✅ **Receber Webhooks**: Notificações chegando
 3. ✅ **Acessar APIs**: Dados sendo recuperados
 4. ✅ **Persistir Dados**: Salvando no Supabase
@@ -329,4 +329,4 @@ Após todas as configurações, deve ser possível:
 
 ---
 
-*Checklist baseado na análise completa das APIs MercadoLibre Brasil*
+*Checklist baseado na análise completa das APIs Mercado Livre Brasil*

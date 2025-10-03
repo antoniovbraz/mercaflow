@@ -4,7 +4,7 @@
 - ✓ GitHub Repository conectado
 - ✓ Código base no GitHub (push feito)
 - ✓ Supabase configurado (todas as variáveis)
-- ✓ MercadoLibre App criada (CLIENT_ID, SECRET, REDIRECT_URI)
+- ✓ Mercado Livre App criada (CLIENT_ID, SECRET, REDIRECT_URI)
 
 ## 🔧 **FALTA ADICIONAR NO VERCEL:**
 
@@ -80,7 +80,7 @@ O endpoint `/api/test` deve retornar:
 
 ## 🔄 **APÓS CONFIGURAÇÃO:**
 
-1. **OAuth Flow**: Teste o login com MercadoLibre
+1. **OAuth Flow**: Teste o login com Mercado Livre
 2. **Webhook Setup**: Configure webhooks na app ML
 3. **Database**: Verifique se as tabelas foram criadas no Supabase
 4. **Monitoramento**: Configure error tracking se necessário

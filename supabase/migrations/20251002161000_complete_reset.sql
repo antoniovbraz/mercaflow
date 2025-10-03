@@ -71,7 +71,7 @@ CREATE TABLE tenant_users (
   UNIQUE(tenant_id, user_id)
 );
 
--- 6. TABELA ML USERS (Integração MercadoLibre)
+-- 6. TABELA ML USERS (Integração Mercado Livre)
 CREATE TABLE ml_users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
