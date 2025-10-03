@@ -40,3 +40,22 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
+.env*.local
+
+# Backup files
+*-backup.*
+*-old.*
+*-broken.*
+*-new.*
+*-fixed.*
+page-backup.tsx
+page-old.tsx
+page-new.tsx
+page-broken.tsx
+page-fixed.tsx
+
+# Supabase
+supabase/.branches
+supabase/.temp

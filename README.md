@@ -1,13 +1,27 @@
-# 🚀 Merca Flow
+# 🚀 MercaFlow - Plataforma World-Class para Mercado Livre
 
-**Plataforma world-class de integração com Mercado Livre**
+**MercaFlow** é uma plataforma SaaS enterprise-grade para integração com Mercado Livre, posicionada como "Linktree Premium para E-commerce Brasileiro", combinando Next.js 15, Supabase, Vercel e ML API.
 
-Solução SaaS enterprise para vendedores do Mercado Livre com multi-tenancy, RBAC avançado e IA integrada.
+## ✨ Características Principais
 
-## 🌟 Características
+- 🏢 **Sistema Multi-Tenant** com isolamento completo de dados
+- 🔐 **RBAC Hierárquico** com 5 roles e 64 permissões granulares  
+- 🤖 **Integração Nativa ML API** com OAuth 2.0 e webhooks em tempo real
+- 🧠 **IA para Otimização** de preços, títulos e análise competitiva
+- 🏗️ **Arquitetura Enterprise** seguindo padrões oficiais mais avançados
 
-- **🏢 Multi-Tenancy**: Arquitetura multi-tenant completa com isolamento de dados
-- **🔐 Autenticação Avançada**: Sistema RBAC com 3 níveis (super_admin, admin, user)
+## 🛠️ Stack Tecnológico
+
+### Frontend & Backend
+- **Next.js 15.5.4**: App Router com Server Components e SSR
+- **TypeScript**: Strict mode para type safety completo
+- **Tailwind CSS**: Styling moderno e responsivo
+- **shadcn/ui**: Componentes UI padronizados
+
+### Database & Authentication  
+- **Supabase**: PostgreSQL + Auth + RLS + Traditional RBAC
+- **Row Level Security**: Isolamento automático de dados por tenant
+- **Profile-based RBAC**: Sistema de roles robusto baseado em tabela profiles
 - **🛡️ Segurança Enterprise**: Row Level Security (RLS) + JWT claims customizados
 - **🤖 IA Integrada**: Otimização de preços e títulos com OpenAI
 - **📊 Analytics Real-time**: Dashboards com métricas em tempo real
