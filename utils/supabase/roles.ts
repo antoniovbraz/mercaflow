@@ -1,12 +1,10 @@
 import { createClient } from './server'
 
-// Role hierarchy levels
+// Role hierarchy levels (simplified for MercaFlow)
 export const ROLE_LEVELS = {
-  viewer: 1,
-  user: 2,
-  manager: 3,
-  admin: 4,
-  super_admin: 5,
+  user: 1,
+  admin: 2,
+  super_admin: 3,
 } as const
 
 export type UserRole = keyof typeof ROLE_LEVELS
@@ -90,63 +88,42 @@ export const PERMISSIONS = {
 
 export type Permission = keyof typeof PERMISSIONS
 
-// Base permissions for each role
-const VIEWER_PERMISSIONS: Permission[] = [
+// Base permissions for each role (simplified)
+const USER_PERMISSIONS: Permission[] = [
   'dashboard.view',
   'ml.items.read',
   'ml.orders.read',
   'ml.messages.read',
   'ml.analytics.basic',
   'reports.basic',
+  'reports.export',
+  'analytics.revenue',
+  'analytics.performance',
+  'alerts.create',
 ]
 
-const USER_PERMISSIONS: Permission[] = [
-  ...VIEWER_PERMISSIONS,
+const ADMIN_PERMISSIONS: Permission[] = [
+  ...USER_PERMISSIONS,
+  'users.read',
+  'users.list',
+  'tenants.read',
+  'tenants.settings',
   'ml.auth.connect',
   'ml.auth.disconnect',
   'ml.items.create',
   'ml.items.update',
-  'ml.messages.send',
-  'ml.catalog.access',
-  'ml.pricing.suggestions',
-  'dashboard.customize',
-  'analytics.revenue',
-  'analytics.performance',
-  'analytics.products',
-  'metrics.kpis',
-  'alerts.create',
-]
-
-const MANAGER_PERMISSIONS: Permission[] = [
-  ...USER_PERMISSIONS,
-  'ml.items.delete',
   'ml.orders.manage',
+  'ml.messages.send',
   'ml.analytics.advanced',
-  'ml.webhooks.manage',
-  'ml.competition.analysis',
   'reports.advanced',
-  'reports.export',
   'reports.schedule',
   'analytics.customers',
+  'analytics.products',
   'analytics.competition',
   'analytics.forecasting',
+  'metrics.kpis',
   'metrics.custom',
   'alerts.manage',
-]
-
-const ADMIN_PERMISSIONS: Permission[] = [
-  ...MANAGER_PERMISSIONS,
-  'users.create',
-  'users.read',
-  'users.update',
-  'users.list',
-  'users.invite',
-  'users.permissions.view',
-  'tenants.read',
-  'tenants.update',
-  'tenants.settings',
-  'tenants.billing',
-  'tenants.analytics',
 ]
 
 const SUPER_ADMIN_PERMISSIONS: Permission[] = [
@@ -155,9 +132,7 @@ const SUPER_ADMIN_PERMISSIONS: Permission[] = [
 
 // Role-based permissions mapping
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
-  viewer: VIEWER_PERMISSIONS,
   user: USER_PERMISSIONS,
-  manager: MANAGER_PERMISSIONS,
   admin: ADMIN_PERMISSIONS,
   super_admin: SUPER_ADMIN_PERMISSIONS,
 }

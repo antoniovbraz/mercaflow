@@ -1,5 +1,7 @@
 import { updateSession } from "@/utils/supabase/middleware";
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { hasRole, UserRole } from "@/utils/supabase/roles";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -16,48 +18,121 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Only run session update for protected routes and auth pages
-  const protectedPaths = ['/dashboard', '/admin', '/profile', '/settings'];
-  const authPaths = ['/login', '/register'];
-  const needsSession = protectedPaths.some(path => pathname.startsWith(path)) ||
-                      authPaths.includes(pathname);
+  // Define route protection rules
+  const routeProtection = {
+    // Public routes (no auth required)
+    public: ['/', '/login', '/register', '/forgot-password', '/update-password', '/auth/callback'],
 
-  if (needsSession) {
-    const response = await updateSession(request);
+    // Protected routes by minimum role
+    protected: {
+      '/dashboard': 'user',
+      '/admin': 'admin',
+      '/super-admin': 'super_admin',
+    }
+  };
 
-    // Handle protected routes
-    const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
+  // Check if route is public
+  const isPublicRoute = routeProtection.public.some(path =>
+    pathname === path || pathname.startsWith(path + '/')
+  );
 
-    if (isProtectedPath) {
-      // Check if user is authenticated by looking for session cookie
-      const sessionCookie = request.cookies.get('sb-localhost-auth-token') ||
-                            request.cookies.get(`sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`);
+  // Check if route is protected
+  const protectedRoute = Object.entries(routeProtection.protected).find(([path]) =>
+    pathname.startsWith(path)
+  );
 
-      if (!sessionCookie) {
-        // Not authenticated, redirect to login
-        const loginUrl = new URL('/login', request.url);
-        loginUrl.searchParams.set('redirect', pathname);
-        return NextResponse.redirect(loginUrl);
+  // For protected routes, check authentication and authorization
+  if (protectedRoute) {
+    const [, requiredRole] = protectedRoute;
+
+    // Create Supabase client for this request
+    const response = NextResponse.next();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
       }
+    );
+
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      // Not authenticated, redirect to login
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
     }
 
-    // Redirect authenticated users away from auth pages
-    const isAuthPath = authPaths.includes(pathname);
-
-    if (isAuthPath) {
-      const sessionCookie = request.cookies.get('sb-localhost-auth-token') ||
-                            request.cookies.get(`sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`);
-
-      if (sessionCookie) {
-        // Authenticated user trying to access auth pages, redirect to dashboard
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+    // Check if user has required role
+    try {
+      const hasRequiredRole = await hasRole(requiredRole as UserRole);
+      if (!hasRequiredRole) {
+        // Insufficient permissions, redirect to dashboard with error
+        const dashboardUrl = new URL('/dashboard', request.url);
+        dashboardUrl.searchParams.set('error', 'Você não tem permissão para acessar esta página');
+        return NextResponse.redirect(dashboardUrl);
       }
+    } catch (error) {
+      console.error('Error checking role:', error);
+      // On error, redirect to dashboard
+      const dashboardUrl = new URL('/dashboard', request.url);
+      dashboardUrl.searchParams.set('error', 'Erro ao verificar permissões');
+      return NextResponse.redirect(dashboardUrl);
     }
 
-    return response;
+    // User is authenticated and authorized, proceed with session update
+    return await updateSession(request);
   }
 
-  // For all other routes, just pass through
+  // For auth pages, redirect authenticated users to dashboard
+  const authPages = ['/login', '/register', '/forgot-password'];
+  if (authPages.includes(pathname)) {
+    const response = NextResponse.next();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      // Authenticated user trying to access auth pages, redirect to dashboard
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+
+    // Proceed with session update for auth pages
+    return await updateSession(request);
+  }
+
+  // For other routes, just update session if needed
+  if (!isPublicRoute) {
+    return await updateSession(request);
+  }
+
+  // For truly public routes, pass through
   return NextResponse.next();
 }export const config = {
   matcher: [

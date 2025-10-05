@@ -2,16 +2,20 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const router = useRouter()
+  const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
+    setSuccess('')
 
     const formData = new FormData(e.currentTarget)
     const email = formData.get('email') as string
@@ -32,9 +36,33 @@ export default function RegisterPage() {
     }
 
     try {
-      // Por enquanto, apenas redireciona para login com sucesso
-      router.push('/login?success=Registro+em+desenvolvimento+-+funcionalidade+será+ativada+em+breve')
-    } catch {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
+      })
+
+      if (signUpError) {
+        console.error('Erro no registro:', signUpError)
+        setError(signUpError.message)
+        setIsLoading(false)
+        return
+      }
+
+      if (data.user && !data.user.email_confirmed_at) {
+        setSuccess('Registro realizado! Verifique seu email para confirmar a conta.')
+      } else {
+        setSuccess('Registro realizado com sucesso!')
+        setTimeout(() => {
+          router.push('/login?message=Conta+criada+com+sucesso')
+        }, 2000)
+      }
+    } catch (err) {
+      console.error('Erro inesperado:', err)
       setError('Erro ao processar registro. Tente novamente.')
       setIsLoading(false)
     }
@@ -56,6 +84,12 @@ export default function RegisterPage() {
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+              {success}
             </div>
           )}
 
