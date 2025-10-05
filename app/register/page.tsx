@@ -3,7 +3,7 @@ import { signUpAction } from '@/app/login/actions'
 
 async function ErrorDisplay({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const params = await searchParams
-  
+
   if (params.error) {
     return (
       <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded max-w-md mx-auto">
@@ -11,7 +11,7 @@ async function ErrorDisplay({ searchParams }: { searchParams: Promise<{ error?: 
       </div>
     )
   }
-  
+
   return null
 }
 
@@ -27,7 +27,7 @@ function SimpleRegisterForm() {
             Comece a usar o MercaFlow hoje mesmo
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" action={signUpAction}>
           <div className="space-y-4">
             <div>
@@ -44,7 +44,7 @@ function SimpleRegisterForm() {
                 placeholder="Seu nome completo"
               />
             </div>
-            
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email
@@ -59,7 +59,7 @@ function SimpleRegisterForm() {
                 placeholder="seu@email.com"
               />
             </div>
-            
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Senha
@@ -86,8 +86,8 @@ function SimpleRegisterForm() {
           </div>
 
           <div className="text-center">
-            <a 
-              href="/login" 
+            <a
+              href="/login"
               className="text-blue-600 hover:text-blue-500 text-sm"
             >
               Já tem conta? Faça login
@@ -104,6 +104,26 @@ export default async function RegisterPage({
 }: {
   searchParams: Promise<{ error?: string }>
 }) {
+  // Check if Supabase is configured
+  const isSupabaseConfigured = !!(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full space-y-8 text-center">
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 p-4 rounded">
+            <h2 className="font-bold">Configuração Pendente</h2>
+            <p>As variáveis de ambiente do Supabase não estão configuradas.</p>
+            <p className="text-sm mt-2">Verifique as configurações no Vercel.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
       <Suspense fallback={<div>Carregando...</div>}>
