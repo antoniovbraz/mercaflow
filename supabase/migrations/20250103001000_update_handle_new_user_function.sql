@@ -1,42 +1,50 @@
--- Update handle_new_user function to remove hardcoded super admin logic
--- The super admin logic will be handled by the application layer
+-- Update handle_new_user function to be more robust and simple
+-- Remove complex slug generation and focus on basic tenant/profile creation
 
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 DECLARE
   new_tenant_id UUID;
-  tenant_slug TEXT;
+  user_name TEXT;
+  tenant_name TEXT;
 BEGIN
-  -- Generate a unique tenant slug from email
-  tenant_slug := LOWER(REPLACE(SPLIT_PART(NEW.email, '@', 1), '.', '-'));
-  
-  -- Ensure slug is unique by adding random suffix if needed
-  WHILE EXISTS (SELECT 1 FROM tenants WHERE slug = tenant_slug) LOOP
-    tenant_slug := tenant_slug || '-' || SUBSTR(gen_random_uuid()::TEXT, 1, 4);
-  END LOOP;
-  
-  -- Create tenant first
+  -- Get user name from metadata or email
+  user_name := COALESCE(NEW.raw_user_meta_data->>'full_name', SPLIT_PART(NEW.email, '@', 1));
+  tenant_name := user_name || ' Organization';
+
+  -- Create tenant with simple name (no complex slug logic)
   INSERT INTO tenants (name, slug, owner_id)
   VALUES (
-    COALESCE(NEW.raw_user_meta_data->>'full_name', SPLIT_PART(NEW.email, '@', 1)),
-    tenant_slug,
+    tenant_name,
+    LOWER(REPLACE(user_name, ' ', '-') || '-' || SUBSTR(NEW.id::TEXT, 1, 8)),
     NEW.id
   )
   RETURNING id INTO new_tenant_id;
-  
+
   -- Create profile with default 'user' role
-  -- Super admin promotion will be handled by the application layer
   INSERT INTO profiles (id, full_name, tenant_id, role)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', SPLIT_PART(NEW.email, '@', 1)),
+    user_name,
     new_tenant_id,
     'user'
   );
-  
+
   RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Log error but don't fail the user creation
+    RAISE WARNING 'Error in handle_new_user: %', SQLERRM;
+    -- Still create a basic profile without tenant if tenant creation fails
+    INSERT INTO profiles (id, full_name, role)
+    VALUES (
+      NEW.id,
+      COALESCE(NEW.raw_user_meta_data->>'full_name', SPLIT_PART(NEW.email, '@', 1)),
+      'user'
+    );
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Add comment for documentation
-COMMENT ON FUNCTION handle_new_user() IS 'Creates tenant and profile for new users. Role promotion handled by application layer';
+COMMENT ON FUNCTION handle_new_user() IS 'Creates tenant and profile for new users. Handles errors gracefully';
