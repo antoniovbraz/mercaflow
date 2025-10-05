@@ -2,21 +2,32 @@ import { updateSession } from "@/utils/supabase/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  // Update the session
-  let response = await updateSession(request);
-  
-  // Handle protected routes
   const { pathname } = request.nextUrl;
-  
-  // Protected routes that require authentication
+
+  // Skip middleware for static assets and API routes
+  if (
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/api/') ||
+    pathname.includes('.') ||
+    pathname === '/favicon.ico' ||
+    pathname === '/robots.txt' ||
+    pathname === '/sitemap.xml'
+  ) {
+    return NextResponse.next();
+  }
+
+  // Update the session only for page routes
+  const response = await updateSession(request);
+
+  // Handle protected routes
   const protectedPaths = ['/dashboard', '/admin', '/profile', '/settings'];
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
-  
+
   if (isProtectedPath) {
     // Check if user is authenticated by looking for session cookie
-    const sessionCookie = request.cookies.get('sb-localhost-auth-token') || 
+    const sessionCookie = request.cookies.get('sb-localhost-auth-token') ||
                           request.cookies.get(`sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`);
-    
+
     if (!sessionCookie) {
       // Not authenticated, redirect to login
       const loginUrl = new URL('/login', request.url);
@@ -24,21 +35,21 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
   }
-  
+
   // Redirect authenticated users away from auth pages
   const authPaths = ['/login', '/register'];
   const isAuthPath = authPaths.includes(pathname);
-  
+
   if (isAuthPath) {
-    const sessionCookie = request.cookies.get('sb-localhost-auth-token') || 
+    const sessionCookie = request.cookies.get('sb-localhost-auth-token') ||
                           request.cookies.get(`sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`);
-    
+
     if (sessionCookie) {
       // Authenticated user trying to access auth pages, redirect to dashboard
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
-  
+
   return response;
 }
 
