@@ -144,20 +144,30 @@ export async function getUserRole(): Promise<UserRole | null> {
   
   if (!user) return null
   
-  // Check custom JWT claims first
+  // USAR FUNÇÃO SEGURA PARA EVITAR RECURSÃO RLS
+  try {
+    const { data, error } = await supabase.rpc('get_current_user_role_safe')
+    
+    if (!error && data) {
+      return data as UserRole
+    }
+  } catch {
+    console.log('RPC function not available, using fallback')
+  }
+  
+  // Fallback: Check JWT claims
   const roleFromClaims = user.app_metadata?.app_role as UserRole
   if (roleFromClaims && roleFromClaims in ROLE_LEVELS) {
     return roleFromClaims
   }
   
-  // Fallback to profile table
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  // Último fallback: verificar por email (super admins)
+  if (user.email === 'peepers.shop@gmail.com' || user.email === 'antoniovbraz@gmail.com') {
+    return 'super_admin'
+  }
   
-  return profile?.role as UserRole || 'user'
+  // Default fallback
+  return 'user'
 }
 
 export async function hasRole(requiredRole: UserRole): Promise<boolean> {
