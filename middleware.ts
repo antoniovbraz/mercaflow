@@ -1,7 +1,40 @@
 import { updateSession } from "@/utils/supabase/middleware";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { hasRole, UserRole } from "@/utils/supabase/roles";
+
+// Role hierarchy levels
+const ROLE_LEVELS = {
+  user: 1,
+  admin: 2,
+  super_admin: 3,
+} as const
+
+export type UserRole = keyof typeof ROLE_LEVELS
+
+// Helper function for middleware-specific role checking
+async function hasRoleInMiddleware(supabase: ReturnType<typeof createServerClient>, requiredRole: UserRole): Promise<boolean> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return false
+
+    // Check JWT claims first
+    const roleFromClaims = user.app_metadata?.app_role as UserRole
+    if (roleFromClaims && roleFromClaims in ROLE_LEVELS) {
+      return ROLE_LEVELS[roleFromClaims] >= ROLE_LEVELS[requiredRole]
+    }
+    
+    // Check super admin emails
+    if (user.email === 'peepers.shop@gmail.com' || user.email === 'antoniovbraz@gmail.com') {
+      return ROLE_LEVELS['super_admin'] >= ROLE_LEVELS[requiredRole]
+    }
+    
+    // Default to user role for authenticated users
+    return ROLE_LEVELS['user'] >= ROLE_LEVELS[requiredRole]
+  } catch (error) {
+    console.error('Error checking role in middleware:', error)
+    return false
+  }
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -18,33 +51,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Define route protection rules
-  const routeProtection = {
-    // Public routes (no auth required)
-    public: ['/', '/login', '/register', '/forgot-password', '/update-password', '/auth/callback'],
+  // Define protected routes that require authentication
+  const protectedRoutes = ['/dashboard', '/admin', '/super-admin'];
+  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/update-password', '/auth/callback'];
 
-    // Protected routes by minimum role
-    protected: {
-      '/dashboard': 'user',
-      '/admin': 'admin',
-      '/super-admin': 'super_admin',
-    }
-  };
+  // Check if route requires authentication
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  const isPublicRoute = publicRoutes.includes(pathname);
 
-  // Check if route is public
-  const isPublicRoute = routeProtection.public.some(path =>
-    pathname === path || pathname.startsWith(path + '/')
-  );
-
-  // Check if route is protected
-  const protectedRoute = Object.entries(routeProtection.protected).find(([path]) =>
-    pathname.startsWith(path)
-  );
-
-  // For protected routes, check authentication and authorization
-  if (protectedRoute) {
-    const [, requiredRole] = protectedRoute;
-
+  // For protected routes, check authentication
+  if (isProtectedRoute) {
     // Create Supabase client for this request
     const response = NextResponse.next();
     const supabase = createServerClient(
@@ -74,24 +90,25 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Check if user has required role
-    try {
-      const hasRequiredRole = await hasRole(requiredRole as UserRole);
-      if (!hasRequiredRole) {
-        // Insufficient permissions, redirect to dashboard with error
+    // For /admin routes, check if user has admin role (basic check)
+    if (pathname.startsWith('/admin')) {
+      try {
+        const hasAdminRole = await hasRoleInMiddleware(supabase, 'admin');
+        if (!hasAdminRole) {
+          const dashboardUrl = new URL('/dashboard', request.url);
+          dashboardUrl.searchParams.set('error', 'Você não tem permissão para acessar esta página');
+          return NextResponse.redirect(dashboardUrl);
+        }
+      } catch (error) {
+        console.error('Error checking admin role:', error);
+        // On error, allow access to dashboard but not admin
         const dashboardUrl = new URL('/dashboard', request.url);
-        dashboardUrl.searchParams.set('error', 'Você não tem permissão para acessar esta página');
+        dashboardUrl.searchParams.set('error', 'Erro ao verificar permissões');
         return NextResponse.redirect(dashboardUrl);
       }
-    } catch (error) {
-      console.error('Error checking role:', error);
-      // On error, redirect to dashboard
-      const dashboardUrl = new URL('/dashboard', request.url);
-      dashboardUrl.searchParams.set('error', 'Erro ao verificar permissões');
-      return NextResponse.redirect(dashboardUrl);
     }
 
-    // User is authenticated and authorized, proceed with session update
+    // User is authenticated, proceed with session update
     return await updateSession(request);
   }
 
