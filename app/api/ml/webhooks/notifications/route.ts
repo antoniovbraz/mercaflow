@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { headers } from 'next/headers';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Webhook notification types from Mercado Livre
 interface MLWebhookNotification {
