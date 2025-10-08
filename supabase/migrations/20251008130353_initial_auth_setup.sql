@@ -4,8 +4,7 @@
 -- Create profiles table exactly as recommended by Supabase docs
 create table public.profiles (
   id uuid not null references auth.users on delete cascade,
-  first_name text,
-  last_name text,
+  full_name text,
   avatar_url text,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now(),
@@ -32,11 +31,10 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, first_name, last_name)
+  insert into public.profiles (id, full_name)
   values (
     new.id,
-    new.raw_user_meta_data->>'first_name',
-    new.raw_user_meta_data->>'last_name'
+    new.raw_user_meta_data->>'full_name'
   );
   return new;
 end;
