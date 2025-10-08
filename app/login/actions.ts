@@ -1,6 +1,8 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
+import { createClient } from '@/utils/supabase/server'
 
 // Simplified actions for initial deployment
 export async function signInAction(formData: FormData) {
@@ -29,5 +31,15 @@ export async function signUpAction(formData: FormData) {
 }
 
 export async function signOutAction() {
-  redirect('/login?message=Logout realizado')
+  const supabase = await createClient()
+  
+  const { error } = await supabase.auth.signOut()
+  
+  if (error) {
+    console.error('Sign out error:', error)
+    redirect('/dashboard?error=Erro ao fazer logout')
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/login?message=Logout realizado com sucesso')
 }
