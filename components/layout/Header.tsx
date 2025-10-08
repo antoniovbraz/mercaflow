@@ -10,8 +10,8 @@ export default function Header() {
   const navigationItems = [
     { name: 'Recursos', href: '/recursos' },
     { name: 'Preços', href: '/precos' },
-    { name: 'Cases de Sucesso', href: '/cases' },
-    { name: 'Blog', href: '/blog' },
+    { name: 'Sobre', href: '/sobre' },
+    { name: 'Contato', href: '/contato' },
   ]
 
   return (
