@@ -182,9 +182,12 @@ export default async function DashboardPage() {
                 </div>
               </div>
               <div className="mt-4">
-                <button className="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                  Conectar Conta ML
-                </button>
+                <a 
+                  href="/dashboard/ml"
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors inline-block text-center"
+                >
+                  Gerenciar Integração ML
+                </a>
               </div>
             </div>
           </div>
