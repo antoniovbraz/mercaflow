@@ -183,7 +183,61 @@ CREATE POLICY "Users can view own ML products" ON public.ml_products
   );
 
 -- ==========================================
--- 5. Updated At Triggers
+-- 5. ML Webhook Logs
+-- ==========================================
+CREATE TABLE IF NOT EXISTS public.ml_webhook_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  
+  -- Webhook Notification Data
+  notification_id TEXT NOT NULL UNIQUE,
+  topic TEXT NOT NULL,
+  resource TEXT NOT NULL,
+  user_id BIGINT NOT NULL,
+  application_id BIGINT NOT NULL,
+  attempts INTEGER DEFAULT 1,
+  
+  -- Timestamps
+  sent_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  received_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  processed_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  
+  -- Processing Status
+  status TEXT NOT NULL CHECK (status IN ('success', 'error', 'skipped')),
+  error_message TEXT,
+  
+  -- Resource Data (optional cached data)
+  resource_data JSONB,
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS ml_webhook_logs_notification_id_idx 
+  ON public.ml_webhook_logs(notification_id);
+CREATE INDEX IF NOT EXISTS ml_webhook_logs_topic_idx 
+  ON public.ml_webhook_logs(topic);
+CREATE INDEX IF NOT EXISTS ml_webhook_logs_user_id_idx 
+  ON public.ml_webhook_logs(user_id);
+CREATE INDEX IF NOT EXISTS ml_webhook_logs_status_idx 
+  ON public.ml_webhook_logs(status);
+CREATE INDEX IF NOT EXISTS ml_webhook_logs_created_at_idx 
+  ON public.ml_webhook_logs(created_at DESC);
+
+-- RLS
+ALTER TABLE public.ml_webhook_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own ML webhook logs" ON public.ml_webhook_logs
+  FOR SELECT USING (
+    user_id::TEXT IN (
+      SELECT i.ml_user_id::TEXT FROM public.ml_integrations i 
+      WHERE i.tenant_id IN (
+        SELECT id FROM public.profiles WHERE user_id = auth.uid()
+      )
+    )
+  );
+
+-- ==========================================
+-- 6. Updated At Triggers
 -- ==========================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
