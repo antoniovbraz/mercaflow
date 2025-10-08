@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -22,7 +22,7 @@ interface CallbackStatus {
   };
 }
 
-export default function MLCallbackPage() {
+function MLCallbackContent() {
   const [status, setStatus] = useState<CallbackStatus>({ status: 'loading' });
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -216,5 +216,38 @@ export default function MLCallbackPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function MLCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="w-full max-w-md">
+          <Card>
+            <CardContent className="p-8">
+              <div className="text-center space-y-6">
+                <div className="flex justify-center">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h1 className="text-xl font-semibold">
+                    Carregando...
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Processando callback do Mercado Livre
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    }>
+      <MLCallbackContent />
+    </Suspense>
   );
 }
