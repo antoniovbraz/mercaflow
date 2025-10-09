@@ -39,48 +39,12 @@ export async function GET(): Promise<NextResponse> {
     
     const supabase = await createClient();
     
-    // Get or create user profile
-    let { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    // If profile doesn't exist, try to create it
-    if (!profile) {
-      const { data: newProfile, error: createError } = await supabase
-        .from('profiles')
-        .insert({
-          id: user.id,
-          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-          avatar_url: user.user_metadata?.avatar_url || null
-        })
-        .select()
-        .single();
-
-      if (createError) {
-        console.error('Error creating profile:', createError);
-        return NextResponse.json(
-          { error: 'Failed to create user profile' },
-          { status: 500 }
-        );
-      }
-      
-      profile = newProfile;
-    }
-
-    if (!profile) {
-      return NextResponse.json(
-        { error: 'Unable to get or create user profile' },
-        { status: 500 }
-      );
-    }
-
+    // For ML integration, we use the user ID directly as tenant identifier
     // Get integration with summary data
     const { data: integration, error } = await supabase
       .from('ml_integration_summary')
       .select('*')
-      .eq('tenant_id', profile.id)
+      .eq('tenant_id', user.id)
       .single();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
