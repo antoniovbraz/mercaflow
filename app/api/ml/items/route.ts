@@ -90,7 +90,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       profileTenantId: profile?.tenant_id,
       integrationFound: !!integration,
       integrationId: integration?.id,
-      integrationStatus: integration?.status
+      integrationStatus: integration?.status,
+      mlUserId: integration?.ml_user_id,
+      tokenExpiresAt: integration?.token_expires_at,
+      currentTime: new Date().toISOString()
     });
     
     if (!integration) {
@@ -119,11 +122,26 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       searchParams.set('limit', '50');
     }
 
+    const mlApiUrl = `/users/${integration.ml_user_id}/items?${searchParams.toString()}`;
+    
+    console.log('Making ML API request:', {
+      integrationId: integration.id,
+      mlUserId: integration.ml_user_id,
+      apiUrl: mlApiUrl,
+      searchParams: searchParams.toString()
+    });
+
     // Make authenticated request to ML API
     const mlResponse = await tokenManager.makeMLRequest(
       integration.id,
-      `/users/${integration.ml_user_id}/items?${searchParams.toString()}`
+      mlApiUrl
     );
+
+    console.log('ML API Response:', {
+      status: mlResponse.status,
+      ok: mlResponse.ok,
+      headers: Object.fromEntries(mlResponse.headers.entries())
+    });
 
     if (!mlResponse.ok) {
       const errorText = await mlResponse.text();
