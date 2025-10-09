@@ -48,6 +48,13 @@ interface SyncLogData {
   count?: number;
   total?: number;
   item_id?: string;
+  question_id?: string;
+  pack_id?: string;
+  to_user_id?: string;
+  text_length?: number;
+  has_attachments?: boolean;
+  template_used?: boolean;
+  is_template?: boolean;
   title?: string;
 }
 
