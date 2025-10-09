@@ -9,8 +9,9 @@ interface FeedbackUpdatePayload {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { feedbackId: string } }
+  { params }: { params: Promise<{ feedbackId: string }> }
 ) {
+  const { feedbackId } = await params;
   try {
     const supabase = await createClient();
     
@@ -36,8 +37,6 @@ export async function GET(
         { status: 404 }
       );
     }
-
-    const { feedbackId } = params;
 
     // Buscar token ML
     const { data: integration } = await supabase
@@ -90,8 +89,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { feedbackId: string } }
+  { params }: { params: Promise<{ feedbackId: string }> }
 ) {
+  const { feedbackId } = await params;
   try {
     const supabase = await createClient();
     
@@ -118,7 +118,6 @@ export async function PUT(
       );
     }
 
-    const { feedbackId } = params;
     const body = await request.json();
     const { fulfilled, rating, message } = body;
 
