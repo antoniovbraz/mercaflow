@@ -46,27 +46,11 @@ function MLCallbackContent() {
           throw new Error('Parâmetros de callback inválidos');
         }
 
-        // Exchange code for token
-        const response = await fetch('/api/ml/auth/callback', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ code, state }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Falha na autenticação');
-        }
-
-        // Success!
-        setStatus({
-          status: 'success',
-          message: 'Conexão com Mercado Livre estabelecida com sucesso!',
-          integration: data.integration,
-        });
+        // Exchange code for token using GET (redirect to API)
+        const callbackUrl = `/api/ml/auth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
+        
+        // Redirect to the API route which will handle the OAuth flow and redirect back
+        window.location.href = callbackUrl;
 
         // Auto-redirect after 3 seconds
         setTimeout(() => {
