@@ -83,7 +83,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Get ML integration for this tenant
     const integration = await tokenManager.getIntegrationByTenant(tenantId);
     
+    console.log('ML Items Debug:', {
+      userId: user.id,
+      tenantId,
+      profileTenantId: profile?.tenant_id,
+      integrationFound: !!integration,
+      integrationId: integration?.id,
+      integrationStatus: integration?.status
+    });
+    
     if (!integration) {
+      console.error('No ML integration found for tenant:', tenantId);
       return NextResponse.json(
         { error: 'No active ML integration found. Please connect your Mercado Livre account.' },
         { status: 404 }
