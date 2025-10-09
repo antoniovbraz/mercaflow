@@ -109,45 +109,54 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       searchParams: searchParams.toString()
     });
 
-    // Make authenticated request to ML API
-    const mlResponse = await tokenManager.makeMLRequest(
-      integration.id,
-      mlApiUrl
-    );
+    // Make authenticated request to ML API with intelligent pagination
+    const allItemIds: string[] = [];
+    let offset = 0;
+    const limit = 100; // Max allowed by ML API
+    let hasMore = true;
 
-    console.log('ML API Response:', {
-      status: mlResponse.status,
-      ok: mlResponse.ok,
-      headers: Object.fromEntries(mlResponse.headers.entries())
-    });
-
-    if (!mlResponse.ok) {
-      const errorText = await mlResponse.text();
-      console.error('ML API Error:', mlResponse.status, errorText);
+    // Fetch all item IDs with pagination
+    while (hasMore && allItemIds.length < 1000) { // Safety limit
+      const paginatedUrl = `/users/${integration.ml_user_id}/items/search?limit=${limit}&offset=${offset}`;
       
-      return NextResponse.json(
-        { 
-          error: 'Failed to fetch items from Mercado Livre',
-          details: errorText,
-          status: mlResponse.status,
-        },
-        { status: mlResponse.status }
+      console.log(`Fetching batch: ${paginatedUrl}`);
+      
+      const batchResponse = await tokenManager.makeMLRequest(
+        integration.id,
+        paginatedUrl
       );
+
+      if (!batchResponse.ok) {
+        const errorText = await batchResponse.text();
+        console.error('ML API Error on batch:', batchResponse.status, errorText);
+        break;
+      }
+
+      const batchData = await batchResponse.json();
+      
+      if (batchData.results && batchData.results.length > 0) {
+        allItemIds.push(...batchData.results);
+        
+        // Check if there are more items
+        hasMore = (batchData.paging?.offset || 0) + (batchData.paging?.limit || 0) < (batchData.paging?.total || 0);
+        offset += limit;
+        
+        console.log(`Fetched ${batchData.results.length} items, total so far: ${allItemIds.length}, hasMore: ${hasMore}`);
+      } else {
+        hasMore = false;
+      }
     }
 
-    const searchData = await mlResponse.json();
+    console.log(`Total item IDs collected: ${allItemIds.length}`);
+
+    // Apply client-side filtering if needed
+    const requestedOffset = parseInt(url.searchParams.get('offset') || '0');
+    const requestedLimit = parseInt(url.searchParams.get('limit') || '50');
     
-    // If no results, return empty response
-    if (!searchData.results || searchData.results.length === 0) {
-      return NextResponse.json({
-        results: [],
-        paging: searchData.paging || { total: 0, offset: 0, limit: 20, primary_results: 0 }
-      });
-    }
-
-    // Get detailed item data for the first few items (to avoid rate limits)
-    const maxItemsToFetch = Math.min(searchData.results.length, 20); // Limit to 20 items max
-    const itemDetailsPromises = searchData.results.slice(0, maxItemsToFetch).map(async (itemId: string) => {
+    const paginatedItemIds = allItemIds.slice(requestedOffset, requestedOffset + requestedLimit);
+    
+    // Get detailed item data for paginated results
+    const itemDetailsPromises = paginatedItemIds.map(async (itemId: string) => {
       try {
         const itemResponse = await tokenManager.makeMLRequest(
           integration.id,
@@ -169,7 +178,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const itemDetails = await Promise.all(itemDetailsPromises);
     const validItems = itemDetails.filter(item => item !== null);
 
-    console.log(`Fetched ${validItems.length} item details out of ${maxItemsToFetch} requested`);
+    console.log(`Fetched ${validItems.length} item details out of ${paginatedItemIds.length} requested`);
     
     // Sync products to local database
     const supabaseForSync = await createClient();
@@ -205,7 +214,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       await tokenManager['logSync'](integration.id, 'products', 'success', {
         action: 'items_synced',
         count: validItems.length,
-        total: searchData.paging?.total || 0,
+        total: allItemIds.length,
       });
     } catch (syncError) {
       console.error('Product sync failed:', syncError);
@@ -218,7 +227,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({
       results: validItems,
-      paging: searchData.paging
+      paging: {
+        total: allItemIds.length,
+        offset: requestedOffset,
+        limit: requestedLimit,
+        primary_results: validItems.length
+      }
     });
 
   } catch (error) {

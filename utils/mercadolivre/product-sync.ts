@@ -62,6 +62,19 @@ export async function syncProducts(
     total: mlProducts.length
   };
 
+  // Get tenant_id from integration once
+  const { data: integrationData } = await supabase
+    .from('ml_integrations')
+    .select('tenant_id')
+    .eq('id', integrationId)
+    .single();
+
+  if (!integrationData?.tenant_id) {
+    throw new Error(`No tenant_id found for integration ${integrationId}`);
+  }
+
+  const tenantId = integrationData.tenant_id;
+
   for (const mlProduct of mlProducts) {
     try {
       // Check if product already exists
@@ -74,6 +87,7 @@ export async function syncProducts(
 
       const productData = {
         integration_id: integrationId,
+        tenant_id: tenantId,
         ml_item_id: mlProduct.id,
         title: mlProduct.title,
         category_id: mlProduct.category_id,
@@ -82,6 +96,7 @@ export async function syncProducts(
         sold_quantity: mlProduct.sold_quantity,
         status: mlProduct.status,
         permalink: mlProduct.permalink,
+        thumbnail: mlProduct.thumbnail,
         ml_data: mlProduct,
         last_synced_at: new Date().toISOString()
       };
