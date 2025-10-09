@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import { syncProducts } from '@/utils/mercadolivre/product-sync';
 import { headers } from 'next/headers';
 
 // Webhook notification types from Mercado Livre
@@ -184,23 +186,96 @@ async function processItemNotification(
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
   console.log(`📋 Processing item notification: ${itemId}`);
-  
-  // Update item cache or trigger sync
-  await supabase
-    .from('ml_sync_logs')
-    .insert({
-      operation: 'webhook_item_update',
-      resource_id: itemId,
-      user_id: notification.user_id.toString(),
-      success: true,
-      details: {
-        webhook_id: notification._id,
-        resource: notification.resource,
-        attempts: notification.attempts,
-      },
-    });
-    
-  console.log(`✅ Item ${itemId} webhook logged`);
+
+  try {
+    // Find the integration for this user
+    const { data: integration } = await supabase
+      .from('ml_integrations')
+      .select('id, tenant_id')
+      .eq('ml_user_id', notification.user_id.toString())
+      .eq('status', 'active')
+      .single();
+
+    if (!integration) {
+      console.log(`⚠️ No active integration found for ML user ${notification.user_id}`);
+      return;
+    }
+
+    // Fetch updated item data from ML
+    const tokenManager = new MLTokenManager();
+    const mlResponse = await tokenManager.makeMLRequest(
+      integration.id,
+      `/items/${itemId}`
+    );
+
+    if (!mlResponse.ok) {
+      console.error(`❌ Failed to fetch item ${itemId} from ML:`, mlResponse.status);
+      return;
+    }
+
+    const itemData = await mlResponse.json();
+
+    // Convert to product format and sync
+    const mlProducts = [{
+      id: itemData.id,
+      title: itemData.title,
+      price: itemData.price,
+      available_quantity: itemData.available_quantity,
+      sold_quantity: itemData.sold_quantity,
+      condition: itemData.condition,
+      permalink: itemData.permalink,
+      thumbnail: itemData.thumbnail,
+      status: itemData.status,
+      category_id: itemData.category_id || '',
+      currency_id: itemData.currency_id || 'BRL',
+      buying_mode: itemData.buying_mode || 'buy_it_now',
+      listing_type_id: itemData.listing_type_id || 'gold_special',
+      start_time: itemData.start_time || new Date().toISOString(),
+      tags: itemData.tags || [],
+      automatic_relist: itemData.automatic_relist || false,
+      date_created: itemData.date_created || new Date().toISOString(),
+      last_updated: itemData.last_updated || new Date().toISOString(),
+      channels: itemData.channels || []
+    }];
+
+    const syncResult = await syncProducts(supabase, integration.id, mlProducts);
+    console.log(`✅ Item ${itemId} synced via webhook:`, syncResult);
+
+    // Log the webhook processing
+    await supabase
+      .from('ml_sync_logs')
+      .insert({
+        operation: 'webhook_item_sync',
+        resource_id: itemId,
+        user_id: notification.user_id.toString(),
+        success: syncResult.failed === 0,
+        details: {
+          webhook_id: notification._id,
+          resource: notification.resource,
+          attempts: notification.attempts,
+          synced: syncResult.synced,
+          failed: syncResult.failed,
+        },
+      });
+
+  } catch (error) {
+    console.error(`❌ Error syncing item ${itemId} via webhook:`, error);
+
+    // Still log the webhook even if sync failed
+    await supabase
+      .from('ml_sync_logs')
+      .insert({
+        operation: 'webhook_item_sync_failed',
+        resource_id: itemId,
+        user_id: notification.user_id.toString(),
+        success: false,
+        details: {
+          webhook_id: notification._id,
+          resource: notification.resource,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
+  }
 }
 
 async function processQuestionNotification(
