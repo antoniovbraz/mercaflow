@@ -62,6 +62,9 @@ export function MLConnectionStatus() {
       
       const data: IntegrationStatus = await response.json();
       setStatus(data);
+      
+      // Emit event to notify other components
+      window.dispatchEvent(new CustomEvent('ml-connection-changed'));
     } catch (err) {
       console.error('Failed to fetch ML integration status:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -115,6 +118,9 @@ export function MLConnectionStatus() {
       
       // Update state immediately to reflect disconnection
       setStatus({ hasIntegration: false });
+      
+      // Emit event to notify other components
+      window.dispatchEvent(new CustomEvent('ml-connection-changed'));
       
       // Also refresh from server to be sure
       setTimeout(() => {
