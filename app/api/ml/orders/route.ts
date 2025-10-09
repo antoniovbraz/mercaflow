@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireRole } from '@/utils/supabase/roles';
+import { getCurrentUser, createClient } from '@/utils/supabase/server';
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 
 const tokenManager = new MLTokenManager();
@@ -61,7 +61,30 @@ interface MLOrder {
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     // Verify authentication
-    const profile = await requireRole('user');
+    const user = await getCurrentUser();
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
+    const supabase = await createClient();
+    
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      return NextResponse.json(
+        { error: 'User profile not found' },
+        { status: 404 }
+      );
+    }
     
     // Get ML integration
     const integration = await tokenManager.getIntegrationByTenant(profile.id);
