@@ -97,6 +97,8 @@ export async function POST(): Promise<NextResponse> {
       code_challenge_method: 'S256',
       // Scopes for full integration
       scope: 'read write offline_access',
+      // Force consent screen even if user is already logged in
+      approval_prompt: 'force',
     });
 
     const authUrl = `https://auth.mercadolivre.com.br/authorization?${params.toString()}`;

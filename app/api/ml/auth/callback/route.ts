@@ -149,9 +149,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     console.log(`ML integration completed for tenant ${stateRecord.tenant_id}`);
 
-    // Redirect to success page
+    // Redirect to ML dashboard with success message
     return NextResponse.redirect(
-      new URL('/dashboard?ml_connected=true', request.url)
+      new URL('/dashboard/ml?connected=success', request.url)
     );
 
   } catch (error) {

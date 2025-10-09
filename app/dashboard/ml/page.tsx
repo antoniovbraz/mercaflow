@@ -1,12 +1,43 @@
 import { MLConnectionStatus } from '@/components/ml/ConnectionStatus';
 import { MLProductManager } from '@/components/ml/ProductManager';
 import { MLOrderManager } from '@/components/ml/OrderManager';
+import { MLContentWrapper } from '@/components/ml/ContentWrapper';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCurrentUser } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
-export default async function MLDashboard() {
+// Component to handle success message
+function SuccessMessage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
+  if (searchParams?.connected === 'success') {
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <p className="text-sm font-medium text-green-800">
+              Conexão com Mercado Livre realizada com sucesso!
+            </p>
+            <p className="text-sm text-green-700 mt-1">
+              Agora você pode gerenciar seus produtos e pedidos diretamente pelo MercaFlow.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
+export default async function MLDashboard({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   // Use getCurrentUser instead of requireRole to avoid exceptions
   const user = await getCurrentUser();
   
@@ -49,26 +80,31 @@ export default async function MLDashboard() {
             </p>
           </div>
 
+          {/* Success Message */}
+          <SuccessMessage searchParams={searchParams} />
+
           {/* Connection Status */}
           <MLConnectionStatus />
 
           {/* Main Content */}
-          <div className="bg-white rounded-lg shadow">
-            <Tabs defaultValue="products" className="p-6">
-              <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-                <TabsTrigger value="products">Produtos</TabsTrigger>
-                <TabsTrigger value="orders">Pedidos</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="products" className="mt-6">
-                <MLProductManager />
-              </TabsContent>
-              
-              <TabsContent value="orders" className="mt-6">
-              <MLOrderManager />
-              </TabsContent>
-            </Tabs>
-          </div>
+          <MLContentWrapper>
+            <div className="bg-white rounded-lg shadow">
+              <Tabs defaultValue="products" className="p-6">
+                <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+                  <TabsTrigger value="products">Produtos</TabsTrigger>
+                  <TabsTrigger value="orders">Pedidos</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="products" className="mt-6">
+                  <MLProductManager />
+                </TabsContent>
+                
+                <TabsContent value="orders" className="mt-6">
+                <MLOrderManager />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </MLContentWrapper>
         </div>
       </main>
     </div>
