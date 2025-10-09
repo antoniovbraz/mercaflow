@@ -144,7 +144,18 @@ export async function getUserRole(): Promise<UserRole | null> {
   
   if (!user) return null
   
-  // USAR FUNÇÃO SEGURA PARA EVITAR RECURSÃO RLS
+  // USAR NOVA FUNÇÃO SEGURA PARA EVITAR RECURSÃO RLS
+  try {
+    const { data, error } = await supabase.rpc('get_user_role', { target_user_id: user.id })
+    
+    if (!error && data) {
+      return data as UserRole
+    }
+  } catch (err) {
+    console.log('RPC function get_user_role not available, using fallback:', err)
+  }
+  
+  // Fallback: Tentar função antiga se ainda existir
   try {
     const { data, error } = await supabase.rpc('get_current_user_role_safe')
     
@@ -152,7 +163,7 @@ export async function getUserRole(): Promise<UserRole | null> {
       return data as UserRole
     }
   } catch {
-    console.log('RPC function not available, using fallback')
+    console.log('RPC function get_current_user_role_safe not available, using final fallback')
   }
   
   // Fallback: Check JWT claims
@@ -211,6 +222,24 @@ export async function requirePermission(permission: Permission) {
   }
   
   return true
+}
+
+// Função segura para obter usuário atual com role (alternativa ao requireRole)
+export async function getCurrentUser() {
+  const supabase = await createClient()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  
+  if (error || !user) {
+    return null
+  }
+  
+  // Obter role usando função segura
+  const role = await getUserRole()
+  
+  return {
+    ...user,
+    role
+  }
 }
 
 // Get profile helper (moved here to avoid circular dependency)
