@@ -313,38 +313,34 @@ export class MLTokenManager {
    * Encrypt token for database storage
    */
   private encryptToken(token: string): string {
-    const algorithm = 'aes-256-gcm';
+    const algorithm = 'aes-256-cbc';
     const key = crypto.scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
     const iv = crypto.randomBytes(16);
     
-    const cipher = crypto.createCipher(algorithm, key);
-    cipher.setAAD(Buffer.from('ml_token'));
+    const cipher = crypto.createCipher(algorithm, this.ENCRYPTION_KEY);
     
     let encrypted = cipher.update(token, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     
-    const authTag = cipher.getAuthTag();
-    
-    return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
+    return `${iv.toString('hex')}:${encrypted}`;
   }
 
   /**
    * Decrypt token from database
    */
   private decryptToken(encryptedToken: string): string {
-    const [ivHex, authTagHex, encrypted] = encryptedToken.split(':');
+    const parts = encryptedToken.split(':');
     
-    if (!ivHex || !authTagHex || !encrypted) {
+    // Handle both old format (iv:authTag:encrypted) and new format (iv:encrypted)
+    const encrypted = parts.length === 3 ? parts[2] : parts[1];
+    
+    if (!encrypted) {
       throw new Error('Invalid token format');
     }
     
-    const algorithm = 'aes-256-gcm';
-    const key = crypto.scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
-    const authTag = Buffer.from(authTagHex, 'hex');
+    const algorithm = 'aes-256-cbc';
     
-    const decipher = crypto.createDecipher(algorithm, key);
-    decipher.setAAD(Buffer.from('ml_token'));
-    decipher.setAuthTag(authTag);
+    const decipher = crypto.createDecipher(algorithm, this.ENCRYPTION_KEY);
     
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');

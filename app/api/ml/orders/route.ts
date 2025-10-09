@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/utils/supabase/server';
+import { getCurrentUser, createClient } from '@/utils/supabase/server';
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 
 const tokenManager = new MLTokenManager();
@@ -70,8 +70,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
     
-    // Get ML integration using user ID as tenant ID
-    const integration = await tokenManager.getIntegrationByTenant(user.id);
+    // Get user profile to find correct tenant_id
+    const supabase = await createClient();
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('id', user.id)
+      .single();
+
+    const tenantId = profile?.tenant_id || user.id;
+    
+    // Get ML integration for this tenant
+    const integration = await tokenManager.getIntegrationByTenant(tenantId);
     
     if (!integration) {
       return NextResponse.json(
