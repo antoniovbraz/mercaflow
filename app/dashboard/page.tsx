@@ -19,23 +19,44 @@ export default async function DashboardPage() {
   const isAdmin = await hasRole('admin')
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {/* Background decorative elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-32 w-80 h-80 rounded-full bg-gradient-to-br from-blue-400/10 to-indigo-600/10 blur-3xl" />
+        <div className="absolute top-80 -left-32 w-80 h-80 rounded-full bg-gradient-to-br from-indigo-400/10 to-purple-600/10 blur-3xl" />
+        <div className="absolute bottom-20 right-20 w-60 h-60 rounded-full bg-gradient-to-br from-purple-400/10 to-pink-600/10 blur-3xl" />
+      </div>
+
       {/* Modern Navigation Header */}
-      <nav className="bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-200/50 sticky top-0 z-50">
+      <nav className="relative bg-white/90 backdrop-blur-md shadow-lg border-b border-gray-200/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0 flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
                   <span className="text-white font-bold text-sm">MF</span>
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     MercaFlow
                   </h1>
-                  <p className="text-xs text-gray-500 -mt-1">
-                    {isSuperAdmin ? '⚡ Super Admin' : isAdmin ? '👤 Admin' : '📊 Dashboard'}
-                  </p>
+                  <div className="flex items-center space-x-2 -mt-1">
+                    {isSuperAdmin && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800">
+                        ⚡ Super Admin
+                      </span>
+                    )}
+                    {isAdmin && !isSuperAdmin && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800">
+                        👤 Admin
+                      </span>
+                    )}
+                    {!isAdmin && !isSuperAdmin && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-green-100 to-emerald-100 text-green-800">
+                        📊 Dashboard
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -233,12 +254,9 @@ export default async function DashboardPage() {
                 <h4 className="ml-3 font-semibold text-gray-900 text-sm">Pedidos</h4>
               </div>
               <p className="text-xs text-gray-600 mb-3">Gerencie vendas</p>
-              <Link 
-                href="/pedidos"
-                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-medium transition-colors block text-center"
-              >
+              <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-medium transition-colors">
                 Ver Pedidos
-              </Link>
+              </button>
             </div>
           </div>
 
