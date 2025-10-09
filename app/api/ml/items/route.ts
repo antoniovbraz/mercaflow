@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
-import { syncProducts } from '@/utils/mercadolivre/product-sync';
+import { syncProducts, getCachedProducts } from '@/utils/mercadolivre/product-sync';
 
 const tokenManager = new MLTokenManager();
 
@@ -86,6 +86,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const url = new URL(request.url);
     const searchParams = new URLSearchParams();
     
+    // Extract request parameters
+    const status = url.searchParams.get('status');
+    const search = url.searchParams.get('search');
+    const requestedOffset = parseInt(url.searchParams.get('offset') || '0');
+    const requestedLimit = parseInt(url.searchParams.get('limit') || '50');
+    
     // Forward allowed parameters
     const allowedParams = ['offset', 'limit', 'status', 'search'];
     for (const param of allowedParams) {
@@ -109,11 +115,42 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       searchParams: searchParams.toString()
     });
 
-    // Make authenticated request to ML API with intelligent pagination
+    // For immediate response, fetch from local cache first
+    const supabaseForCache = await createClient();
+    const { products: cachedProducts, total: cachedTotal } = await getCachedProducts(supabaseForCache, integration.id, {
+      status: status || undefined,
+      search: search || undefined,
+      limit: requestedLimit,
+      offset: requestedOffset
+    });
+
+    // If we have cached products and they're recent (< 1 hour), return them
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const hasRecentCache = cachedProducts.length > 0 && 
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          cachedProducts.some((p: any) => p.last_synced_at > oneHourAgo);
+
+    if (hasRecentCache && cachedProducts.length >= requestedLimit) {
+      console.log(`Returning cached products: ${cachedProducts.length} items`);
+      return NextResponse.json({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        results: cachedProducts.map((p: any) => p.ml_data),
+        paging: {
+          total: cachedTotal,
+          offset: requestedOffset,
+          limit: requestedLimit,
+          primary_results: cachedProducts.length
+        }
+      });
+    }
+
+    // Otherwise, fetch fresh data from ML API with intelligent pagination
     const allItemIds: string[] = [];
     let offset = 0;
     const limit = 100; // Max allowed by ML API
     let hasMore = true;
+
+    console.log(`Cache miss or stale, fetching from ML API...`);
 
     // Fetch all item IDs with pagination
     while (hasMore && allItemIds.length < 1000) { // Safety limit
@@ -150,9 +187,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     console.log(`Total item IDs collected: ${allItemIds.length}`);
 
     // Apply client-side filtering if needed
-    const requestedOffset = parseInt(url.searchParams.get('offset') || '0');
-    const requestedLimit = parseInt(url.searchParams.get('limit') || '50');
-    
     const paginatedItemIds = allItemIds.slice(requestedOffset, requestedOffset + requestedLimit);
     
     // Get detailed item data for paginated results
