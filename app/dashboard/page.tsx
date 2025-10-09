@@ -233,9 +233,12 @@ export default async function DashboardPage() {
                 <h4 className="ml-3 font-semibold text-gray-900 text-sm">Pedidos</h4>
               </div>
               <p className="text-xs text-gray-600 mb-3">Gerencie vendas</p>
-              <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-medium transition-colors">
+              <Link 
+                href="/pedidos"
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-medium transition-colors block text-center"
+              >
                 Ver Pedidos
-              </button>
+              </Link>
             </div>
           </div>
 
