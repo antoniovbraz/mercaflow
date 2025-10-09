@@ -12,28 +12,6 @@ import { syncProducts } from '@/utils/mercadolivre/product-sync';
 
 const tokenManager = new MLTokenManager();
 
-interface MLItemsResponse {
-  results: MLItem[];
-  paging: {
-    total: number;
-    offset: number;
-    limit: number;
-    primary_results: number;
-  };
-}
-
-interface MLItem {
-  id: string;
-  title: string;
-  price: number;
-  available_quantity: number;
-  sold_quantity: number;
-  condition: string;
-  permalink: string;
-  thumbnail: string;
-  status: string;
-}
-
 interface CreateItemRequest {
   title: string;
   category_id: string;
@@ -122,7 +100,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       searchParams.set('limit', '50');
     }
 
-    const mlApiUrl = `/users/${integration.ml_user_id}/items?${searchParams.toString()}`;
+    const mlApiUrl = `/users/${integration.ml_user_id}/items/search?${searchParams.toString()}`;
     
     console.log('Making ML API request:', {
       integrationId: integration.id,
@@ -157,14 +135,48 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const data: MLItemsResponse = await mlResponse.json();
+    const searchData = await mlResponse.json();
+    
+    // If no results, return empty response
+    if (!searchData.results || searchData.results.length === 0) {
+      return NextResponse.json({
+        results: [],
+        paging: searchData.paging || { total: 0, offset: 0, limit: 20, primary_results: 0 }
+      });
+    }
+
+    // Get detailed item data for the first few items (to avoid rate limits)
+    const maxItemsToFetch = Math.min(searchData.results.length, 20); // Limit to 20 items max
+    const itemDetailsPromises = searchData.results.slice(0, maxItemsToFetch).map(async (itemId: string) => {
+      try {
+        const itemResponse = await tokenManager.makeMLRequest(
+          integration.id,
+          `/items/${itemId}`
+        );
+        
+        if (itemResponse.ok) {
+          return await itemResponse.json();
+        } else {
+          console.warn(`Failed to fetch item ${itemId}:`, itemResponse.status);
+          return null;
+        }
+      } catch (error) {
+        console.warn(`Error fetching item ${itemId}:`, error);
+        return null;
+      }
+    });
+
+    const itemDetails = await Promise.all(itemDetailsPromises);
+    const validItems = itemDetails.filter(item => item !== null);
+
+    console.log(`Fetched ${validItems.length} item details out of ${maxItemsToFetch} requested`);
     
     // Sync products to local database
     const supabaseForSync = await createClient();
     try {
       // Convert ML items to ML products format with defaults for missing fields
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mlProducts = data.results.map((item: any) => ({
+      const mlProducts = validItems.map((item: any) => ({
         id: item.id,
         title: item.title,
         price: item.price,
@@ -192,8 +204,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // Log successful sync
       await tokenManager['logSync'](integration.id, 'products', 'success', {
         action: 'items_synced',
-        count: data.results?.length || 0,
-        total: data.paging?.total || 0,
+        count: validItems.length,
+        total: searchData.paging?.total || 0,
       });
     } catch (syncError) {
       console.error('Product sync failed:', syncError);
@@ -204,7 +216,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json({
+      results: validItems,
+      paging: searchData.paging
+    });
 
   } catch (error) {
     console.error('ML Items GET Error:', error);
