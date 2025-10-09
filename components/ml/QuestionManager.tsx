@@ -89,9 +89,12 @@ export function MLQuestionManager() {
       setError(null);
       const params = new URLSearchParams({
         limit: '50',
-        status: selectedStatus === 'ALL' ? '' : selectedStatus,
-        sort: 'date_desc',
       });
+      
+      // Only add status if it's not 'ALL'
+      if (selectedStatus !== 'ALL') {
+        params.set('status', selectedStatus);
+      }
 
       const response = await fetch(`/api/ml/questions?${params}`);
       

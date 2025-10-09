@@ -86,8 +86,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const url = new URL(request.url);
     const searchParams = new URLSearchParams();
     
-    // Forward allowed parameters
-    const allowedParams = ['offset', 'limit', 'status', 'item_id', 'sort'];
+    // Forward allowed parameters (based on ML official docs for /my/received_questions/search)
+    const allowedParams = ['offset', 'limit', 'status', 'item_id'];
     for (const param of allowedParams) {
       const value = url.searchParams.get(param);
       if (value) {
@@ -100,17 +100,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       searchParams.set('limit', '50');
     }
 
-    // Default sort by newest first
-    if (!searchParams.has('sort')) {
-      searchParams.set('sort', 'date_desc');
-    }
+    // Add API version for new structure (according to ML docs)
+    searchParams.set('api_version', '4');
 
     console.log('📝 Fetching questions with params:', searchParams.toString());
 
-    // Make authenticated request to ML Questions API
+    // Make authenticated request to ML Questions API using the correct endpoint
+    // According to ML docs, use /my/received_questions/search for user's questions
     const mlResponse = await tokenManager.makeMLRequest(
       integration.id,
-      `/questions/search?${searchParams.toString()}`
+      `/my/received_questions/search?${searchParams.toString()}`
     );
 
     if (!mlResponse.ok) {
