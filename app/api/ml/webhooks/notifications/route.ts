@@ -4,17 +4,50 @@ import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { syncProducts } from '@/utils/mercadolivre/product-sync';
 import { headers } from 'next/headers';
 
-// Webhook notification types from Mercado Livre
+// Webhook notification types from Mercado Livre - Complete list from official docs
 interface MLWebhookNotification {
-  _id: string;
+  _id?: string;
+  id?: string; // Some webhooks use 'id' instead of '_id'
   resource: string; // e.g., "/orders/123456789", "/items/MLB123456789"
   user_id: number;
-  topic: 'orders' | 'items' | 'questions' | 'claims' | 'messages' | 'shipments';
+  topic: MLWebhookTopic;
   application_id: number;
   attempts: number;
   sent: string; // ISO date
   received: string; // ISO date
+  actions?: MLWebhookAction[]; // For structured webhooks (messages, vis_leads, post_purchase)
 }
+
+// All supported webhook topics from ML documentation
+type MLWebhookTopic = 
+  // Orders & Sales
+  | 'orders' | 'orders_v2' | 'orders_feedback'
+  // Messages & Communication  
+  | 'messages'
+  // Items & Catalog
+  | 'items' | 'price_suggestion' | 'quotations' | 'items_prices' 
+  | 'stock_locations' | 'user_products_families' | 'catalog_item_competition' | 'catalog_suggestions'
+  // Shipments & Logistics
+  | 'shipments' | 'fbm_stock_operations' | 'flex_handshakes'
+  // Promotions
+  | 'public_offers' | 'public_candidates'
+  // VIS Leads (Real Estate/Motors)
+  | 'vis_leads'
+  // Post Purchase
+  | 'post_purchase'
+  // Questions & Claims  
+  | 'questions' | 'claims'
+  // Payments & Finance
+  | 'payments' | 'invoices' | 'leads_credits';
+
+// Subtopic actions for structured webhooks
+type MLWebhookAction =
+  // Messages actions
+  | 'created' | 'read'
+  // VIS Leads actions  
+  | 'whatsapp' | 'call' | 'question' | 'contact_request' | 'reservation' | 'visit_request'
+  // Post Purchase actions
+  | 'claims' | 'claims_actions';
 
 // Enhanced notification data when we fetch from the resource URL
 interface ProcessedNotification extends MLWebhookNotification {
@@ -119,20 +152,92 @@ async function processNotification(
     console.log(`🔍 Processing ${notification.topic} notification for resource: ${resourceId}`);
 
     switch (notification.topic) {
+      // Orders & Sales
       case 'orders':
+      case 'orders_v2':
         await processOrderNotification(resourceId, notification, supabase);
         break;
+      case 'orders_feedback':
+        await processOrdersFeedbackNotification(resourceId, notification, supabase);
+        break;
         
+      // Messages & Communication (structured with actions)
+      case 'messages':
+        await processMessagesNotification(resourceId, notification, supabase);
+        break;
+        
+      // Items & Catalog
       case 'items':
         await processItemNotification(resourceId, notification, supabase);
         break;
+      case 'price_suggestion':
+        await processPriceSuggestionNotification(resourceId, notification, supabase);
+        break;
+      case 'quotations':
+        await processQuotationsNotification(resourceId, notification, supabase);
+        break;
+      case 'items_prices':
+        await processItemsPricesNotification(resourceId, notification, supabase);
+        break;
+      case 'stock_locations':
+        await processStockLocationsNotification(resourceId, notification, supabase);
+        break;
+      case 'user_products_families':
+        await processUserProductsFamiliesNotification(resourceId, notification, supabase);
+        break;
+      case 'catalog_item_competition':
+        await processCatalogCompetitionNotification(resourceId, notification, supabase);
+        break;
+      case 'catalog_suggestions':
+        await processCatalogSuggestionsNotification(resourceId, notification, supabase);
+        break;
         
+      // Shipments & Logistics
+      case 'shipments':
+        await processShipmentsNotification(resourceId, notification, supabase);
+        break;
+      case 'fbm_stock_operations':
+        await processFbmStockNotification(resourceId, notification, supabase);
+        break;
+      case 'flex_handshakes':
+        await processFlexHandshakesNotification(resourceId, notification, supabase);
+        break;
+        
+      // Promotions
+      case 'public_offers':
+        await processPublicOffersNotification(resourceId, notification, supabase);
+        break;
+      case 'public_candidates':
+        await processPublicCandidatesNotification(resourceId, notification, supabase);
+        break;
+        
+      // VIS Leads (Real Estate/Motors) - structured with actions
+      case 'vis_leads':
+        await processVisLeadsNotification(resourceId, notification, supabase);
+        break;
+        
+      // Post Purchase - structured with actions  
+      case 'post_purchase':
+        await processPostPurchaseNotification(resourceId, notification, supabase);
+        break;
+        
+      // Questions & Claims
       case 'questions':
         await processQuestionNotification(resourceId, notification, supabase);
         break;
-        
       case 'claims':
         await processClaimNotification(resourceId, notification, supabase);
+        break;
+        
+      // Payments & Finance
+      case 'payments':
+        await processPaymentsNotification(resourceId, notification, supabase);
+        break;
+      case 'invoices':
+        await processInvoicesNotification(resourceId, notification, supabase);
+        break;
+      case 'leads_credits':
+        await processLeadsCreditsNotification(resourceId, notification, supabase);
         break;
         
       default:
@@ -335,27 +440,80 @@ async function logWebhookNotification(
 ) {
   try {
     // Store webhook log for debugging and analytics
-    await supabase
+    const { data, error } = await supabase
       .from('ml_webhook_logs')
       .insert({
-        notification_id: notification._id,
+        notification_id: notification._id || notification.id,
         topic: notification.topic,
         resource: notification.resource,
         user_id: notification.user_id,
-        application_id: notification.application_id,
+        application_id: notification.application_id || null,
         attempts: notification.attempts,
-        sent_at: notification.sent,
-        received_at: notification.received,
+        sent_at: notification.sent || new Date().toISOString(),
+        received_at: notification.received || new Date().toISOString(),
         processed_at: notification.processed_at,
         status: notification.status,
-        error_message: notification.error_message,
-        resource_data: notification.resource_data,
-      });
+        error_message: notification.error_message || null,
+        resource_data: notification.resource_data || null,
+        actions: notification.actions || null,
+        priority: determinePriority(notification.topic, notification.actions),
+        subtopic: determineSubtopic(notification.topic, notification.actions),
+      })
+      .select();
+
+    if (error) {
+      console.error('❌ Database error logging webhook:', error);
+      // Try with service role if regular client fails
+      return await logWithServiceRole(notification);
+    }
       
-    console.log('📊 Webhook logged to database');
+    console.log('📊 Webhook logged to database successfully');
+    return data;
   } catch (error) {
     console.error('❌ Failed to log webhook:', error);
-    // Don't throw - logging failure shouldn't break webhook processing
+    // Try with service role as fallback
+    return await logWithServiceRole(notification);
+  }
+}
+
+async function logWithServiceRole(notification: ProcessedNotification) {
+  try {
+    const { createClient } = await import('@/utils/supabase/server');
+    
+    // Create service role client for webhook logging
+    const serviceSupabase = await createClient();
+    
+    const { data, error } = await serviceSupabase
+      .from('ml_webhook_logs')
+      .insert({
+        notification_id: notification._id || notification.id,
+        topic: notification.topic,
+        resource: notification.resource,
+        user_id: notification.user_id,
+        application_id: notification.application_id || null,
+        attempts: notification.attempts,
+        sent_at: notification.sent || new Date().toISOString(),
+        received_at: notification.received || new Date().toISOString(),
+        processed_at: notification.processed_at,
+        status: notification.status,
+        error_message: notification.error_message || null,
+        resource_data: notification.resource_data || null,
+        actions: notification.actions || null,
+        priority: determinePriority(notification.topic, notification.actions),
+        subtopic: determineSubtopic(notification.topic, notification.actions),
+      })
+      .select();
+
+    if (error) {
+      console.error('❌ Service role webhook logging failed:', error);
+      return null;
+    }
+
+    console.log('📊 Webhook logged with service role');
+    return data;
+  } catch (error) {
+    console.error('❌ Service role logging error:', error);
+    return null;
   }
 }
 
@@ -363,6 +521,486 @@ function extractResourceId(resource: string): string {
   // Extract ID from resource URLs like "/orders/123456789" or "/items/MLB123456789"
   const matches = resource.match(/\/([^\/]+)\/([^\/]+)$/);
   return matches ? matches[2] : resource;
+}
+
+function determinePriority(topic: MLWebhookTopic, actions?: MLWebhookAction[]): string {
+  // High priority webhooks that require immediate attention
+  const highPriorityTopics = [
+    'payments', 'orders_v2', 'claims', 'post_purchase', 
+    'shipments', 'invoices'
+  ];
+  
+  const criticalActions = [
+    'claims_actions', 'contact_request', 'reservation', 'visit_request'
+  ];
+  
+  if (highPriorityTopics.includes(topic)) {
+    return 'high';
+  }
+  
+  if (actions && actions.some(action => criticalActions.includes(action))) {
+    return 'critical';
+  }
+  
+  // Medium priority - business relevant but not urgent
+  const mediumPriorityTopics = [
+    'questions', 'messages', 'items', 'price_suggestion', 'public_offers'
+  ];
+  
+  if (mediumPriorityTopics.includes(topic)) {
+    return 'normal';
+  }
+  
+  return 'low'; // Analytics, catalog suggestions, etc.
+}
+
+function determineSubtopic(topic: MLWebhookTopic, actions?: MLWebhookAction[]): string | null {
+  if (!actions || actions.length === 0) {
+    return null;
+  }
+  
+  // For structured webhooks, use the first action as subtopic
+  const action = actions[0];
+  
+  switch (topic) {
+    case 'messages':
+      return `message_${action}`; // message_created, message_read
+    case 'vis_leads':
+      return `lead_${action}`; // lead_whatsapp, lead_call, lead_question, etc.
+    case 'post_purchase':
+      return `purchase_${action}`; // purchase_claims, purchase_claims_actions
+    default:
+      return action;
+  }
+}
+
+// ===== Additional Webhook Processors =====
+
+async function processOrdersFeedbackNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`⭐ Processing orders feedback notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_orders_feedback',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processMessagesNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  const action = notification.actions?.[0] || 'unknown';
+  console.log(`💬 Processing messages notification: ${resourceId}, action: ${action}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: `webhook_message_${action}`,
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+        actions: notification.actions,
+      },
+    });
+}
+
+async function processPriceSuggestionNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`💰 Processing price suggestion notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_price_suggestion',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processQuotationsNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`🏠 Processing quotations notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_quotations',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processItemsPricesNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`🏷️ Processing items prices notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_items_prices',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processStockLocationsNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`📦 Processing stock locations notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_stock_locations',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processUserProductsFamiliesNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`👪 Processing user products families notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_user_products_families',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processCatalogCompetitionNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`🏆 Processing catalog competition notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_catalog_competition',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processCatalogSuggestionsNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`💡 Processing catalog suggestions notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_catalog_suggestions',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processShipmentsNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`🚚 Processing shipments notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_shipments',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processFbmStockNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`📋 Processing FBM stock operations notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_fbm_stock_operations',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processFlexHandshakesNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`🤝 Processing flex handshakes notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_flex_handshakes',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processPublicOffersNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`🎯 Processing public offers notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_public_offers',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processPublicCandidatesNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`🎪 Processing public candidates notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_public_candidates',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processVisLeadsNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  const action = notification.actions?.[0] || 'unknown';
+  console.log(`🏢 Processing VIS leads notification: ${resourceId}, action: ${action}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: `webhook_vis_leads_${action}`,
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+        actions: notification.actions,
+        priority: ['contact_request', 'reservation', 'visit_request'].includes(action) ? 'high' : 'normal',
+      },
+    });
+}
+
+async function processPostPurchaseNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  const action = notification.actions?.[0] || 'unknown';
+  console.log(`📦 Processing post purchase notification: ${resourceId}, action: ${action}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: `webhook_post_purchase_${action}`,
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+        actions: notification.actions,
+        priority: 'high', // Post-purchase issues are high priority
+      },
+    });
+}
+
+async function processPaymentsNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`💳 Processing payments notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_payments',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+        priority: 'high', // Payment events are high priority
+      },
+    });
+}
+
+async function processInvoicesNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`📄 Processing invoices notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_invoices',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
+}
+
+async function processLeadsCreditsNotification(
+  resourceId: string,
+  notification: MLWebhookNotification,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  console.log(`💰 Processing leads credits notification: ${resourceId}`);
+  
+  await supabase
+    .from('ml_sync_logs')
+    .insert({
+      operation: 'webhook_leads_credits',
+      resource_id: resourceId,
+      user_id: notification.user_id.toString(),
+      success: true,
+      details: {
+        webhook_id: notification._id || notification.id,
+        resource: notification.resource,
+        attempts: notification.attempts,
+      },
+    });
 }
 
 // GET endpoint for webhook verification (if ML requires it)
@@ -378,6 +1016,26 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     status: 'ML Webhooks endpoint active',
     timestamp: new Date().toISOString(),
-    supported_topics: ['orders', 'items', 'questions', 'claims'],
+    supported_topics: [
+      // Orders & Sales
+      'orders', 'orders_v2', 'orders_feedback',
+      // Messages & Communication
+      'messages', 
+      // Items & Catalog
+      'items', 'price_suggestion', 'quotations', 'items_prices', 
+      'stock_locations', 'user_products_families', 'catalog_item_competition', 'catalog_suggestions',
+      // Shipments & Logistics  
+      'shipments', 'fbm_stock_operations', 'flex_handshakes',
+      // Promotions
+      'public_offers', 'public_candidates',
+      // VIS Leads
+      'vis_leads',
+      // Post Purchase
+      'post_purchase', 
+      // Questions & Claims
+      'questions', 'claims',
+      // Payments & Finance
+      'payments', 'invoices', 'leads_credits'
+    ],
   });
 }
