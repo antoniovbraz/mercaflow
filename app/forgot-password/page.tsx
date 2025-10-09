@@ -53,16 +53,34 @@ function ForgotPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Esqueceu sua senha?
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Digite seu email para receber instruções de recuperação
-          </p>
-        </div>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+      <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+      <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+      
+      <div className="relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 mb-2">
+                  MercaFlow
+                </h1>
+                <div className="absolute -top-1 -right-8">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+                    Recuperação
+                  </span>
+                </div>
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Esqueceu sua senha?
+            </h2>
+            <p className="text-gray-600">
+              Digite seu email para receber instruções de recuperação
+            </p>
+          </div>
 
         {message && (
           <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
@@ -118,6 +136,7 @@ function ForgotPasswordForm() {
             </Link>
           </div>
         </form>
+        </div>
       </div>
     </div>
   )

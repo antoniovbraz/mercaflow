@@ -57,33 +57,69 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Entre na sua conta
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Background decorative elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-32 w-80 h-80 rounded-full bg-gradient-to-br from-blue-400/10 to-indigo-600/10 blur-3xl" />
+        <div className="absolute top-80 -left-32 w-80 h-80 rounded-full bg-gradient-to-br from-indigo-400/10 to-purple-600/10 blur-3xl" />
+        <div className="absolute bottom-20 right-20 w-60 h-60 rounded-full bg-gradient-to-br from-purple-400/10 to-pink-600/10 blur-3xl" />
+      </div>
+
+      <div className="relative max-w-md w-full space-y-8">
+        <div className="text-center">
+          {/* Logo */}
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl mb-6 shadow-xl">
+            <span className="text-white font-bold text-xl">MF</span>
+          </div>
+          
+          <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full px-4 py-2 mb-6">
+            <span className="text-2xl">🔐</span>
+            <span className="text-sm font-medium text-blue-800">
+              Login Seguro
+            </span>
+          </div>
+          
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-3">
+            Entre na sua{' '}
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              conta
+            </span>
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Acesse sua plataforma MercaFlow
+          <p className="text-lg text-gray-600">
+            Acesse sua plataforma <strong>MercaFlow</strong> e gerencie seu e-commerce
           </p>
         </div>
 
         {(successMessage || message) && (
-          <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
-            {successMessage || message}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 text-blue-800 px-6 py-4 rounded-xl shadow-lg">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <span className="font-medium">{successMessage || message}</span>
+            </div>
           </div>
         )}
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {error}
+          <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200/50 text-red-800 px-6 py-4 rounded-xl shadow-lg">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <span className="font-medium">{error}</span>
+            </div>
           </div>
         )}
 
-        <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+        <form className="space-y-6 bg-white/90 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-gray-100/50" onSubmit={handleSubmit}>
+          <div className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-800 mb-2">
                 Email
               </label>
               <input
@@ -92,13 +128,13 @@ function LoginForm() {
                 type="email"
                 autoComplete="email"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm hover:shadow-md"
                 placeholder="seu@email.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-800 mb-2">
                 Senha
               </label>
               <input
@@ -107,7 +143,7 @@ function LoginForm() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm hover:shadow-md"
                 placeholder="Sua senha"
               />
             </div>
@@ -117,7 +153,7 @@ function LoginForm() {
             <div className="text-sm">
               <Link
                 href="/forgot-password"
-                className="text-blue-600 hover:text-blue-500"
+                className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
               >
                 Esqueceu a senha?
               </Link>
@@ -128,9 +164,11 @@ function LoginForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-3 px-6 text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100"
             >
-              {isLoading ? 'Entrando...' : 'Entrar'}
+              <span className="relative">
+                {isLoading ? 'Entrando...' : 'Entrar'}
+              </span>
             </button>
           </div>
 
@@ -138,7 +176,7 @@ function LoginForm() {
             <span className="text-gray-600">Não tem conta? </span>
             <Link
               href="/register"
-              className="text-blue-600 hover:text-blue-500 font-medium"
+              className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
             >
               Criar conta
             </Link>
