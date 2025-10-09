@@ -3,8 +3,9 @@ import { createClient } from '@/utils/supabase/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { feedbackId: string } }
+  { params }: { params: Promise<{ feedbackId: string }> }
 ) {
+  const { feedbackId } = await params;
   try {
     const supabase = await createClient();
     
@@ -31,7 +32,6 @@ export async function POST(
       );
     }
 
-    const { feedbackId } = params;
     const body = await request.json();
     const { reply } = body;
 
