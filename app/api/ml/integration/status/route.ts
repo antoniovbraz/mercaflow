@@ -48,11 +48,12 @@ export async function GET(): Promise<NextResponse> {
       
     const tenantId = profile?.tenant_id || user.id;
     
-    // Get integration with summary data
+    // Get integration with summary data (only active ones)
     const { data: integration, error } = await supabase
       .from('ml_integration_summary')
       .select('*')
       .eq('tenant_id', tenantId)
+      .eq('status', 'active') // Only fetch active integrations
       .single();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
@@ -159,37 +160,34 @@ export async function DELETE(): Promise<NextResponse> {
       );
     }
 
-    // Revoke the integration
-    const { error: updateError } = await supabase
+    // Delete the integration completely (safer than just revoking)
+    const { error: deleteError } = await supabase
       .from('ml_integrations')
-      .update({
-        status: 'revoked',
-        updated_at: new Date().toISOString(),
-      })
+      .delete()
       .eq('id', integration.id);
 
-    if (updateError) {
-      console.error('Error revoking integration:', updateError);
+    if (deleteError) {
+      console.error('Error deleting integration:', deleteError);
       return NextResponse.json(
-        { error: 'Failed to revoke integration' },
+        { error: 'Failed to delete integration' },
         { status: 500 }
       );
     }
 
-    // Log the revocation
+    // Log the deletion
     await supabase
       .from('ml_sync_logs')
       .insert({
         integration_id: integration.id,
         sync_type: 'user_info',
         status: 'success',
-        sync_data: { action: 'integration_revoked_by_user' },
+        sync_data: { action: 'integration_deleted_by_user' },
         completed_at: new Date().toISOString(),
       });
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Integration revoked successfully' 
+      message: 'Integration deleted successfully' 
     });
 
   } catch (error) {
