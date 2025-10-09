@@ -39,17 +39,40 @@ export async function GET(): Promise<NextResponse> {
     
     const supabase = await createClient();
     
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
+    // Get or create user profile
+    let { data: profile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile) {
+    // If profile doesn't exist, try to create it
+    if (!profile) {
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          avatar_url: user.user_metadata?.avatar_url || null
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('Error creating profile:', createError);
+        return NextResponse.json(
+          { error: 'Failed to create user profile' },
+          { status: 500 }
+        );
+      }
+      
+      profile = newProfile;
+    }
+
+    if (!profile) {
       return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
+        { error: 'Unable to get or create user profile' },
+        { status: 500 }
       );
     }
 
