@@ -1,14 +1,15 @@
 import { MLConnectionStatus } from '@/components/ml/ConnectionStatus';
 import { MLProductManager } from '@/components/ml/ProductManager';
-import { MLOrderManager } from '@/components/ml/OrderManager';
-import { MLContentWrapper } from '@/components/ml/ContentWrapper';
+import MLOrderManagerNew from '@/components/ml/OrderManagerNew';
+import { MLQuestionManager } from '@/components/ml/QuestionManager';
+import MLMessageManager from '@/components/ml/MessageManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCurrentUser } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
 // Component to handle success message
-function SuccessMessage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
+function SuccessMessage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   if (searchParams?.connected === 'success') {
     return (
       <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
@@ -36,8 +37,9 @@ function SuccessMessage({ searchParams }: { searchParams: Record<string, string 
 export default async function MLDashboard({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   // Use getCurrentUser instead of requireRole to avoid exceptions
   const user = await getCurrentUser();
   
@@ -81,30 +83,38 @@ export default async function MLDashboard({
           </div>
 
           {/* Success Message */}
-          <SuccessMessage searchParams={searchParams} />
+          <SuccessMessage searchParams={resolvedSearchParams} />
 
           {/* Connection Status */}
           <MLConnectionStatus />
 
           {/* Main Content */}
-          <MLContentWrapper>
-            <div className="bg-white rounded-lg shadow">
-              <Tabs defaultValue="products" className="p-6">
-                <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-                  <TabsTrigger value="products">Produtos</TabsTrigger>
-                  <TabsTrigger value="orders">Pedidos</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="products" className="mt-6">
-                  <MLProductManager />
-                </TabsContent>
-                
-                <TabsContent value="orders" className="mt-6">
-                <MLOrderManager />
-                </TabsContent>
-              </Tabs>
-            </div>
-          </MLContentWrapper>
+          <div className="bg-white rounded-lg shadow">
+            <Tabs defaultValue="products" className="p-6">
+              <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+                <TabsTrigger value="products">Produtos</TabsTrigger>
+                <TabsTrigger value="orders">Pedidos</TabsTrigger>
+                <TabsTrigger value="questions">Perguntas</TabsTrigger>
+                <TabsTrigger value="messages">Mensagens</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="products" className="mt-6">
+                <MLProductManager />
+              </TabsContent>
+              
+              <TabsContent value="orders" className="mt-6">
+                <MLOrderManagerNew />
+              </TabsContent>
+              
+              <TabsContent value="questions" className="mt-6">
+                <MLQuestionManager />
+              </TabsContent>
+              
+              <TabsContent value="messages" className="mt-6">
+                <MLMessageManager />
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </main>
     </div>
