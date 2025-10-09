@@ -113,8 +113,13 @@ export function MLConnectionStatus() {
         throw new Error(errorData.error || 'Failed to disconnect');
       }
       
-      // Refresh status
-      await fetchStatus();
+      // Update state immediately to reflect disconnection
+      setStatus({ hasIntegration: false });
+      
+      // Also refresh from server to be sure
+      setTimeout(() => {
+        fetchStatus();
+      }, 1000);
     } catch (err) {
       console.error('Failed to disconnect ML:', err);
       setError(err instanceof Error ? err.message : 'Disconnect failed');

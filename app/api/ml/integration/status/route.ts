@@ -39,12 +39,20 @@ export async function GET(): Promise<NextResponse> {
     
     const supabase = await createClient();
     
-    // For ML integration, we use the user ID directly as tenant identifier
+    // Get user profile to determine correct tenant_id
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('id', user.id)
+      .single();
+      
+    const tenantId = profile?.tenant_id || user.id;
+    
     // Get integration with summary data
     const { data: integration, error } = await supabase
       .from('ml_integration_summary')
       .select('*')
-      .eq('tenant_id', user.id)
+      .eq('tenant_id', tenantId)
       .single();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
@@ -133,11 +141,14 @@ export async function DELETE(): Promise<NextResponse> {
       );
     }
 
+    // Use consistent tenant_id logic (same as GET method)
+    const tenantId = profile.tenant_id || user.id;
+    
     // Find and revoke integration
     const { data: integration, error: findError } = await supabase
       .from('ml_integrations')
       .select('id')
-      .eq('tenant_id', profile.id)
+      .eq('tenant_id', tenantId)
       .eq('status', 'active')
       .single();
 
