@@ -317,7 +317,7 @@ export class MLTokenManager {
     const key = crypto.scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
     const iv = crypto.randomBytes(16);
     
-    const cipher = crypto.createCipher(algorithm, this.ENCRYPTION_KEY);
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
     
     let encrypted = cipher.update(token, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -332,15 +332,22 @@ export class MLTokenManager {
     const parts = encryptedToken.split(':');
     
     // Handle both old format (iv:authTag:encrypted) and new format (iv:encrypted)
+    if (parts.length < 2) {
+      throw new Error('Invalid token format');
+    }
+    
+    const ivHex = parts[0];
     const encrypted = parts.length === 3 ? parts[2] : parts[1];
     
-    if (!encrypted) {
+    if (!ivHex || !encrypted) {
       throw new Error('Invalid token format');
     }
     
     const algorithm = 'aes-256-cbc';
+    const key = crypto.scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
+    const iv = Buffer.from(ivHex, 'hex');
     
-    const decipher = crypto.createDecipher(algorithm, this.ENCRYPTION_KEY);
+    const decipher = crypto.createDecipheriv(algorithm, key, iv);
     
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
