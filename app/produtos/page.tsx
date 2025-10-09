@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { hasRole } from '@/utils/supabase/roles';
+import { hasRole } from '@/utils/supabase/client-roles';
 
 interface Product {
   id: string;
