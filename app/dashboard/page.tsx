@@ -3,11 +3,12 @@ import { getCurrentUser } from '@/utils/supabase/server'
 import { getUserRole, hasRole } from '@/utils/supabase/roles'
 import { signOutAction } from '../login/actions'
 import Link from 'next/link'
+import { DashboardStats } from './components/DashboardStats'
 
 export default async function DashboardPage() {
   // Require authentication
   const user = await getCurrentUser()
-  
+
   if (!user) {
     redirect('/login')
   }
@@ -38,7 +39,7 @@ export default async function DashboardPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               {/* Quick Actions */}
               <div className="hidden md:flex items-center space-x-2">
@@ -53,13 +54,13 @@ export default async function DashboardPage() {
                   </svg>
                 </button>
               </div>
-              
+
               {/* User Info */}
               <div className="flex items-center space-x-3">
                 {userRole && (
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    userRole === 'super_admin' 
-                      ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg' 
+                    userRole === 'super_admin'
+                      ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg'
                       : userRole === 'admin'
                       ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg'
                       : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg'
@@ -67,7 +68,7 @@ export default async function DashboardPage() {
                     {userRole === 'super_admin' ? 'Super Admin' : userRole === 'admin' ? 'Admin' : 'Usuário'}
                   </span>
                 )}
-                
+
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-medium">
@@ -78,9 +79,9 @@ export default async function DashboardPage() {
                     <p className="text-sm font-medium text-gray-700">{user.email}</p>
                   </div>
                 </div>
-                
+
                 <form action={signOutAction}>
-                  <button 
+                  <button
                     type="submit"
                     className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                   >
@@ -103,93 +104,13 @@ export default async function DashboardPage() {
             Bem-vindo ao MercaFlow
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Sua plataforma profissional de integração e-commerce. Centralize suas vendas, 
+            Sua plataforma profissional de integração e-commerce. Centralize suas vendas,
             gerencie produtos e potencialize seu negócio digital.
           </p>
         </div>
 
         {/* Modern Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {/* Revenue Card */}
-          <div className="bg-white/80 backdrop-blur-sm overflow-hidden shadow-xl rounded-2xl border border-gray-100/50 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Receita Mensal</p>
-                  <p className="text-3xl font-bold text-gray-900">R$ 0,00</p>
-                  <p className="text-sm text-green-600 flex items-center">
-                    <span className="text-xs mr-1">↗</span> +0% vs mês anterior
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Orders Card */}
-          <div className="bg-white/80 backdrop-blur-sm overflow-hidden shadow-xl rounded-2xl border border-gray-100/50 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pedidos Hoje</p>
-                  <p className="text-3xl font-bold text-gray-900">0</p>
-                  <p className="text-sm text-blue-600 flex items-center">
-                    <span className="text-xs mr-1">→</span> 0 pendentes
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Products Card */}
-          <div className="bg-white/80 backdrop-blur-sm overflow-hidden shadow-xl rounded-2xl border border-gray-100/50 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Produtos Ativos</p>
-                  <p className="text-3xl font-bold text-gray-900">0</p>
-                  <p className="text-sm text-purple-600 flex items-center">
-                    <span className="text-xs mr-1">◆</span> 0 sincronizados
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Integrations Card */}
-          <div className="bg-white/80 backdrop-blur-sm overflow-hidden shadow-xl rounded-2xl border border-gray-100/50 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Integrações</p>
-                  <p className="text-3xl font-bold text-gray-900">0</p>
-                  <p className="text-sm text-orange-600 flex items-center">
-                    <span className="text-xs mr-1">⚡</span> Mercado Livre
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DashboardStats />
 
         {/* Main Action Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-12">

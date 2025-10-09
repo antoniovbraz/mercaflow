@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import { syncProducts } from '@/utils/mercadolivre/product-sync';
 
 const tokenManager = new MLTokenManager();
 
@@ -140,12 +141,50 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const data: MLItemsResponse = await mlResponse.json();
     
-    // Log successful sync
-    await tokenManager['logSync'](integration.id, 'products', 'success', {
-      action: 'items_fetched',
-      count: data.results?.length || 0,
-      total: data.paging?.total || 0,
-    });
+    // Sync products to local database
+    const supabaseForSync = await createClient();
+    try {
+      // Convert ML items to ML products format with defaults for missing fields
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mlProducts = data.results.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        available_quantity: item.available_quantity,
+        sold_quantity: item.sold_quantity,
+        condition: item.condition,
+        permalink: item.permalink,
+        thumbnail: item.thumbnail,
+        status: item.status,
+        category_id: item.category_id || '',
+        currency_id: item.currency_id || 'BRL',
+        buying_mode: item.buying_mode || 'buy_it_now',
+        listing_type_id: item.listing_type_id || 'gold_special',
+        start_time: item.start_time || new Date().toISOString(),
+        tags: item.tags || [],
+        automatic_relist: item.automatic_relist || false,
+        date_created: item.date_created || new Date().toISOString(),
+        last_updated: item.last_updated || new Date().toISOString(),
+        channels: item.channels || []
+      }));
+
+      const syncResult = await syncProducts(supabaseForSync, integration.id, mlProducts);
+      console.log('Product sync result:', syncResult);
+      
+      // Log successful sync
+      await tokenManager['logSync'](integration.id, 'products', 'success', {
+        action: 'items_synced',
+        count: data.results?.length || 0,
+        total: data.paging?.total || 0,
+      });
+    } catch (syncError) {
+      console.error('Product sync failed:', syncError);
+      // Don't fail the request if sync fails, just log it
+      await tokenManager['logSync'](integration.id, 'products', 'error', {
+        action: 'items_sync_failed',
+        error: syncError instanceof Error ? syncError.message : 'Unknown sync error',
+      });
+    }
 
     return NextResponse.json(data);
 
