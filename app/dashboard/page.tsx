@@ -238,30 +238,12 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Link 
-                  href="/dashboard/ml"
-                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 inline-block text-center"
-                >
-                  Gerenciar Integração ML
-                </Link>
-                
-                {/* Debug buttons - temporary */}
-                <div className="flex space-x-2">
-                  <Link 
-                    href="/debug-ml"
-                    className="flex-1 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors text-center"
-                  >
-                    🔧 Debug ML
-                  </Link>
-                  <Link 
-                    href="/ml-simple"
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors text-center"
-                  >
-                    🧪 ML Simple
-                  </Link>
-                </div>
-              </div>
+              <Link 
+                href="/dashboard/ml"
+                className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 inline-block text-center"
+              >
+                Gerenciar Integração ML
+              </Link>
             </div>
           </div>
 

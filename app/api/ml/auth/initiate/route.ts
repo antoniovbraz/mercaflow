@@ -6,8 +6,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
-import { requireRole } from '@/utils/supabase/roles';
+import { createClient, getCurrentUser } from '@/utils/supabase/server';
 import crypto from 'crypto';
 
 interface AuthInitiateResponse {
@@ -17,9 +16,32 @@ interface AuthInitiateResponse {
 
 export async function POST(): Promise<NextResponse> {
   try {
-    // Verify authentication and get user profile
-    const profile = await requireRole('user');
+    // Verify authentication and get user
+    const user = await getCurrentUser();
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
     const supabase = await createClient();
+    
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('Failed to get user profile:', profileError);
+      return NextResponse.json(
+        { error: 'User profile not found' },
+        { status: 404 }
+      );
+    }
 
     // Generate PKCE parameters
     const code_verifier = crypto.randomBytes(128).toString('base64url');
@@ -40,8 +62,8 @@ export async function POST(): Promise<NextResponse> {
       .insert({
         state,
         code_verifier,
-        user_id: profile.user_id,
-        tenant_id: profile.id,
+        user_id: user.id,
+        tenant_id: profile.tenant_id || profile.id,
         expires_at: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
       });
 
