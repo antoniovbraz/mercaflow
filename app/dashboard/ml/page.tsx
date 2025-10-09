@@ -103,7 +103,21 @@ export default async function MLDashboard({
               </TabsContent>
               
               <TabsContent value="orders" className="mt-6">
-                <MLOrderManagerNew />
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900">Gerenciamento de Pedidos</h3>
+                    <Link 
+                      href="/pedidos"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <svg className="-ml-1 mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                      </svg>
+                      Ver Todos os Pedidos
+                    </Link>
+                  </div>
+                  <MLOrderManagerNew />
+                </div>
               </TabsContent>
               
               <TabsContent value="questions" className="mt-6">
