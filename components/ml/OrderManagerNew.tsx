@@ -79,7 +79,7 @@ export default function MLOrderManager({ integrationId: propIntegrationId }: MLO
   const [integrationId, setIntegrationId] = useState<string | null>(propIntegrationId || null)
   
   // Filtros
-  const [statusFilter, setStatusFilter] = useState<string>('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [dateFromFilter, setDateFromFilter] = useState<string>('')
   const [dateToFilter, setDateToFilter] = useState<string>('')
   const [searchFilter, setSearchFilter] = useState<string>('')
@@ -135,7 +135,7 @@ export default function MLOrderManager({ integrationId: propIntegrationId }: MLO
         limit: '100'
       })
       
-      if (statusFilter) params.append('status', statusFilter)
+      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter)
       if (dateFromFilter) params.append('date_from', dateFromFilter)
       if (dateToFilter) params.append('date_to', dateToFilter)
       
@@ -379,7 +379,7 @@ export default function MLOrderManager({ integrationId: propIntegrationId }: MLO
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os status</SelectItem>
+                <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="pending">Pendente</SelectItem>
                 <SelectItem value="paid">Pago</SelectItem>
                 <SelectItem value="shipped">Enviado</SelectItem>
@@ -404,12 +404,12 @@ export default function MLOrderManager({ integrationId: propIntegrationId }: MLO
               placeholder="Data fim"
             />
             
-            {(statusFilter || dateFromFilter || dateToFilter) && (
+            {(statusFilter !== 'all' || dateFromFilter || dateToFilter) && (
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => {
-                  setStatusFilter('')
+                  setStatusFilter('all')
                   setDateFromFilter('')
                   setDateToFilter('')
                 }}
