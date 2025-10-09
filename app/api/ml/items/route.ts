@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser, createClient } from '@/utils/supabase/server';
+import { getCurrentUser } from '@/utils/supabase/server';
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 
 const tokenManager = new MLTokenManager();
@@ -70,24 +70,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
     
-    const supabase = await createClient();
-    
-    // Get user profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile) {
-      return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
-      );
-    }
-    
-    // Get ML integration
-    const integration = await tokenManager.getIntegrationByTenant(profile.id);
+    // Use user ID directly as tenant ID for ML integration
+    const integration = await tokenManager.getIntegrationByTenant(user.id);
     
     if (!integration) {
       return NextResponse.json(
@@ -184,24 +168,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
     
-    const supabase = await createClient();
-    
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !profile) {
-      return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
-      );
-    }
-    
-    // Get ML integration
-    const integration = await tokenManager.getIntegrationByTenant(profile.id);
+    // Get ML integration using user ID as tenant ID
+    const integration = await tokenManager.getIntegrationByTenant(user.id);
     
     if (!integration) {
       return NextResponse.json(
