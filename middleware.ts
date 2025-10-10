@@ -23,8 +23,9 @@ async function hasRoleInMiddleware(supabase: ReturnType<typeof createServerClien
       return ROLE_LEVELS[roleFromClaims] >= ROLE_LEVELS[requiredRole]
     }
     
-    // Check super admin emails
-    if (user.email === 'peepers.shop@gmail.com' || user.email === 'antoniovbraz@gmail.com') {
+    // Check super admin emails from environment variable
+    const superAdminEmails = process.env.SUPER_ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
+    if (superAdminEmails.includes(user.email || '')) {
       return ROLE_LEVELS['super_admin'] >= ROLE_LEVELS[requiredRole]
     }
     

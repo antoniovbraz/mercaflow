@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server'
 import { getCurrentUser, createClient } from '@/utils/supabase/server'
 
 export async function POST() {
+  // PROTEÇÃO: Bloquear em produção
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { error: 'Debug endpoints are disabled in production' },
+      { status: 403 }
+    );
+  }
+
   try {
     const user = await getCurrentUser()
     
