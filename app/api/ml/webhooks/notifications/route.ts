@@ -26,6 +26,9 @@ export async function POST(request: NextRequest) {
   try {
     logger.info('ML Webhook notification received');
     
+    // Clone request BEFORE validation to avoid "unusable" error
+    const requestClone = request.clone();
+    
     // Validate and parse the notification using Zod
     let notification: MLWebhookNotification;
     
@@ -41,8 +44,7 @@ export async function POST(request: NextRequest) {
         if (errorString.includes('Invalid option') || errorString.includes('topic') || errorString.includes('actions')) {
           logger.warn('Unknown webhook topic or action, accepting with fallback');
           
-          // Get raw body to log the unknown values
-          const requestClone = request.clone();
+          // Get raw body from the cloned request (not consumed yet)
           const rawBody = await requestClone.json();
           logger.warn('Unknown webhook data', { 
             topic: rawBody.topic, 
