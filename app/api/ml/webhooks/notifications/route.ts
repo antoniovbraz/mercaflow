@@ -25,22 +25,45 @@ export async function POST(request: NextRequest) {
     console.log('🔔 ML Webhook received');
     
     // Validate and parse the notification using Zod
-    let notification;
+    let notification: MLWebhookNotification;
+    
     try {
       notification = await validateRequestBody(MLWebhookNotificationSchema, request);
       console.log('✅ Webhook notification validated successfully');
     } catch (error) {
       if (error instanceof ValidationError) {
         console.error('❌ Webhook validation failed:', error.details);
-        return NextResponse.json(
-          { 
-            error: 'Invalid notification format',
-            details: error.details,
-          },
-          { status: 400 }
-        );
+        
+        // Check if it's just an unknown topic/action - if so, log warning but accept
+        const errorString = JSON.stringify(error.details);
+        if (errorString.includes('Invalid option') || errorString.includes('topic') || errorString.includes('actions')) {
+          console.warn('⚠️ Unknown webhook topic or action, accepting with fallback');
+          
+          // Get raw body to log the unknown values
+          const requestClone = request.clone();
+          const rawBody = await requestClone.json();
+          console.warn('Original topic:', rawBody.topic);
+          console.warn('Original actions:', rawBody.actions);
+          
+          // Use rawBody with type casting and fallback to 'items' topic
+          notification = {
+            ...rawBody,
+            topic: 'items' as MLWebhookTopic, // Fallback to valid topic
+            actions: undefined, // Clear invalid actions
+          } as MLWebhookNotification;
+        } else {
+          // Other validation errors - reject
+          return NextResponse.json(
+            { 
+              error: 'Invalid notification format',
+              details: error.details,
+            },
+            { status: 400 }
+          );
+        }
+      } else {
+        throw error;
       }
-      throw error;
     }
     
     console.log('📝 Notification details:', {
