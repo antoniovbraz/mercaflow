@@ -1,27 +1,20 @@
-/**
- * Sentry Server Configuration
- * Tracks errors and performance on the server
- */
+// This file configures the initialization of Sentry on the server.
+// The config you add here will be used whenever the server handles a request.
+// https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
-  // Get your DSN from https://sentry.io/settings/projects/YOUR_PROJECT/keys/
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  dsn: "https://21e456bf4235ce4074c6210fa6ed6cbe@o4510167006707712.ingest.us.sentry.io/4510167064969216",
 
-  // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
-  // We recommend adjusting this value in production
-  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1,
+
+  // Enable logs to be sent to Sentry
+  enableLogs: true,
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
-
-  // Capture unhandled promise rejections
-  integrations: [
-    Sentry.captureConsoleIntegration({
-      levels: ['error'],
-    }),
-  ],
 
   // Filter sensitive data
   beforeSend(event) {
@@ -41,14 +34,5 @@ Sentry.init({
     }
 
     return event;
-  },
-
-  // Add custom tags
-  initialScope: {
-    tags: {
-      app: 'mercaflow',
-      environment: process.env.NODE_ENV || 'development',
-      runtime: 'node',
-    },
   },
 });
