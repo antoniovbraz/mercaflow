@@ -3,13 +3,17 @@
  * 
  * Validates required environment variables on startup to prevent
  * runtime errors and ensure proper configuration.
+ * 
+ * Note: SUPABASE_SERVICE_ROLE_KEY is intentionally NOT required here.
+ * Supabase recommends using anon key + RLS policies instead of service_role
+ * for better security. The service_role bypasses all RLS policies.
  */
 
 export function validateEnvVars() {
   const requiredEnvVars = [
     'NEXT_PUBLIC_SUPABASE_URL',
     'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-    'SUPABASE_SERVICE_ROLE_KEY',
+    // 'SUPABASE_SERVICE_ROLE_KEY', // ❌ NOT REQUIRED - Use RLS policies instead
     'ML_CLIENT_ID',
     'ML_CLIENT_SECRET',
     'ENCRYPTION_KEY',

@@ -4,7 +4,7 @@ import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { syncProducts } from '@/utils/mercadolivre/product-sync';
 import { headers } from 'next/headers';
 import { logger } from '@/utils/logger';
-import { invalidateCache, buildCacheKey, CachePrefix } from '@/utils/redis';
+import { invalidateCache, CachePrefix } from '@/utils/redis';
 import { 
   MLWebhookNotificationSchema,
   MLWebhookNotification,
@@ -489,7 +489,7 @@ async function logWithServiceRole(notification: ProcessedNotification) {
     
     const { data, error } = await serviceSupabase
       .from('ml_webhook_logs')
-      .insert({
+      .upsert({
         notification_id: notification._id || notification.id,
         topic: notification.topic,
         resource: notification.resource,
@@ -505,6 +505,9 @@ async function logWithServiceRole(notification: ProcessedNotification) {
         actions: notification.actions || null,
         priority: determinePriority(notification.topic, notification.actions),
         subtopic: determineSubtopic(notification.topic, notification.actions),
+      }, {
+        onConflict: 'notification_id', // Use upsert to handle duplicates (fixes 409 error)
+        ignoreDuplicates: false // Update existing records instead of ignoring
       })
       .select();
 

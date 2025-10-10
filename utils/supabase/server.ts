@@ -89,9 +89,19 @@ export async function requireProfile() {
 export async function createServiceClient() {
   const { createClient } = await import('@supabase/supabase-js')
   
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  
+  if (!serviceRoleKey) {
+    throw new Error(
+      'SUPABASE_SERVICE_ROLE_KEY is required for createServiceClient(). ' +
+      'This function bypasses RLS and should only be used for server-side operations ' +
+      'like webhook processing. For user-authenticated requests, use createClient() instead.'
+    )
+  }
+  
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    serviceRoleKey,
     {
       auth: {
         autoRefreshToken: false,
