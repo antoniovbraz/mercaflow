@@ -83,7 +83,7 @@ export async function syncProducts(
         .select('id, updated_at')
         .eq('integration_id', integrationId)
         .eq('ml_item_id', mlProduct.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle() to allow 0 or 1 results (fixes 406 error)
 
       const productData = {
         integration_id: integrationId,
