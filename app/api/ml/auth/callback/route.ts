@@ -96,6 +96,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const rawTokenData = await tokenResponse.json();
     
     // Validate token response using Zod
+    console.log('Raw token data from ML:', JSON.stringify(rawTokenData, null, 2));
     const tokenData = validateOutput(MLTokenResponseSchema, rawTokenData);
     
     console.log('Token received and validated successfully for user:', tokenData.user_id);
@@ -121,6 +122,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const rawUserData = await userResponse.json();
     
     // Validate user data using Zod
+    console.log('Raw user data from ML:', JSON.stringify(rawUserData, null, 2));
     const userData = validateOutput(MLUserDataSchema, rawUserData);
     
     console.log('ML user data received and validated:', userData.nickname);
@@ -134,6 +136,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       tokenData,
       userData // Pass the complete validated user data object
     );
+
+    console.log('Integration saved successfully for tenant:', stateRecord.tenant_id);
 
     // Clean up used OAuth state
     await supabase
