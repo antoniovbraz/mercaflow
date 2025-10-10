@@ -92,8 +92,10 @@ class Logger {
       }
     } else if (this.isProduction && typeof window === 'undefined') {
       // Server-side error tracking
-      // Note: Sentry will be configured in sentry.server.config.ts
-      // This is just a placeholder - actual integration happens via @sentry/nextjs
+      // Note: Sentry will be configured in sentry.server.config.ts when installed
+      // For now, we skip Sentry integration to avoid build errors
+      // TODO: Add Sentry when needed
+      /*
       try {
         // Dynamic import to avoid bundling in development
         import('@sentry/nextjs').then((Sentry) => {
@@ -108,6 +110,7 @@ class Logger {
       } catch {
         // Sentry not configured
       }
+      */
     }
   }
 
