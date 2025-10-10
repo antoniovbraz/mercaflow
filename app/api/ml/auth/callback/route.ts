@@ -3,33 +3,19 @@
  * 
  * Handles the OAuth 2.0 callback, exchanges code for tokens,
  * and stores the integration data securely
+ * 
+ * @security Implements Zod validation for all ML API responses
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
-
-interface MLTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  scope: string;
-  user_id: number;
-  refresh_token: string;
-}
-
-interface MLUserResponse {
-  id: number;
-  nickname: string;
-  email?: string;
-  first_name?: string;
-  last_name?: string;
-  country_id: string;
-  address?: {
-    state?: string;
-    city?: string;
-  };
-}
+import { 
+  MLTokenResponseSchema, 
+  MLUserDataSchema,
+  validateOutput,
+  MLApiError,
+} from '@/utils/validation';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const url = new URL(request.url);
@@ -101,11 +87,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error('Token exchange failed:', tokenResponse.status, errorText);
-      throw new Error(`Token exchange failed: ${errorText}`);
+      throw new MLApiError(
+        `Token exchange failed: ${errorText}`,
+        tokenResponse.status
+      );
     }
 
-    const tokenData: MLTokenResponse = await tokenResponse.json();
-    console.log('Token received successfully for user:', tokenData.user_id);
+    const rawTokenData = await tokenResponse.json();
+    
+    // Validate token response using Zod
+    const tokenData = validateOutput(MLTokenResponseSchema, rawTokenData);
+    
+    console.log('Token received and validated successfully for user:', tokenData.user_id);
 
     // Fetch ML user data
     console.log('Fetching ML user data...');
@@ -119,11 +112,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (!userResponse.ok) {
       const errorText = await userResponse.text();
       console.error('Failed to fetch ML user data:', userResponse.status, errorText);
-      throw new Error(`Failed to fetch ML user data: ${errorText}`);
+      throw new MLApiError(
+        `Failed to fetch ML user data: ${errorText}`,
+        userResponse.status
+      );
     }
 
-    const userData: MLUserResponse = await userResponse.json();
-    console.log('ML user data received:', userData.nickname);
+    const rawUserData = await userResponse.json();
+    
+    // Validate user data using Zod
+    const userData = validateOutput(MLUserDataSchema, rawUserData);
+    
+    console.log('ML user data received and validated:', userData.nickname);
 
     // Save integration using token manager
     const tokenManager = new MLTokenManager();
@@ -157,8 +157,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     console.error('ML Auth Callback Error:', error);
     
-    // Log error details for debugging
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    // Handle specific error types with appropriate responses
+    if (error instanceof MLApiError) {
+      // ML API errors - log details and redirect with specific error
+      console.error('ML API Error:', {
+        message: error.message,
+        statusCode: error.statusCode,
+        mlError: error.mlError,
+      });
+      return NextResponse.redirect(
+        new URL(`/dashboard?ml_error=${encodeURIComponent(error.message)}`, request.url)
+      );
+    }
+    
+    // Validation errors or general errors
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     
     return NextResponse.redirect(
       new URL(`/dashboard?ml_error=${encodeURIComponent(errorMessage)}`, request.url)

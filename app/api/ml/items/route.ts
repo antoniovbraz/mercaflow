@@ -3,42 +3,47 @@
  * 
  * Proxies requests to ML Items API with automatic authentication
  * and token refresh. Handles rate limiting and error management.
+ * 
+ * @security Implements Zod validation for query params and ML API responses
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { syncProducts, getCachedProducts } from '@/utils/mercadolivre/product-sync';
+import {
+  MLItemSchema,
+  CreateMLItemSchema,
+  ItemsSearchQuerySchema,
+  validateQueryParams,
+  validateRequestBody,
+  validateOutput,
+  ValidationError,
+  MLApiError,
+} from '@/utils/validation';
 
 const tokenManager = new MLTokenManager();
-
-interface CreateItemRequest {
-  title: string;
-  category_id: string;
-  price: number;
-  currency_id: string;
-  available_quantity: number;
-  buying_mode: string;
-  condition: string;
-  listing_type_id: string;
-  description?: string;
-  pictures?: Array<{ source: string }>;
-  attributes?: Array<{
-    id: string;
-    value_name?: string;
-    value_id?: string;
-  }>;
-  sale_terms?: Array<{
-    id: string;
-    value_name: string;
-  }>;
-}
 
 /**
  * GET /api/ml/items - List user's items
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
+    // Validate query parameters
+    try {
+      // Validate query params - result not directly used as we forward all params to ML API
+      // But validation ensures they're in expected format
+      validateQueryParams(ItemsSearchQuerySchema, request.nextUrl.searchParams);
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return NextResponse.json(
+          { error: 'Invalid query parameters', details: error.details },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
+    
     // Verify authentication
     const user = await getCurrentUser();
     
@@ -401,34 +406,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Parse and validate request body
-    let itemData: CreateItemRequest;
+    // Parse and validate request body using Zod
+    let itemData;
     try {
-      itemData = await request.json();
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 }
-      );
+      itemData = await validateRequestBody(CreateMLItemSchema, request);
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return NextResponse.json(
+          { 
+            error: 'Invalid item data',
+            details: error.details,
+          },
+          { status: 400 }
+        );
+      }
+      throw error;
     }
 
-    // Basic validation
-    const requiredFields = ['title', 'category_id', 'price', 'currency_id', 'available_quantity', 'condition'];
-    const missingFields = requiredFields.filter(field => !itemData[field as keyof CreateItemRequest]);
-    
-    if (missingFields.length > 0) {
-      return NextResponse.json(
-        { 
-          error: 'Missing required fields',
-          missing: missingFields,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Set defaults for required ML fields
+    // Data is already validated by Zod, can use directly
     const mlItemData = {
       ...itemData,
+      // These have defaults in the schema, but ensure they're set
       buying_mode: itemData.buying_mode || 'buy_it_now',
       listing_type_id: itemData.listing_type_id || 'gold_special',
       currency_id: itemData.currency_id || 'BRL',
@@ -459,16 +457,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         status_code: mlResponse.status,
       });
       
-      return NextResponse.json(
-        { 
-          error: 'Failed to create item on Mercado Livre',
-          details: responseText,
-        },
-        { status: mlResponse.status }
+      throw new MLApiError(
+        `Failed to create item on Mercado Livre: ${responseText}`,
+        mlResponse.status
       );
     }
 
-    const createdItem = JSON.parse(responseText);
+    const rawCreatedItem = JSON.parse(responseText);
+    
+    // Validate ML API response
+    const createdItem = validateOutput(MLItemSchema, rawCreatedItem);
     
     // Log successful creation
     await tokenManager['logSync'](integration.id, 'products', 'success', {
@@ -481,6 +479,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   } catch (error) {
     console.error('ML Items POST Error:', error);
+    
+    // Handle specific error types
+    if (error instanceof MLApiError) {
+      return NextResponse.json(
+        { 
+          error: 'Failed to create item on Mercado Livre',
+          details: error.message,
+        },
+        { status: error.statusCode }
+      );
+    }
     
     if (error instanceof Error && error.message.includes('Insufficient role')) {
       return NextResponse.json(

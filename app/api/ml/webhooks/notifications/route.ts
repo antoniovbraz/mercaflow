@@ -3,51 +3,14 @@ import { createClient } from '@/utils/supabase/server';
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { syncProducts } from '@/utils/mercadolivre/product-sync';
 import { headers } from 'next/headers';
-
-// Webhook notification types from Mercado Livre - Complete list from official docs
-interface MLWebhookNotification {
-  _id?: string;
-  id?: string; // Some webhooks use 'id' instead of '_id'
-  resource: string; // e.g., "/orders/123456789", "/items/MLB123456789"
-  user_id: number;
-  topic: MLWebhookTopic;
-  application_id: number;
-  attempts: number;
-  sent: string; // ISO date
-  received: string; // ISO date
-  actions?: MLWebhookAction[]; // For structured webhooks (messages, vis_leads, post_purchase)
-}
-
-// All supported webhook topics from ML documentation
-type MLWebhookTopic = 
-  // Orders & Sales
-  | 'orders' | 'orders_v2' | 'orders_feedback'
-  // Messages & Communication  
-  | 'messages'
-  // Items & Catalog
-  | 'items' | 'price_suggestion' | 'quotations' | 'items_prices' 
-  | 'stock_locations' | 'user_products_families' | 'catalog_item_competition' | 'catalog_suggestions'
-  // Shipments & Logistics
-  | 'shipments' | 'fbm_stock_operations' | 'flex_handshakes'
-  // Promotions
-  | 'public_offers' | 'public_candidates'
-  // VIS Leads (Real Estate/Motors)
-  | 'vis_leads'
-  // Post Purchase
-  | 'post_purchase'
-  // Questions & Claims  
-  | 'questions' | 'claims'
-  // Payments & Finance
-  | 'payments' | 'invoices' | 'leads_credits';
-
-// Subtopic actions for structured webhooks
-type MLWebhookAction =
-  // Messages actions
-  | 'created' | 'read'
-  // VIS Leads actions  
-  | 'whatsapp' | 'call' | 'question' | 'contact_request' | 'reservation' | 'visit_request'
-  // Post Purchase actions
-  | 'claims' | 'claims_actions';
+import { 
+  MLWebhookNotificationSchema,
+  MLWebhookNotification,
+  validateRequestBody,
+  ValidationError,
+  type MLWebhookTopic,
+  type MLWebhookAction,
+} from '@/utils/validation';
 
 // Enhanced notification data when we fetch from the resource URL
 interface ProcessedNotification extends MLWebhookNotification {
@@ -61,25 +24,32 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🔔 ML Webhook received');
     
-    // Parse the notification
-    const notification: MLWebhookNotification = await request.json();
+    // Validate and parse the notification using Zod
+    let notification;
+    try {
+      notification = await validateRequestBody(MLWebhookNotificationSchema, request);
+      console.log('✅ Webhook notification validated successfully');
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        console.error('❌ Webhook validation failed:', error.details);
+        return NextResponse.json(
+          { 
+            error: 'Invalid notification format',
+            details: error.details,
+          },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
     
     console.log('📝 Notification details:', {
-      id: notification._id,
+      id: notification._id || notification.id,
       topic: notification.topic,
       resource: notification.resource,
       user_id: notification.user_id,
       attempts: notification.attempts,
     });
-
-    // Validate required fields
-    if (!notification._id || !notification.resource || !notification.topic) {
-      console.error('❌ Invalid notification format');
-      return NextResponse.json(
-        { error: 'Invalid notification format' },
-        { status: 400 }
-      );
-    }
 
     // Get headers for potential validation
     const headersList = await headers();
@@ -95,14 +65,16 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // Check if we already processed this notification (idempotency)
+    // ML can send either _id or id depending on the webhook type
+    const notificationId = notification._id || notification.id;
     const { data: existingNotification } = await supabase
       .from('ml_webhook_logs')
       .select('id')
-      .eq('notification_id', notification._id)
+      .eq('notification_id', notificationId)
       .single();
 
     if (existingNotification) {
-      console.log('⚠️ Notification already processed:', notification._id);
+      console.log('⚠️ Notification already processed:', notificationId);
       return NextResponse.json({ status: 'already_processed' });
     }
 
@@ -118,7 +90,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       status: 'success',
       processed_at: new Date().toISOString(),
-      notification_id: notification._id
+      notification_id: notificationId
     });
 
   } catch (error) {

@@ -3,19 +3,19 @@
  * 
  * Manages ML OAuth tokens with automatic refresh, encryption,
  * and secure storage following ML API best practices.
+ * 
+ * @security Implements Zod validation for all token operations
  */
 
 import { createClient } from '@/utils/supabase/server';
 import crypto from 'crypto';
-
-interface MLTokenData {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  token_type: string;
-  scope: string;
-  user_id: number;
-}
+import {
+  MLTokenResponseSchema,
+  MLUserDataSchema,
+  validateOutput,
+  type MLTokenResponse,
+  type MLUserData as ValidatedMLUserData,
+} from '../validation';
 
 interface MLIntegration {
   id: string;
@@ -28,14 +28,6 @@ interface MLIntegration {
   token_expires_at: string;
   scopes: string[];
   status: 'active' | 'expired' | 'revoked' | 'error';
-}
-
-interface MLUserData {
-  id: number;
-  nickname: string;
-  email?: string;
-  first_name?: string;
-  last_name?: string;
 }
 
 interface SyncLogData {
@@ -131,25 +123,30 @@ export class MLTokenManager {
 
   /**
    * Save new token data from OAuth flow
+   * Validates token data before saving to prevent invalid data storage
    */
   async saveTokenData(
     userId: string,
     tenantId: string,
-    tokenData: MLTokenData,
-    mlUserData: MLUserData
+    tokenData: MLTokenResponse,
+    mlUserData: ValidatedMLUserData
   ): Promise<MLIntegration> {
+    // Validate token data (even though it should be validated at OAuth callback)
+    const validatedToken = validateOutput(MLTokenResponseSchema, tokenData);
+    const validatedUser = validateOutput(MLUserDataSchema, mlUserData);
+    
     const supabase = await createClient();
     
     const integrationData = {
       user_id: userId,
       tenant_id: tenantId,
-      ml_user_id: tokenData.user_id,
-      ml_nickname: mlUserData.nickname,
-      ml_email: mlUserData.email,
-      access_token: this.encryptToken(tokenData.access_token),
-      refresh_token: this.encryptToken(tokenData.refresh_token),
-      token_expires_at: new Date(Date.now() + tokenData.expires_in * 1000),
-      scopes: tokenData.scope.split(' '),
+      ml_user_id: validatedToken.user_id,
+      ml_nickname: validatedUser.nickname,
+      ml_email: validatedUser.email,
+      access_token: this.encryptToken(validatedToken.access_token),
+      refresh_token: this.encryptToken(validatedToken.refresh_token),
+      token_expires_at: new Date(Date.now() + validatedToken.expires_in * 1000),
+      scopes: validatedToken.scope.split(' '),
       status: 'active' as const,
       last_sync_at: new Date(),
     };
@@ -169,14 +166,14 @@ export class MLTokenManager {
     // Log successful integration
     await this.logSync(integration.id, 'user_info', 'success', {
       action: 'token_saved',
-      ml_user_id: tokenData.user_id,
-      scopes: tokenData.scope,
+      ml_user_id: validatedToken.user_id,
+      scopes: validatedToken.scope,
     });
 
     return {
       ...integration,
-      access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token,
+      access_token: validatedToken.access_token,
+      refresh_token: validatedToken.refresh_token,
     };
   }
 
@@ -225,7 +222,10 @@ export class MLTokenManager {
         return null;
       }
 
-      const tokenData = await response.json();
+      const rawTokenData = await response.json();
+      
+      // Validate ML API token response
+      const tokenData = validateOutput(MLTokenResponseSchema, rawTokenData);
 
       // Update tokens in database
       await supabase

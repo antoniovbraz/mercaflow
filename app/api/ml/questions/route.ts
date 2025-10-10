@@ -4,11 +4,18 @@
  * Handles ML Questions/Answers functionality with auto-response capabilities.
  * Integrates with ML Questions API to fetch, manage, and automatically respond
  * to customer questions using AI-powered templates.
+ * 
+ * @security Implements Zod validation for query params
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import {
+  QuestionsSearchQuerySchema,
+  validateQueryParams,
+  ValidationError,
+} from '@/utils/validation';
 
 const tokenManager = new MLTokenManager();
 
@@ -45,6 +52,19 @@ interface MLQuestionsResponse {
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     console.log('🔍 ML Questions GET request received');
+    
+    // Validate query parameters
+    try {
+      validateQueryParams(QuestionsSearchQuerySchema, request.nextUrl.searchParams);
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return NextResponse.json(
+          { error: 'Invalid query parameters', details: error.details },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
     
     // Verify authentication
     const user = await getCurrentUser();
