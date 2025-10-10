@@ -132,13 +132,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       stateRecord.user_id,
       stateRecord.tenant_id,
       tokenData,
-      {
-        id: userData.id,
-        nickname: userData.nickname,
-        email: userData.email,
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-      }
+      userData // Pass the complete validated user data object
     );
 
     // Clean up used OAuth state
