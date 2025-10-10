@@ -3,6 +3,7 @@ import { createClient } from '@/utils/supabase/server';
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { syncProducts } from '@/utils/mercadolivre/product-sync';
 import { headers } from 'next/headers';
+import { logger } from '@/utils/logger';
 import { 
   MLWebhookNotificationSchema,
   MLWebhookNotification,
@@ -22,28 +23,30 @@ interface ProcessedNotification extends MLWebhookNotification {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔔 ML Webhook received');
+    logger.info('ML Webhook notification received');
     
     // Validate and parse the notification using Zod
     let notification: MLWebhookNotification;
     
     try {
       notification = await validateRequestBody(MLWebhookNotificationSchema, request);
-      console.log('✅ Webhook notification validated successfully');
+      logger.debug('Webhook notification validated successfully');
     } catch (error) {
       if (error instanceof ValidationError) {
-        console.error('❌ Webhook validation failed:', error.details);
+        logger.warn('Webhook validation failed, checking for unknown topic', { details: error.details });
         
         // Check if it's just an unknown topic/action - if so, log warning but accept
         const errorString = JSON.stringify(error.details);
         if (errorString.includes('Invalid option') || errorString.includes('topic') || errorString.includes('actions')) {
-          console.warn('⚠️ Unknown webhook topic or action, accepting with fallback');
+          logger.warn('Unknown webhook topic or action, accepting with fallback');
           
           // Get raw body to log the unknown values
           const requestClone = request.clone();
           const rawBody = await requestClone.json();
-          console.warn('Original topic:', rawBody.topic);
-          console.warn('Original actions:', rawBody.actions);
+          logger.warn('Unknown webhook data', { 
+            topic: rawBody.topic, 
+            actions: rawBody.actions 
+          });
           
           // Use rawBody with type casting and fallback to 'items' topic
           notification = {
@@ -66,7 +69,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    console.log('📝 Notification details:', {
+    logger.info('📝 Notification details:', {
       id: notification._id || notification.id,
       topic: notification.topic,
       resource: notification.resource,
@@ -79,7 +82,7 @@ export async function POST(request: NextRequest) {
     const userAgent = headersList.get('user-agent');
     
     // Log webhook source for debugging
-    console.log('🌐 Webhook headers:', {
+    logger.info('🌐 Webhook headers:', {
       userAgent,
       contentType: headersList.get('content-type'),
     });
@@ -97,7 +100,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle(); // Use maybeSingle() to allow 0 or 1 results (fixes 406 error)
 
     if (existingNotification) {
-      console.log('⚠️ Notification already processed:', notificationId);
+      logger.info('⚠️ Notification already processed:', notificationId);
       return NextResponse.json({ status: 'already_processed' });
     }
 
@@ -107,7 +110,7 @@ export async function POST(request: NextRequest) {
     // Log the webhook to database for audit
     await logWebhookNotification(processedNotification);
 
-    console.log('✅ Webhook processed successfully');
+    logger.info('✅ Webhook processed successfully');
     
     // ML expects a 200 response to confirm receipt
     return NextResponse.json({ 
@@ -117,7 +120,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('💥 Webhook processing error:', error);
+    logger.error('💥 Webhook processing error:', error);
     
     // Still return 200 to avoid ML retries for unrecoverable errors
     return NextResponse.json(
@@ -144,7 +147,7 @@ async function processNotification(
     // Extract resource ID from the resource URL
     const resourceId = extractResourceId(notification.resource);
     
-    console.log(`🔍 Processing ${notification.topic} notification for resource: ${resourceId}`);
+    logger.info(`🔍 Processing ${notification.topic} notification for resource: ${resourceId}`);
 
     switch (notification.topic) {
       // Orders & Sales
@@ -236,13 +239,13 @@ async function processNotification(
         break;
         
       default:
-        console.log(`ℹ️ Unhandled topic: ${notification.topic}`);
+        logger.info(`ℹ️ Unhandled topic: ${notification.topic}`);
         processed.status = 'skipped';
         processed.error_message = `Unhandled topic: ${notification.topic}`;
     }
 
   } catch (error) {
-    console.error(`❌ Error processing ${notification.topic}:`, error);
+    logger.error(`❌ Error processing ${notification.topic}:`, error);
     processed.status = 'error';
     processed.error_message = error instanceof Error ? error.message : 'Processing error';
   }
@@ -255,7 +258,7 @@ async function processOrderNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`📦 Processing order notification: ${orderId}`);
+  logger.info(`📦 Processing order notification: ${orderId}`);
   
   // Here you would typically:
   // 1. Fetch the updated order data from ML API
@@ -277,7 +280,7 @@ async function processOrderNotification(
       },
     });
     
-  console.log(`✅ Order ${orderId} webhook logged`);
+  logger.info(`✅ Order ${orderId} webhook logged`);
 }
 
 async function processItemNotification(
@@ -285,7 +288,7 @@ async function processItemNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`📋 Processing item notification: ${itemId}`);
+  logger.info(`📋 Processing item notification: ${itemId}`);
 
   try {
     // Find the integration for this user
@@ -297,7 +300,7 @@ async function processItemNotification(
       .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
 
     if (!integration) {
-      console.log(`⚠️ No active integration found for ML user ${notification.user_id}`);
+      logger.info(`⚠️ No active integration found for ML user ${notification.user_id}`);
       return;
     }
 
@@ -309,7 +312,7 @@ async function processItemNotification(
     );
 
     if (!mlResponse.ok) {
-      console.error(`❌ Failed to fetch item ${itemId} from ML:`, mlResponse.status);
+      logger.error(`❌ Failed to fetch item ${itemId} from ML:`, mlResponse.status);
       return;
     }
 
@@ -339,7 +342,7 @@ async function processItemNotification(
     }];
 
     const syncResult = await syncProducts(supabase, integration.id, mlProducts);
-    console.log(`✅ Item ${itemId} synced via webhook:`, syncResult);
+    logger.info(`✅ Item ${itemId} synced via webhook:`, syncResult);
 
     // Log the webhook processing
     await supabase
@@ -359,7 +362,7 @@ async function processItemNotification(
       });
 
   } catch (error) {
-    console.error(`❌ Error syncing item ${itemId} via webhook:`, error);
+    logger.error(`❌ Error syncing item ${itemId} via webhook:`, error);
 
     // Still log the webhook even if sync failed
     await supabase
@@ -383,7 +386,7 @@ async function processQuestionNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`❓ Processing question notification: ${questionId}`);
+  logger.info(`❓ Processing question notification: ${questionId}`);
   
   // Handle new questions - could trigger notifications to seller
   await supabase
@@ -400,7 +403,7 @@ async function processQuestionNotification(
       },
     });
     
-  console.log(`✅ Question ${questionId} webhook logged`);
+  logger.info(`✅ Question ${questionId} webhook logged`);
 }
 
 async function processClaimNotification(
@@ -408,7 +411,7 @@ async function processClaimNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`⚠️ Processing claim notification: ${claimId}`);
+  logger.info(`⚠️ Processing claim notification: ${claimId}`);
   
   // Handle claims/disputes - high priority notifications
   await supabase
@@ -426,7 +429,7 @@ async function processClaimNotification(
       },
     });
     
-  console.log(`✅ Claim ${claimId} webhook logged`);
+  logger.info(`✅ Claim ${claimId} webhook logged`);
 }
 
 async function logWebhookNotification(
@@ -465,14 +468,14 @@ async function logWithServiceRole(notification: ProcessedNotification) {
       .select();
 
     if (error) {
-      console.error('❌ Service role webhook logging failed:', error);
+      logger.error('❌ Service role webhook logging failed:', error);
       return null;
     }
 
-    console.log('📊 Webhook logged with service role');
+    logger.info('📊 Webhook logged with service role');
     return data;
   } catch (error) {
-    console.error('❌ Service role logging error:', error);
+    logger.error('❌ Service role logging error:', error);
     return null;
   }
 }
@@ -541,7 +544,7 @@ async function processOrdersFeedbackNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`⭐ Processing orders feedback notification: ${resourceId}`);
+  logger.info(`⭐ Processing orders feedback notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -564,7 +567,7 @@ async function processMessagesNotification(
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
   const action = notification.actions?.[0] || 'unknown';
-  console.log(`💬 Processing messages notification: ${resourceId}, action: ${action}`);
+  logger.info(`💬 Processing messages notification: ${resourceId}, action: ${action}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -587,7 +590,7 @@ async function processPriceSuggestionNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`💰 Processing price suggestion notification: ${resourceId}`);
+  logger.info(`💰 Processing price suggestion notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -609,7 +612,7 @@ async function processQuotationsNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`🏠 Processing quotations notification: ${resourceId}`);
+  logger.info(`🏠 Processing quotations notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -631,7 +634,7 @@ async function processItemsPricesNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`🏷️ Processing items prices notification: ${resourceId}`);
+  logger.info(`🏷️ Processing items prices notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -653,7 +656,7 @@ async function processStockLocationsNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`📦 Processing stock locations notification: ${resourceId}`);
+  logger.info(`📦 Processing stock locations notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -675,7 +678,7 @@ async function processUserProductsFamiliesNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`👪 Processing user products families notification: ${resourceId}`);
+  logger.info(`👪 Processing user products families notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -697,7 +700,7 @@ async function processCatalogCompetitionNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`🏆 Processing catalog competition notification: ${resourceId}`);
+  logger.info(`🏆 Processing catalog competition notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -719,7 +722,7 @@ async function processCatalogSuggestionsNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`💡 Processing catalog suggestions notification: ${resourceId}`);
+  logger.info(`💡 Processing catalog suggestions notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -741,7 +744,7 @@ async function processShipmentsNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`🚚 Processing shipments notification: ${resourceId}`);
+  logger.info(`🚚 Processing shipments notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -763,7 +766,7 @@ async function processFbmStockNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`📋 Processing FBM stock operations notification: ${resourceId}`);
+  logger.info(`📋 Processing FBM stock operations notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -785,7 +788,7 @@ async function processFlexHandshakesNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`🤝 Processing flex handshakes notification: ${resourceId}`);
+  logger.info(`🤝 Processing flex handshakes notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -807,7 +810,7 @@ async function processPublicOffersNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`🎯 Processing public offers notification: ${resourceId}`);
+  logger.info(`🎯 Processing public offers notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -829,7 +832,7 @@ async function processPublicCandidatesNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`🎪 Processing public candidates notification: ${resourceId}`);
+  logger.info(`🎪 Processing public candidates notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -852,7 +855,7 @@ async function processVisLeadsNotification(
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
   const action = notification.actions?.[0] || 'unknown';
-  console.log(`🏢 Processing VIS leads notification: ${resourceId}, action: ${action}`);
+  logger.info(`🏢 Processing VIS leads notification: ${resourceId}, action: ${action}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -877,7 +880,7 @@ async function processPostPurchaseNotification(
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
   const action = notification.actions?.[0] || 'unknown';
-  console.log(`📦 Processing post purchase notification: ${resourceId}, action: ${action}`);
+  logger.info(`📦 Processing post purchase notification: ${resourceId}, action: ${action}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -901,7 +904,7 @@ async function processPaymentsNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`💳 Processing payments notification: ${resourceId}`);
+  logger.info(`💳 Processing payments notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -924,7 +927,7 @@ async function processInvoicesNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`📄 Processing invoices notification: ${resourceId}`);
+  logger.info(`📄 Processing invoices notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -946,7 +949,7 @@ async function processLeadsCreditsNotification(
   notification: MLWebhookNotification,
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
-  console.log(`💰 Processing leads credits notification: ${resourceId}`);
+  logger.info(`💰 Processing leads credits notification: ${resourceId}`);
   
   await supabase
     .from('ml_sync_logs')
@@ -969,7 +972,7 @@ export async function GET(request: NextRequest) {
   const challenge = searchParams.get('hub.challenge');
   
   if (challenge) {
-    console.log('🔍 Webhook verification challenge received');
+    logger.info('🔍 Webhook verification challenge received');
     return new NextResponse(challenge, { status: 200 });
   }
   

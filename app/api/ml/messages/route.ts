@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 /**
  * ML Messages API
  * 
@@ -119,7 +120,7 @@ export async function GET(request: NextRequest) {
       .eq('is_active', true);
 
     if (integrationsError) {
-      console.error('❌ Error fetching integrations:', integrationsError);
+      logger.error('❌ Error fetching integrations:', integrationsError);
       return NextResponse.json({ error: 'Failed to fetch integrations' }, { status: 500 });
     }
 
@@ -138,7 +139,7 @@ export async function GET(request: NextRequest) {
       try {
         // Sync messages from ML API if requested
         if (sync) {
-          console.log(`🔄 Syncing messages for integration ${integration.id}...`);
+          logger.info(`🔄 Syncing messages for integration ${integration.id}...`);
           
           if (unread_only) {
             // Get unread messages count
@@ -150,7 +151,7 @@ export async function GET(request: NextRequest) {
             const unreadResponse = await unreadRes.json();
 
             if (unreadResponse && unreadResponse.results) {
-              console.log(`📬 Found ${unreadResponse.results.length} unread conversations`);
+              logger.info(`📬 Found ${unreadResponse.results.length} unread conversations`);
               
               // Fetch detailed messages for each unread conversation
               for (const result of unreadResponse.results) {
@@ -173,7 +174,7 @@ export async function GET(request: NextRequest) {
                     });
                   }
                 } catch (resourceError) {
-                  console.error(`❌ Error fetching messages for ${resourcePath}:`, resourceError);
+                  logger.error(`❌ Error fetching messages for ${resourcePath}:`, resourceError);
                 }
               }
             }
@@ -219,7 +220,7 @@ export async function GET(request: NextRequest) {
         const { data: messages, error: messagesError } = await query.limit(50);
 
         if (messagesError) {
-          console.error('❌ Error fetching messages from database:', messagesError);
+          logger.error('❌ Error fetching messages from database:', messagesError);
           continue;
         }
 
@@ -231,7 +232,7 @@ export async function GET(request: NextRequest) {
         }
 
       } catch (integrationError) {
-        console.error(`❌ Error processing integration ${integration.id}:`, integrationError);
+        logger.error(`❌ Error processing integration ${integration.id}:`, integrationError);
         continue;
       }
     }
@@ -239,7 +240,7 @@ export async function GET(request: NextRequest) {
     // Sort messages by creation date
     allMessages.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    console.log(`✅ Successfully fetched ${allMessages.length} messages`);
+    logger.info(`✅ Successfully fetched ${allMessages.length} messages`);
     
     return NextResponse.json({
       messages: allMessages,
@@ -249,7 +250,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ ML Messages API Error:', error);
+    logger.error('❌ ML Messages API Error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -317,7 +318,7 @@ export async function POST(request: NextRequest) {
       messagePayload.attachments = attachments;
     }
 
-    console.log('📤 Sending message to ML API:', { pack_id, to_user_id, text_length: message_text.length });
+    logger.info('📤 Sending message to ML API:', { pack_id, to_user_id, text_length: message_text.length });
 
     // Send message through ML API
     const res = await tokenManager.makeMLRequest(
@@ -337,7 +338,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = await res.json();
-    console.log('✅ Message sent successfully via ML API');
+    logger.info('✅ Message sent successfully via ML API');
 
     // Store message in local database
     const messageData = {
@@ -365,7 +366,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (saveError) {
-      console.error('❌ Error saving message to database:', saveError);
+      logger.error('❌ Error saving message to database:', saveError);
       // Don't fail the API call since message was sent successfully
     }
 
@@ -391,7 +392,7 @@ export async function POST(request: NextRequest) {
       template_used: !!template_id
     });
 
-    console.log('✅ Successfully sent ML message:', pack_id);
+    logger.info('✅ Successfully sent ML message:', pack_id);
     return NextResponse.json({
       success: true,
       message: savedMessage || messageData,
@@ -399,7 +400,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ ML Messages Send Error:', error);
+    logger.error('❌ ML Messages Send Error:', error);
     return NextResponse.json(
       { error: 'Failed to send message' },
       { status: 500 }
@@ -420,7 +421,7 @@ async function syncMessagesToDatabase(
   const packId = extractPackId(resourcePath);
   const messages = conversationData.messages || [];
 
-  console.log(`🔄 Syncing ${messages.length} messages for pack ${packId}`);
+  logger.info(`🔄 Syncing ${messages.length} messages for pack ${packId}`);
 
   for (const message of messages) {
     try {
@@ -460,11 +461,11 @@ async function syncMessagesToDatabase(
         });
 
       if (upsertError) {
-        console.error('❌ Error upserting message:', upsertError);
+        logger.error('❌ Error upserting message:', upsertError);
       }
 
     } catch (msgError) {
-      console.error('❌ Error processing message:', message.id, msgError);
+      logger.error('❌ Error processing message:', message.id, msgError);
     }
   }
 }

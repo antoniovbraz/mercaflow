@@ -16,6 +16,7 @@ import {
   validateOutput,
   MLApiError,
 } from '@/utils/validation';
+import { logger } from '@/utils/logger';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const url = new URL(request.url);
@@ -26,23 +27,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   // Handle OAuth errors
   if (error) {
-    console.error('ML OAuth Error:', error, errorDescription);
+    logger.error('ML OAuth Error', new Error(error), { error, errorDescription });
     return NextResponse.redirect(
       new URL(`/dashboard?ml_error=${encodeURIComponent(error)}`, request.url)
     );
   }
 
   if (!code || !state) {
-    console.error('Missing required parameters:', { code: !!code, state: !!state });
+    logger.error('Missing required OAuth parameters', undefined, { hasCode: !!code, hasState: !!state });
     return NextResponse.redirect(
       new URL('/dashboard?ml_error=missing_parameters', request.url)
     );
   }
 
   try {
-    console.log('🚀 OAuth callback started');
-    console.log('Code:', code ? `${code.substring(0, 10)}...` : 'N/A');
-    console.log('State:', state ? `${state.substring(0, 10)}...` : 'N/A');
+    logger.info('ML OAuth callback started', { 
+      codePreview: code ? `${code.substring(0, 10)}...` : 'N/A',
+      statePreview: state ? `${state.substring(0, 10)}...` : 'N/A'
+    });
     
     const supabase = await createClient();
 
@@ -55,7 +57,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .single();
 
     if (stateError || !stateRecord) {
-      console.error('Invalid or expired state:', stateError);
+      logger.error('Invalid or expired OAuth state', stateError, { state: state?.substring(0, 10) });
       return NextResponse.redirect(
         new URL('/dashboard?ml_error=invalid_state', request.url)
       );
@@ -71,7 +73,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // Exchange authorization code for access token
-    console.log('Exchanging code for token...');
+    logger.info('Exchanging authorization code for access token');
     const tokenResponse = await fetch('https://api.mercadolibre.com/oauth/token', {
       method: 'POST',
       headers: {
@@ -88,13 +90,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }),
     });
 
-    console.log('Token exchange request sent, waiting for response...');
-    console.log('Response status:', tokenResponse.status);
-    console.log('Response ok:', tokenResponse.ok);
+    logger.debug('Token exchange response received', { 
+      status: tokenResponse.status, 
+      ok: tokenResponse.ok 
+    });
     
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('❌ Token exchange failed:', tokenResponse.status, errorText);
+      logger.error('ML token exchange failed', undefined, { 
+        status: tokenResponse.status, 
+        errorText 
+      });
       throw new MLApiError(
         `Token exchange failed: ${errorText}`,
         tokenResponse.status
@@ -104,13 +110,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const rawTokenData = await tokenResponse.json();
     
     // Validate token response using Zod
-    console.log('✅ Token exchange successful! Raw token data from ML:', JSON.stringify(rawTokenData, null, 2));
+    logger.info('ML token exchange successful', { userId: rawTokenData.user_id });
     const tokenData = validateOutput(MLTokenResponseSchema, rawTokenData);
     
-    console.log('Token received and validated successfully for user:', tokenData.user_id);
+    logger.debug('Token validated successfully', { userId: tokenData.user_id });
 
     // Fetch ML user data
-    console.log('Fetching ML user data...');
+    logger.info('Fetching ML user data');
     const userResponse = await fetch('https://api.mercadolibre.com/users/me', {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
@@ -120,7 +126,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (!userResponse.ok) {
       const errorText = await userResponse.text();
-      console.error('Failed to fetch ML user data:', userResponse.status, errorText);
+      logger.error('Failed to fetch ML user data', undefined, { 
+        status: userResponse.status, 
+        errorText 
+      });
       throw new MLApiError(
         `Failed to fetch ML user data: ${errorText}`,
         userResponse.status
@@ -130,10 +139,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const rawUserData = await userResponse.json();
     
     // Validate user data using Zod
-    console.log('Raw user data from ML:', JSON.stringify(rawUserData, null, 2));
+    logger.debug('ML user data received', { nickname: rawUserData.nickname, id: rawUserData.id });
     const userData = validateOutput(MLUserDataSchema, rawUserData);
     
-    console.log('ML user data received and validated:', userData.nickname);
+    logger.info('ML user data validated', { nickname: userData.nickname, userId: userData.id });
 
     // Save integration using token manager
     const tokenManager = new MLTokenManager();
@@ -145,7 +154,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       userData // Pass the complete validated user data object
     );
 
-    console.log('Integration saved successfully for tenant:', stateRecord.tenant_id);
+    logger.info('ML integration saved successfully', { 
+      tenantId: stateRecord.tenant_id,
+      mlUserId: userData.id,
+      nickname: userData.nickname
+    });
 
     // Trigger initial product sync in background (non-blocking)
     // Don't await - let it run asynchronously
@@ -155,11 +168,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         'Cookie': request.headers.get('cookie') || '',
       },
     }).catch(error => {
-      console.error('Failed to trigger initial product sync:', error);
+      logger.warn('Failed to trigger initial product sync', { error: error.message });
       // Don't fail the OAuth flow if sync fails
     });
 
-    console.log('Initial product sync triggered in background');
+    logger.info('Initial product sync triggered in background');
 
     // Clean up used OAuth state
     await supabase
@@ -167,7 +180,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .delete()
       .eq('state', state);
 
-    console.log(`ML integration completed for tenant ${stateRecord.tenant_id}`);
+    logger.info('ML OAuth flow completed successfully', { 
+      tenantId: stateRecord.tenant_id,
+      mlUserId: userData.id
+    });
 
     // Redirect to ML dashboard with success message
     return NextResponse.redirect(
@@ -175,15 +191,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
 
   } catch (error) {
-    console.error('❌ ML Auth Callback Error - Full details:', error);
-    console.error('Error type:', error?.constructor?.name);
-    console.error('Error message:', error instanceof Error ? error.message : String(error));
+    logger.error('ML OAuth callback failed', error instanceof Error ? error : new Error(String(error)), {
+      errorType: error?.constructor?.name,
+      state: state?.substring(0, 10)
+    });
     
     // Handle specific error types with appropriate responses
     if (error instanceof MLApiError) {
       // ML API errors - log details and redirect with specific error
-      console.error('ML API Error details:', {
-        message: error.message,
+      logger.error('ML API Error in OAuth flow', error, {
         statusCode: error.statusCode,
         mlError: error.mlError,
       });
@@ -194,7 +210,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     
     // Validation errors or general errors
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    console.error('Generic error details:', errorMessage);
     
     return NextResponse.redirect(
       new URL(`/dashboard?ml_error=${encodeURIComponent(errorMessage)}`, request.url)

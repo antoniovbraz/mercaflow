@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 /**
  * ML Questions API
  * 
@@ -51,7 +52,7 @@ interface MLQuestionsResponse {
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    console.log('🔍 ML Questions GET request received');
+    logger.info('🔍 ML Questions GET request received');
     
     // Validate query parameters
     try {
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
 
     if (error || !integration) {
-      console.error('No ML integration found for tenant:', tenantId);
+      logger.error('No ML integration found for tenant:', tenantId);
       return NextResponse.json(
         { error: 'No active ML integration found. Please connect your Mercado Livre account.' },
         { status: 404 }
@@ -123,7 +124,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Add API version for new structure (according to ML docs)
     searchParams.set('api_version', '4');
 
-    console.log('📝 Fetching questions with params:', searchParams.toString());
+    logger.info('📝 Fetching questions with params:', searchParams.toString());
 
     // Make authenticated request to ML Questions API using the correct endpoint
     // According to ML docs, use /my/received_questions/search for user's questions
@@ -134,7 +135,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (!mlResponse.ok) {
       const errorText = await mlResponse.text();
-      console.error('ML Questions API Error:', mlResponse.status, errorText);
+      logger.error('ML Questions API Error:', mlResponse.status, errorText);
       
       // Log error
       await tokenManager['logSync'](integration.id, 'questions', 'error', {
@@ -167,11 +168,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       total: data.total || 0,
     });
 
-    console.log('✅ Successfully fetched ML questions:', data.questions.length);
+    logger.info('✅ Successfully fetched ML questions:', data.questions.length);
     return NextResponse.json(data);
 
   } catch (error) {
-    console.error('ML Questions GET Error:', error);
+    logger.error('ML Questions GET Error:', error);
     
     if (error instanceof Error && error.message.includes('No valid ML token')) {
       return NextResponse.json(
@@ -192,7 +193,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    console.log('📝 ML Questions POST request received');
+    logger.info('📝 ML Questions POST request received');
     
     const user = await getCurrentUser();
     if (!user) {
@@ -238,7 +239,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    console.log('💬 Answering question:', question_id);
+    logger.info('💬 Answering question:', question_id);
 
     // Answer the question on ML
     const mlResponse = await tokenManager.makeMLRequest(
@@ -257,7 +258,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (!mlResponse.ok) {
       const errorText = await mlResponse.text();
-      console.error('ML Answer API Error:', mlResponse.status, errorText);
+      logger.error('ML Answer API Error:', mlResponse.status, errorText);
       
       return NextResponse.json(
         { 
@@ -284,7 +285,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .eq('ml_question_id', question_id);
 
     if (updateError) {
-      console.error('Error updating question in database:', updateError);
+      logger.error('Error updating question in database:', updateError);
     }
 
     // If this is a template, save it for future use
@@ -304,11 +305,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       is_template: !!is_template,
     });
 
-    console.log('✅ Successfully answered ML question:', question_id);
+    logger.info('✅ Successfully answered ML question:', question_id);
     return NextResponse.json(responseData);
 
   } catch (error) {
-    console.error('ML Questions POST Error:', error);
+    logger.error('ML Questions POST Error:', error);
     
     return NextResponse.json(
       { error: 'Internal server error while answering question' },
@@ -345,9 +346,9 @@ async function syncQuestionsToDatabase(integrationId: string, questions: MLQuest
     });
 
   if (error) {
-    console.error('Error syncing questions to database:', error);
+    logger.error('Error syncing questions to database:', error);
   } else {
-    console.log('✅ Synced', questionsToUpsert.length, 'questions to database');
+    logger.info('✅ Synced', questionsToUpsert.length, 'questions to database');
   }
 }
 
@@ -374,8 +375,8 @@ async function createQuestionTemplate(
     });
 
   if (error) {
-    console.error('Error creating question template:', error);
+    logger.error('Error creating question template:', error);
   } else {
-    console.log('✅ Created question template:', name);
+    logger.info('✅ Created question template:', name);
   }
 }

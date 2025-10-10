@@ -54,7 +54,9 @@ class Logger {
    * Info level - general informational messages
    * Example: "User logged in", "Email sent", "Sync completed"
    */
-  info(message: string, context?: LogContext): void {
+  info(message: string, ...args: unknown[]): void {
+    // If args are provided, treat them as context
+    const context = args.length > 0 ? { args } : undefined
     this.log('info', message, context)
   }
 
@@ -62,7 +64,8 @@ class Logger {
    * Warning level - potentially problematic situations
    * Example: "Rate limit approaching", "Token expiring soon"
    */
-  warn(message: string, context?: LogContext): void {
+  warn(message: string, ...args: unknown[]): void {
+    const context = args.length > 0 ? { args } : undefined
     this.log('warn', message, context)
   }
 
@@ -70,12 +73,13 @@ class Logger {
    * Error level - error events that might still allow the app to continue
    * Automatically sends to Sentry in production
    */
-  error(message: string, error?: Error | unknown, context?: LogContext): void {
-    const errorObj = error instanceof Error ? error : undefined
-    const errorContext = error instanceof Error ? undefined : (error as LogContext)
-    const fullContext = { ...context, ...errorContext }
+  error(message: string, ...args: unknown[]): void {
+    // First arg might be Error object, rest are context
+    const errorObj = args[0] instanceof Error ? args[0] : undefined
+    const contextArgs = errorObj ? args.slice(1) : args
+    const context = contextArgs.length > 0 ? { args: contextArgs } : undefined
 
-    this.log('error', message, fullContext, errorObj)
+    this.log('error', message, context, errorObj)
 
     // Send to Sentry in production
     if (this.isProduction && typeof window !== 'undefined') {
@@ -83,7 +87,7 @@ class Logger {
       const globalWindow = window as Window & { Sentry?: { captureException: (error: Error, options?: unknown) => void } }
       if (globalWindow.Sentry?.captureException) {
         globalWindow.Sentry.captureException(errorObj || new Error(message), {
-          contexts: { custom: fullContext }
+          contexts: { custom: context }
         })
       }
     } else if (this.isProduction && typeof window === 'undefined') {
@@ -95,7 +99,7 @@ class Logger {
         import('@sentry/nextjs').then((Sentry) => {
           if (Sentry && Sentry.captureException) {
             Sentry.captureException(errorObj || new Error(message), {
-              contexts: { custom: fullContext }
+              contexts: { custom: context }
             })
           }
         }).catch(() => {
