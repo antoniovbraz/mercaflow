@@ -44,7 +44,7 @@ export async function getCurrentUser() {
     }
     
     return user
-  } catch (error) {
+  } catch (_error) {
     // Silently handle auth errors for unauthenticated requests
     return null
   }
@@ -84,4 +84,19 @@ export async function requireProfile() {
     redirect('/onboarding')
   }
   return profile
+}
+
+export async function createServiceClient() {
+  const { createClient } = await import('@supabase/supabase-js')
+  
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
 }

@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     const processedNotification = await processNotification(notification, supabase);
 
     // Log the webhook to database for audit
-    await logWebhookNotification(processedNotification, supabase);
+    await logWebhookNotification(processedNotification);
 
     console.log('✅ Webhook processed successfully');
     
@@ -435,53 +435,18 @@ async function processClaimNotification(
 }
 
 async function logWebhookNotification(
-  notification: ProcessedNotification,
-  supabase: Awaited<ReturnType<typeof createClient>>
+  notification: ProcessedNotification
 ) {
-  try {
-    // Store webhook log for debugging and analytics
-    const { data, error } = await supabase
-      .from('ml_webhook_logs')
-      .insert({
-        notification_id: notification._id || notification.id,
-        topic: notification.topic,
-        resource: notification.resource,
-        user_id: notification.user_id,
-        application_id: notification.application_id || null,
-        attempts: notification.attempts,
-        sent_at: notification.sent || new Date().toISOString(),
-        received_at: notification.received || new Date().toISOString(),
-        processed_at: notification.processed_at,
-        status: notification.status,
-        error_message: notification.error_message || null,
-        resource_data: notification.resource_data || null,
-        actions: notification.actions || null,
-        priority: determinePriority(notification.topic, notification.actions),
-        subtopic: determineSubtopic(notification.topic, notification.actions),
-      })
-      .select();
-
-    if (error) {
-      console.error('❌ Database error logging webhook:', error);
-      // Try with service role if regular client fails
-      return await logWithServiceRole(notification);
-    }
-      
-    console.log('📊 Webhook logged to database successfully');
-    return data;
-  } catch (error) {
-    console.error('❌ Failed to log webhook:', error);
-    // Try with service role as fallback
-    return await logWithServiceRole(notification);
-  }
+  // For webhook logging, always use service role since webhooks are external requests
+  return await logWithServiceRole(notification);
 }
 
 async function logWithServiceRole(notification: ProcessedNotification) {
   try {
-    const { createClient } = await import('@/utils/supabase/server');
+    const { createServiceClient } = await import('@/utils/supabase/server');
     
     // Create service role client for webhook logging
-    const serviceSupabase = await createClient();
+    const serviceSupabase = await createServiceClient();
     
     const { data, error } = await serviceSupabase
       .from('ml_webhook_logs')
