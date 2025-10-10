@@ -40,6 +40,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    console.log('🚀 OAuth callback started');
+    console.log('Code:', code ? `${code.substring(0, 10)}...` : 'N/A');
+    console.log('State:', state ? `${state.substring(0, 10)}...` : 'N/A');
+    
     const supabase = await createClient();
 
     // Validate and retrieve OAuth state
@@ -84,9 +88,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }),
     });
 
+    console.log('Token exchange request sent, waiting for response...');
+    console.log('Response status:', tokenResponse.status);
+    console.log('Response ok:', tokenResponse.ok);
+    
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('Token exchange failed:', tokenResponse.status, errorText);
+      console.error('❌ Token exchange failed:', tokenResponse.status, errorText);
       throw new MLApiError(
         `Token exchange failed: ${errorText}`,
         tokenResponse.status
@@ -96,7 +104,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const rawTokenData = await tokenResponse.json();
     
     // Validate token response using Zod
-    console.log('Raw token data from ML:', JSON.stringify(rawTokenData, null, 2));
+    console.log('✅ Token exchange successful! Raw token data from ML:', JSON.stringify(rawTokenData, null, 2));
     const tokenData = validateOutput(MLTokenResponseSchema, rawTokenData);
     
     console.log('Token received and validated successfully for user:', tokenData.user_id);
@@ -153,12 +161,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
 
   } catch (error) {
-    console.error('ML Auth Callback Error:', error);
+    console.error('❌ ML Auth Callback Error - Full details:', error);
+    console.error('Error type:', error?.constructor?.name);
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
     
     // Handle specific error types with appropriate responses
     if (error instanceof MLApiError) {
       // ML API errors - log details and redirect with specific error
-      console.error('ML API Error:', {
+      console.error('ML API Error details:', {
         message: error.message,
         statusCode: error.statusCode,
         mlError: error.mlError,
@@ -170,6 +180,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     
     // Validation errors or general errors
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error('Generic error details:', errorMessage);
     
     return NextResponse.redirect(
       new URL(`/dashboard?ml_error=${encodeURIComponent(errorMessage)}`, request.url)
