@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 /**
  * ML Items API Proxy
  * 
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Get ML integration for this tenant
     const integration = await tokenManager.getIntegrationByTenant(tenantId);
     
-    console.log('ML Items Debug:', {
+    logger.info('ML Items Debug:', {
       userId: user.id,
       tenantId,
       profileTenantId: profile?.tenant_id,
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
     
     if (!integration) {
-      console.error('No ML integration found for tenant:', tenantId);
+      logger.error('No ML integration found for tenant:', tenantId);
       return NextResponse.json(
         { error: 'No active ML integration found. Please connect your Mercado Livre account.' },
         { status: 404 }
@@ -113,7 +114,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const mlApiUrl = `/users/${integration.ml_user_id}/items/search?${searchParams.toString()}`;
     
-    console.log('Making ML API request:', {
+    logger.info('Making ML API request:', {
       integrationId: integration.id,
       mlUserId: integration.ml_user_id,
       apiUrl: mlApiUrl,
@@ -136,7 +137,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
                           cachedProducts.some((p: any) => p.last_synced_at > oneHourAgo);
 
     if (hasRecentCache && cachedProducts.length >= requestedLimit) {
-      console.log(`Returning cached products: ${cachedProducts.length} items`);
+      logger.info(`Returning cached products: ${cachedProducts.length} items`);
       return NextResponse.json({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         results: cachedProducts.map((p: any) => p.ml_data),
@@ -156,12 +157,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     let hasMore = true;
     let totalItems = 0;
 
-    console.log(`Cache miss or stale, fetching from ML API...`);
+    logger.info(`Cache miss or stale, fetching from ML API...`);
 
     // First request to check total items and determine strategy
     const initialUrl = `/users/${integration.ml_user_id}/items/search?limit=${limit}&offset=0`;
     
-    console.log(`Initial fetch: ${initialUrl}`);
+    logger.info(`Initial fetch: ${initialUrl}`);
     
     const initialResponse = await tokenManager.makeMLRequest(
       integration.id,
@@ -170,14 +171,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (!initialResponse.ok) {
       const errorText = await initialResponse.text();
-      console.error('ML API Initial Error:', initialResponse.status, errorText);
+      logger.error('ML API Initial Error:', initialResponse.status, errorText);
       return NextResponse.json({ error: 'Failed to fetch from ML API' }, { status: initialResponse.status });
     }
 
     const initialData = await initialResponse.json();
     totalItems = initialData.paging?.total || 0;
     
-    console.log(`📊 Total items detected: ${totalItems}`);
+    logger.info(`📊 Total items detected: ${totalItems}`);
 
     if (initialData.results && initialData.results.length > 0) {
       allItemIds.push(...initialData.results);
@@ -185,7 +186,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // If more than 1000 items, use scroll method
     if (totalItems > 1000) {
-      console.log(`🔄 Using scroll method for ${totalItems} items`);
+      logger.info(`🔄 Using scroll method for ${totalItems} items`);
       
       // Start scan mode
       const scanUrl = `/users/${integration.ml_user_id}/items/search?search_type=scan&limit=${limit}`;
@@ -208,7 +209,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         while (scrollId && hasMore && allItemIds.length < totalItems) {
           const scrollUrl = `/users/${integration.ml_user_id}/items/search?search_type=scan&scroll_id=${scrollId}&limit=${limit}`;
           
-          console.log(`Fetching scroll batch: ${allItemIds.length}/${totalItems}`);
+          logger.info(`Fetching scroll batch: ${allItemIds.length}/${totalItems}`);
           
           const scrollResponse = await tokenManager.makeMLRequest(
             integration.id,
@@ -216,7 +217,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           );
 
           if (!scrollResponse.ok) {
-            console.warn(`Scroll request failed: ${scrollResponse.status}`);
+            logger.warn(`Scroll request failed: ${scrollResponse.status}`);
             break;
           }
 
@@ -231,13 +232,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           scrollId = scrollData.scroll_id; // Update scroll_id for next iteration
         }
       } else {
-        console.warn('Scan mode not available, falling back to regular pagination');
+        logger.warn('Scan mode not available, falling back to regular pagination');
       }
     }
 
     // If not using scroll or scroll failed, use regular pagination up to limit
     if (totalItems <= 1000 || allItemIds.length < Math.min(totalItems, 500)) {
-      console.log(`📄 Using regular pagination for remaining items`);
+      logger.info(`📄 Using regular pagination for remaining items`);
       
       let offset = allItemIds.length;
       hasMore = offset < totalItems;
@@ -245,7 +246,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       while (hasMore && offset < Math.min(totalItems, 1000)) { // Reasonable safety limit
         const paginatedUrl = `/users/${integration.ml_user_id}/items/search?limit=${limit}&offset=${offset}`;
         
-        console.log(`Fetching batch: ${offset}-${offset + limit}/${totalItems}`);
+        logger.info(`Fetching batch: ${offset}-${offset + limit}/${totalItems}`);
         
         const batchResponse = await tokenManager.makeMLRequest(
           integration.id,
@@ -254,7 +255,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
         if (!batchResponse.ok) {
           const errorText = await batchResponse.text();
-          console.error('ML API Error on batch:', batchResponse.status, errorText);
+          logger.error('ML API Error on batch:', batchResponse.status, errorText);
           break;
         }
 
@@ -268,11 +269,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         hasMore = (batchData.paging?.offset || 0) + (batchData.paging?.limit || 0) < (batchData.paging?.total || 0);
         offset += limit;
         
-        console.log(`Fetched ${batchData.results?.length || 0} items, total so far: ${allItemIds.length}, hasMore: ${hasMore}`);
+        logger.info(`Fetched ${batchData.results?.length || 0} items, total so far: ${allItemIds.length}, hasMore: ${hasMore}`);
       }
     }
 
-    console.log(`Total item IDs collected: ${allItemIds.length}`);
+    logger.info(`Total item IDs collected: ${allItemIds.length}`);
 
     // Apply client-side filtering if needed
     const paginatedItemIds = allItemIds.slice(requestedOffset, requestedOffset + requestedLimit);
@@ -288,11 +289,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         if (itemResponse.ok) {
           return await itemResponse.json();
         } else {
-          console.warn(`Failed to fetch item ${itemId}:`, itemResponse.status);
+          logger.warn(`Failed to fetch item ${itemId}:`, itemResponse.status);
           return null;
         }
       } catch (error) {
-        console.warn(`Error fetching item ${itemId}:`, error);
+        logger.warn(`Error fetching item ${itemId}:`, error);
         return null;
       }
     });
@@ -300,7 +301,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const itemDetails = await Promise.all(itemDetailsPromises);
     const validItems = itemDetails.filter(item => item !== null);
 
-    console.log(`Fetched ${validItems.length} item details out of ${paginatedItemIds.length} requested`);
+    logger.info(`Fetched ${validItems.length} item details out of ${paginatedItemIds.length} requested`);
     
     // Sync products to local database
     const supabaseForSync = await createClient();
@@ -330,7 +331,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }));
 
       const syncResult = await syncProducts(supabaseForSync, integration.id, mlProducts);
-      console.log('Product sync result:', syncResult);
+      logger.info('Product sync result:', syncResult);
       
       // Log successful sync
       await tokenManager['logSync'](integration.id, 'products', 'success', {
@@ -339,7 +340,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         total: allItemIds.length,
       });
     } catch (syncError) {
-      console.error('Product sync failed:', syncError);
+      logger.error('Product sync failed:', syncError);
       // Don't fail the request if sync fails, just log it
       await tokenManager['logSync'](integration.id, 'products', 'error', {
         action: 'items_sync_failed',
@@ -358,7 +359,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
 
   } catch (error) {
-    console.error('ML Items GET Error:', error);
+    logger.error('ML Items GET Error:', error);
     
     if (error instanceof Error && error.message.includes('Insufficient role')) {
       return NextResponse.json(
@@ -448,7 +449,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const responseText = await mlResponse.text();
     
     if (!mlResponse.ok) {
-      console.error('ML Create Item Error:', mlResponse.status, responseText);
+      logger.error('ML Create Item Error:', mlResponse.status, responseText);
       
       // Log failed creation
       await tokenManager['logSync'](integration.id, 'products', 'error', {
@@ -478,7 +479,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(createdItem, { status: 201 });
 
   } catch (error) {
-    console.error('ML Items POST Error:', error);
+    logger.error('ML Items POST Error:', error);
     
     // Handle specific error types
     if (error instanceof MLApiError) {
