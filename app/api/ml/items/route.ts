@@ -146,41 +146,124 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Otherwise, fetch fresh data from ML API with intelligent pagination
     const allItemIds: string[] = [];
-    let offset = 0;
+    let scrollId: string | null = null;
     const limit = 100; // Max allowed by ML API
     let hasMore = true;
+    let totalItems = 0;
 
     console.log(`Cache miss or stale, fetching from ML API...`);
 
-    // Fetch all item IDs with pagination
-    while (hasMore && allItemIds.length < 1000) { // Safety limit
-      const paginatedUrl = `/users/${integration.ml_user_id}/items/search?limit=${limit}&offset=${offset}`;
+    // First request to check total items and determine strategy
+    const initialUrl = `/users/${integration.ml_user_id}/items/search?limit=${limit}&offset=0`;
+    
+    console.log(`Initial fetch: ${initialUrl}`);
+    
+    const initialResponse = await tokenManager.makeMLRequest(
+      integration.id,
+      initialUrl
+    );
+
+    if (!initialResponse.ok) {
+      const errorText = await initialResponse.text();
+      console.error('ML API Initial Error:', initialResponse.status, errorText);
+      return NextResponse.json({ error: 'Failed to fetch from ML API' }, { status: initialResponse.status });
+    }
+
+    const initialData = await initialResponse.json();
+    totalItems = initialData.paging?.total || 0;
+    
+    console.log(`📊 Total items detected: ${totalItems}`);
+
+    if (initialData.results && initialData.results.length > 0) {
+      allItemIds.push(...initialData.results);
+    }
+
+    // If more than 1000 items, use scroll method
+    if (totalItems > 1000) {
+      console.log(`🔄 Using scroll method for ${totalItems} items`);
       
-      console.log(`Fetching batch: ${paginatedUrl}`);
+      // Start scan mode
+      const scanUrl = `/users/${integration.ml_user_id}/items/search?search_type=scan&limit=${limit}`;
       
-      const batchResponse = await tokenManager.makeMLRequest(
+      const scanResponse = await tokenManager.makeMLRequest(
         integration.id,
-        paginatedUrl
+        scanUrl
       );
 
-      if (!batchResponse.ok) {
-        const errorText = await batchResponse.text();
-        console.error('ML API Error on batch:', batchResponse.status, errorText);
-        break;
-      }
+      if (scanResponse.ok) {
+        const scanData = await scanResponse.json();
+        scrollId = scanData.scroll_id;
+        
+        if (scanData.results && scanData.results.length > 0) {
+          allItemIds.length = 0; // Clear initial results
+          allItemIds.push(...scanData.results);
+        }
 
-      const batchData = await batchResponse.json();
+        // Continue with scroll
+        while (scrollId && hasMore && allItemIds.length < totalItems) {
+          const scrollUrl = `/users/${integration.ml_user_id}/items/search?search_type=scan&scroll_id=${scrollId}&limit=${limit}`;
+          
+          console.log(`Fetching scroll batch: ${allItemIds.length}/${totalItems}`);
+          
+          const scrollResponse = await tokenManager.makeMLRequest(
+            integration.id,
+            scrollUrl
+          );
+
+          if (!scrollResponse.ok) {
+            console.warn(`Scroll request failed: ${scrollResponse.status}`);
+            break;
+          }
+
+          const scrollData = await scrollResponse.json();
+          
+          if (scrollData.results && scrollData.results.length > 0) {
+            allItemIds.push(...scrollData.results);
+          } else {
+            hasMore = false; // No more results
+          }
+
+          scrollId = scrollData.scroll_id; // Update scroll_id for next iteration
+        }
+      } else {
+        console.warn('Scan mode not available, falling back to regular pagination');
+      }
+    }
+
+    // If not using scroll or scroll failed, use regular pagination up to limit
+    if (totalItems <= 1000 || allItemIds.length < Math.min(totalItems, 500)) {
+      console.log(`📄 Using regular pagination for remaining items`);
       
-      if (batchData.results && batchData.results.length > 0) {
-        allItemIds.push(...batchData.results);
+      let offset = allItemIds.length;
+      hasMore = offset < totalItems;
+
+      while (hasMore && offset < Math.min(totalItems, 1000)) { // Reasonable safety limit
+        const paginatedUrl = `/users/${integration.ml_user_id}/items/search?limit=${limit}&offset=${offset}`;
+        
+        console.log(`Fetching batch: ${offset}-${offset + limit}/${totalItems}`);
+        
+        const batchResponse = await tokenManager.makeMLRequest(
+          integration.id,
+          paginatedUrl
+        );
+
+        if (!batchResponse.ok) {
+          const errorText = await batchResponse.text();
+          console.error('ML API Error on batch:', batchResponse.status, errorText);
+          break;
+        }
+
+        const batchData = await batchResponse.json();
+        
+        if (batchData.results && batchData.results.length > 0) {
+          allItemIds.push(...batchData.results);
+        }
         
         // Check if there are more items
         hasMore = (batchData.paging?.offset || 0) + (batchData.paging?.limit || 0) < (batchData.paging?.total || 0);
         offset += limit;
         
-        console.log(`Fetched ${batchData.results.length} items, total so far: ${allItemIds.length}, hasMore: ${hasMore}`);
-      } else {
-        hasMore = false;
+        console.log(`Fetched ${batchData.results?.length || 0} items, total so far: ${allItemIds.length}, hasMore: ${hasMore}`);
       }
     }
 
