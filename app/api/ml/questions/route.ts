@@ -1,10 +1,11 @@
 import { logger } from '@/utils/logger';
+import { getCached, buildCacheKey, CachePrefix, CacheTTL } from '@/utils/redis';
 /**
  * ML Questions API
  * 
  * Handles ML Questions/Answers functionality with auto-response capabilities.
  * Integrates with ML Questions API to fetch, manage, and automatically respond
- * to customer questions using AI-powered templates.
+ * to customer questions using AI-powered templates. With Redis caching.
  * 
  * @security Implements Zod validation for query params
  */
@@ -126,53 +127,84 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     logger.info('📝 Fetching questions with params:', searchParams.toString());
 
-    // Make authenticated request to ML Questions API using the correct endpoint
-    // According to ML docs, use /my/received_questions/search for user's questions
-    const mlResponse = await tokenManager.makeMLRequest(
-      integration.id,
-      `/my/received_questions/search?${searchParams.toString()}`
+    // Build Redis cache key
+    const status = url.searchParams.get('status') || 'all';
+    const itemId = url.searchParams.get('item_id') || 'all';
+    const offset = url.searchParams.get('offset') || '0';
+    const limit = url.searchParams.get('limit') || '50';
+    
+    const cacheKey = buildCacheKey(
+      CachePrefix.ML_QUESTIONS,
+      tenantId,
+      integration.ml_user_id,
+      status,
+      itemId,
+      offset,
+      limit
     );
 
-    if (!mlResponse.ok) {
-      const errorText = await mlResponse.text();
-      logger.error('ML Questions API Error:', mlResponse.status, errorText);
-      
-      // Log error
-      await tokenManager['logSync'](integration.id, 'questions', 'error', {
-        action: 'questions_fetch_failed',
-        error: errorText,
-        status_code: mlResponse.status,
-      });
-      
-      return NextResponse.json(
-        { 
-          error: 'Failed to fetch questions from Mercado Livre',
-          details: errorText,
-          status: mlResponse.status,
-        },
-        { status: mlResponse.status }
-      );
-    }
+    // Wrap ML API call with Redis cache (5 min TTL)
+    const data: MLQuestionsResponse = await getCached(
+      cacheKey,
+      async () => {
+        // Make authenticated request to ML Questions API using the correct endpoint
+        // According to ML docs, use /my/received_questions/search for user's questions
+        const mlResponse = await tokenManager.makeMLRequest(
+          integration.id,
+          `/my/received_questions/search?${searchParams.toString()}`
+        );
 
-    const data: MLQuestionsResponse = await mlResponse.json();
+        if (!mlResponse.ok) {
+          const errorText = await mlResponse.text();
+          logger.error('ML Questions API Error:', mlResponse.status, errorText);
+          
+          // Log error
+          await tokenManager['logSync'](integration.id, 'questions', 'error', {
+            action: 'questions_fetch_failed',
+            error: errorText,
+            status_code: mlResponse.status,
+          });
+          
+          throw new Error(`ML API returned status ${mlResponse.status}: ${errorText}`);
+        }
 
-    // Store/update questions in local database for faster access
-    if (data.questions && data.questions.length > 0) {
-      await syncQuestionsToDatabase(integration.id, data.questions);
-    }
+        const apiData: MLQuestionsResponse = await mlResponse.json();
 
-    // Log successful sync
-    await tokenManager['logSync'](integration.id, 'questions', 'success', {
-      action: 'questions_fetched',
-      count: data.questions?.length || 0,
-      total: data.total || 0,
-    });
+        // Store/update questions in local database for faster access
+        if (apiData.questions && apiData.questions.length > 0) {
+          await syncQuestionsToDatabase(integration.id, apiData.questions);
+        }
 
-    logger.info('✅ Successfully fetched ML questions:', data.questions.length);
+        // Log successful sync
+        await tokenManager['logSync'](integration.id, 'questions', 'success', {
+          action: 'questions_fetched',
+          count: apiData.questions?.length || 0,
+          total: apiData.total || 0,
+        });
+
+        logger.info('✅ Successfully fetched ML questions:', apiData.questions.length);
+        return apiData;
+      },
+      { ttl: CacheTTL.MEDIUM } // 5 minutes cache
+    );
+
     return NextResponse.json(data);
 
   } catch (error) {
     logger.error('ML Questions GET Error:', error);
+    
+    if (error instanceof Error && error.message.includes('ML API returned status')) {
+      // Extract status code from error message
+      const statusMatch = error.message.match(/status (\d+)/);
+      const status = statusMatch ? parseInt(statusMatch[1]) : 500;
+      return NextResponse.json(
+        { 
+          error: 'Failed to fetch questions from Mercado Livre',
+          details: error.message,
+        },
+        { status }
+      );
+    }
     
     if (error instanceof Error && error.message.includes('No valid ML token')) {
       return NextResponse.json(

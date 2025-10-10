@@ -4,6 +4,7 @@ import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { syncProducts } from '@/utils/mercadolivre/product-sync';
 import { headers } from 'next/headers';
 import { logger } from '@/utils/logger';
+import { invalidateCache, buildCacheKey, CachePrefix } from '@/utils/redis';
 import { 
   MLWebhookNotificationSchema,
   MLWebhookNotification,
@@ -260,6 +261,24 @@ async function processOrderNotification(
 ) {
   logger.info(`📦 Processing order notification: ${orderId}`);
   
+  try {
+    // Find the integration for cache invalidation
+    const { data: integration } = await supabase
+      .from('ml_integrations')
+      .select('id, tenant_id')
+      .eq('ml_user_id', notification.user_id.toString())
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (integration) {
+      // Invalidate dashboard cache (includes order stats)
+      await invalidateCache(`${CachePrefix.DASHBOARD}:*:${integration.tenant_id}`);
+      logger.info(`🗑️ Invalidated dashboard cache for tenant ${integration.tenant_id}`);
+    }
+  } catch (error) {
+    logger.warn('Failed to invalidate order cache:', error);
+  }
+  
   // Here you would typically:
   // 1. Fetch the updated order data from ML API
   // 2. Update local cache/database
@@ -344,6 +363,10 @@ async function processItemNotification(
     const syncResult = await syncProducts(supabase, integration.id, mlProducts);
     logger.info(`✅ Item ${itemId} synced via webhook:`, syncResult);
 
+    // Invalidate ML items cache for this tenant (all variants)
+    const invalidatedKeys = await invalidateCache(`${CachePrefix.ML_ITEMS}:${integration.tenant_id}:*`);
+    logger.info(`🗑️ Invalidated ${invalidatedKeys} item cache keys for tenant ${integration.tenant_id}`);
+
     // Log the webhook processing
     await supabase
       .from('ml_sync_logs')
@@ -387,6 +410,24 @@ async function processQuestionNotification(
   supabase: Awaited<ReturnType<typeof createClient>>
 ) {
   logger.info(`❓ Processing question notification: ${questionId}`);
+  
+  try {
+    // Find the integration for cache invalidation
+    const { data: integration } = await supabase
+      .from('ml_integrations')
+      .select('id, tenant_id')
+      .eq('ml_user_id', notification.user_id.toString())
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (integration) {
+      // Invalidate ML questions cache for this tenant
+      const invalidatedKeys = await invalidateCache(`${CachePrefix.ML_QUESTIONS}:${integration.tenant_id}:*`);
+      logger.info(`🗑️ Invalidated ${invalidatedKeys} question cache keys for tenant ${integration.tenant_id}`);
+    }
+  } catch (error) {
+    logger.warn('Failed to invalidate question cache:', error);
+  }
   
   // Handle new questions - could trigger notifications to seller
   await supabase
