@@ -82,7 +82,37 @@ export function MLProductManager() {
 
   useEffect(() => {
     loadProducts();
+    loadStats(); // Load stats separately
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadStats = useCallback(async () => {
+    try {
+      // Fetch total count (all items)
+      const totalResponse = await fetch(`/api/ml/items?limit=1`);
+      const totalData: ProductsResponse = await totalResponse.json();
+      
+      // Fetch active count
+      const activeResponse = await fetch(`/api/ml/items?status=active&limit=1`);
+      const activeData: ProductsResponse = await activeResponse.json();
+      
+      // Fetch paused count
+      const pausedResponse = await fetch(`/api/ml/items?status=paused&limit=1`);
+      const pausedData: ProductsResponse = await pausedResponse.json();
+      
+      // Calculate total sold (need to fetch all for this - use cached total)
+      // For now, just show 0 or fetch from cache
+      
+      setStats({
+        total: totalData.paging.total,
+        active: activeData.paging.total,
+        paused: pausedData.paging.total,
+        sold: 0, // We'll update this with a separate calculation
+      });
+      
+    } catch (err) {
+      console.error('Failed to load stats:', err);
+    }
+  }, []);
 
   const loadProducts = useCallback(async (reset = true, page = 0) => {
     try {
@@ -125,18 +155,6 @@ export function MLProductManager() {
       setHasMore(data.results.length === ITEMS_PER_PAGE);
       setCurrentPage(page);
       
-      // Calculate stats
-      const activeCount = data.results.filter(p => p.status === 'active').length;
-      const pausedCount = data.results.filter(p => p.status === 'paused').length;
-      const soldCount = data.results.reduce((sum, p) => sum + (p.sold_quantity || 0), 0);
-      
-      setStats({
-        total: data.paging.total,
-        active: activeCount,
-        paused: pausedCount,
-        sold: soldCount,
-      });
-      
     } catch (err) {
       console.error('Failed to load products:', err);
       setError(err instanceof Error ? err.message : 'Failed to load products');
@@ -148,7 +166,10 @@ export function MLProductManager() {
 
   const refreshProducts = async () => {
     setRefreshing(true);
-    await loadProducts();
+    await Promise.all([
+      loadProducts(),
+      loadStats()
+    ]);
   };
 
   const loadMore = () => {
