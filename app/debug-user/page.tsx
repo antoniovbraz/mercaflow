@@ -2,6 +2,11 @@ import { getCurrentUser, createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 
 export default async function DebugUser() {
+  // Protect debug endpoint in production
+  if (process.env.NODE_ENV === 'production') {
+    redirect('/')
+  }
+
   const user = await getCurrentUser()
   
   if (!user) {

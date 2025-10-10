@@ -4,6 +4,11 @@ import { getUserRole, hasRole } from '@/utils/supabase/roles'
 import { createClient } from '@/utils/supabase/server'
 
 export default async function DebugRolePage() {
+  // Protect debug endpoint in production
+  if (process.env.NODE_ENV === 'production') {
+    redirect('/')
+  }
+
   // Require authentication
   const user = await getCurrentUser()
   

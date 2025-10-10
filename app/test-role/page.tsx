@@ -3,6 +3,11 @@ import { getCurrentUser } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 
 export default async function TestRolePage() {
+  // Protect debug endpoint in production
+  if (process.env.NODE_ENV === 'production') {
+    redirect('/')
+  }
+
   const supabase = await createClient()
   const user = await getCurrentUser()
   

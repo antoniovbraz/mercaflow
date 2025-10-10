@@ -1,6 +1,12 @@
 import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
 
 export default async function TestPage() {
+  // Protect debug endpoint in production
+  if (process.env.NODE_ENV === 'production') {
+    redirect('/')
+  }
+
   try {
     const supabase = await createClient()
 
