@@ -1,5 +1,5 @@
 import { logger } from '@/utils/logger';
-import { getCached, buildCacheKey, CachePrefix, CacheTTL, invalidateCache } from '@/utils/redis';
+import { getCached, buildCacheKey, CachePrefix, CacheTTL } from '@/utils/redis';
 /**
  * ML Items API Proxy
  * 
