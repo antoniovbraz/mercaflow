@@ -2,11 +2,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager'
+import { 
+  OrdersSearchQuerySchema,
+  validateQueryParams,
+  ValidationError,
+} from '@/utils/validation'
 
 export async function GET(request: NextRequest) {
     try {
         const supabase = await createClient()
         const { searchParams } = new URL(request.url)
+        
+        // Validate query parameters
+        try {
+          validateQueryParams(OrdersSearchQuerySchema, searchParams);
+        } catch (error) {
+          if (error instanceof ValidationError) {
+            return NextResponse.json(
+              { error: 'Parâmetros de consulta inválidos', details: error.details },
+              { status: 400 }
+            );
+          }
+          throw error;
+        }
         
         // Verificar autenticação
         const { data: { user }, error: authError } = await supabase.auth.getUser()
