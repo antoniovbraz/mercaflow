@@ -1,9 +1,11 @@
 import { logger } from '@/utils/logger';
+import { getCached, buildCacheKey, CachePrefix, CacheTTL, invalidateCache } from '@/utils/redis';
 /**
  * ML Items API Proxy
  * 
  * Proxies requests to ML Items API with automatic authentication
  * and token refresh. Handles rate limiting and error management.
+ * With Redis caching layer for improved performance.
  * 
  * @security Implements Zod validation for query params and ML API responses
  */
@@ -121,36 +123,51 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       searchParams: searchParams.toString()
     });
 
-    // For immediate response, fetch from local cache first
-    const supabaseForCache = await createClient();
-    const { products: cachedProducts, total: cachedTotal } = await getCachedProducts(supabaseForCache, integration.id, {
-      status: status || undefined,
-      search: search || undefined,
-      limit: requestedLimit,
-      offset: requestedOffset
-    });
+    // Build Redis cache key including all relevant params
+    const cacheKey = buildCacheKey(
+      CachePrefix.ML_ITEMS,
+      tenantId,
+      integration.ml_user_id,
+      status || 'all',
+      search || 'none',
+      requestedOffset.toString(),
+      requestedLimit.toString()
+    );
 
-    // If we have cached products and they're recent (< 1 hour), return them
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const hasRecentCache = cachedProducts.length > 0 && 
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          cachedProducts.some((p: any) => p.last_synced_at > oneHourAgo);
-
-    if (hasRecentCache && cachedProducts.length >= requestedLimit) {
-      logger.info(`Returning cached products: ${cachedProducts.length} items`);
-      return NextResponse.json({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        results: cachedProducts.map((p: any) => p.ml_data),
-        paging: {
-          total: cachedTotal,
-          offset: requestedOffset,
+    // Try Redis cache first (10 min TTL - longer than Supabase 1h check)
+    const cachedResponse = await getCached(
+      cacheKey,
+      async () => {
+        // For immediate response, fetch from local cache first (Supabase backup)
+        const supabaseForCache = await createClient();
+        const { products: cachedProducts, total: cachedTotal } = await getCachedProducts(supabaseForCache, integration.id, {
+          status: status || undefined,
+          search: search || undefined,
           limit: requestedLimit,
-          primary_results: cachedProducts.length
-        }
-      });
-    }
+          offset: requestedOffset
+        });
 
-    // Otherwise, fetch fresh data from ML API with intelligent pagination
+        // If we have cached products and they're recent (< 1 hour), return them
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        const hasRecentCache = cachedProducts.length > 0 && 
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                              cachedProducts.some((p: any) => p.last_synced_at > oneHourAgo);
+
+        if (hasRecentCache && cachedProducts.length >= requestedLimit) {
+          logger.info(`Returning cached products: ${cachedProducts.length} items`);
+          return {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            results: cachedProducts.map((p: any) => p.ml_data),
+            paging: {
+              total: cachedTotal,
+              offset: requestedOffset,
+              limit: requestedLimit,
+              primary_results: cachedProducts.length
+            }
+          };
+        }
+
+        // Otherwise, fetch fresh data from ML API with intelligent pagination
     const allItemIds: string[] = [];
     let scrollId: string | null = null;
     const limit = 100; // Max allowed by ML API
@@ -348,7 +365,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       });
     }
 
-    return NextResponse.json({
+    // Return fetched items
+    return {
       results: validItems,
       paging: {
         total: allItemIds.length,
@@ -356,7 +374,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         limit: requestedLimit,
         primary_results: validItems.length
       }
-    });
+    };
+      },
+      { ttl: CacheTTL.LONG } // 10 minutes cache
+    );
+
+    // Return cached or fresh response
+    return NextResponse.json(cachedResponse);
 
   } catch (error) {
     logger.error('ML Items GET Error:', error);

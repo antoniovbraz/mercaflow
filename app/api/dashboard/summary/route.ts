@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { getCached, buildCacheKey, CachePrefix, CacheTTL } from '@/utils/redis';
+import { logger } from '@/utils/logger';
 
 export async function GET() {
   try {
@@ -28,82 +30,96 @@ export async function GET() {
       );
     }
 
-    // Get dashboard summary data with optimized queries
+    // Get dashboard summary data with optimized queries + Redis cache
     const tenantId = profile.tenant_id;
+    
+    // Build cache key for this tenant's dashboard
+    const cacheKey = buildCacheKey(CachePrefix.DASHBOARD, 'summary', tenantId);
 
-    // Parallel queries for better performance
-    const [
-      integrationsResult,
-      ordersStatsResult,
-      itemsStatsResult,
-      webhooksStatsResult
-    ] = await Promise.all([
-      // ML Integrations status
-      supabase
-        .from('ml_integrations')
-        .select('id, status, ml_user_id, created_at, last_sync_at')
-        .eq('tenant_id', tenantId),
-        
-      // Orders stats (last 30 days)
-      supabase
-        .from('ml_orders')
-        .select('id, status, total_amount, created_at')
-        .eq('tenant_id', tenantId)
-        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1000),
+    // Wrap expensive dashboard queries in cache
+    const dashboardData = await getCached(
+      cacheKey,
+      async () => {
+        // Parallel queries for better performance
+        const [
+          integrationsResult,
+          ordersStatsResult,
+          itemsStatsResult,
+          webhooksStatsResult
+        ] = await Promise.all([
+          // ML Integrations status
+          supabase
+            .from('ml_integrations')
+            .select('id, status, ml_user_id, created_at, last_sync_at')
+            .eq('tenant_id', tenantId),
+            
+          // Orders stats (last 30 days)
+          supabase
+            .from('ml_orders')
+            .select('id, status, total_amount, created_at')
+            .eq('tenant_id', tenantId)
+            .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+            .order('created_at', { ascending: false })
+            .limit(1000),
 
-      // Items/Products stats
-      supabase
-        .from('ml_products')
-        .select('id, status, price, sold_quantity, available_quantity')
-        .eq('tenant_id', tenantId),
+          // Items/Products stats
+          supabase
+            .from('ml_products')
+            .select('id, status, price, sold_quantity, available_quantity')
+            .eq('tenant_id', tenantId),
 
-      // Recent webhooks (last 24h)
-      supabase
-        .from('ml_webhook_logs')
-        .select('id, topic, status, created_at')
-        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-        .order('created_at', { ascending: false })
-        .limit(100)
-    ]);
+          // Recent webhooks (last 24h)
+          supabase
+            .from('ml_webhook_logs')
+            .select('id, topic, status, created_at')
+            .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+            .order('created_at', { ascending: false })
+            .limit(100)
+        ]);
+
+        return {
+          integrations: integrationsResult.data || [],
+          orders: ordersStatsResult.data || [],
+          items: itemsStatsResult.data || [],
+          webhooks: webhooksStatsResult.data || [],
+        };
+      },
+      { ttl: CacheTTL.MEDIUM } // 5 minutes cache
+    );
 
     // Process integrations
-    const integrations = integrationsResult.data || [];
-    const activeIntegrations = integrations.filter(i => i.status === 'active').length;
+    const { integrations, orders, items, webhooks } = dashboardData;
+    const activeIntegrations = integrations.filter((i: { status: string }) => i.status === 'active').length;
     const totalIntegrations = integrations.length;
 
     // Process orders stats
-    const orders = ordersStatsResult.data || [];
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+    const totalRevenue = orders.reduce((sum: number, order: { total_amount: number | null }) => sum + (order.total_amount || 0), 0);
     const ordersCount = orders.length;
-    const ordersByStatus = orders.reduce((acc, order) => {
+    const ordersByStatus = orders.reduce((acc: Record<string, number>, order: { status: string }) => {
       acc[order.status] = (acc[order.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
     // Process items stats
-    const items = itemsStatsResult.data || [];
     const totalItems = items.length;
-    const activeItems = items.filter(item => item.status === 'active').length;
-    const totalInventory = items.reduce((sum, item) => sum + (item.available_quantity || 0), 0);
-    const totalSold = items.reduce((sum, item) => sum + (item.sold_quantity || 0), 0);
+    const activeItems = items.filter((item: { status: string }) => item.status === 'active').length;
+    const totalInventory = items.reduce((sum: number, item: { available_quantity: number | null }) => sum + (item.available_quantity || 0), 0);
+    const totalSold = items.reduce((sum: number, item: { sold_quantity: number | null }) => sum + (item.sold_quantity || 0), 0);
 
     // Process webhooks stats
-    const webhooks = webhooksStatsResult.data || [];
-    const webhooksByStatus = webhooks.reduce((acc, webhook) => {
+    const webhooksByStatus = webhooks.reduce((acc: Record<string, number>, webhook: { status: string }) => {
       acc[webhook.status] = (acc[webhook.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    const webhooksByTopic = webhooks.reduce((acc, webhook) => {
+    const webhooksByTopic = webhooks.reduce((acc: Record<string, number>, webhook: { topic: string }) => {
       acc[webhook.topic] = (acc[webhook.topic] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
     // Calculate growth trends (simplified - comparing with previous period)
     const last7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const recentOrders = orders.filter(o => new Date(o.created_at) >= last7Days);
-    const recentRevenue = recentOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+    const recentOrders = orders.filter((o: { created_at: string }) => new Date(o.created_at) >= last7Days);
+    const recentRevenue = recentOrders.reduce((sum: number, order: { total_amount: number | null }) => sum + (order.total_amount || 0), 0);
 
     const dashboardSummary = {
       integrations: {
@@ -124,7 +140,7 @@ export async function GET() {
         active: activeItems,
         inventory: totalInventory,
         sold: totalSold,
-        averagePrice: totalItems > 0 ? items.reduce((sum, item) => sum + (item.price || 0), 0) / totalItems : 0
+        averagePrice: totalItems > 0 ? items.reduce((sum: number, item: { price: number | null }) => sum + (item.price || 0), 0) / totalItems : 0
       },
       webhooks: {
         total: webhooks.length,
@@ -138,6 +154,8 @@ export async function GET() {
       }
     };
 
+    logger.info('Dashboard summary generated', { tenantId, cacheKey });
+
     // Set cache headers (5 minutes cache)
     const response = NextResponse.json({
       dashboard: dashboardSummary,
@@ -149,7 +167,7 @@ export async function GET() {
     return response;
 
   } catch (error) {
-    console.error('Erro na API dashboard summary:', error);
+    logger.error('Dashboard summary API error', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
