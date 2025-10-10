@@ -75,7 +75,7 @@ export class MLTokenManager {
       .select('*')
       .eq('id', integrationId)
       .eq('status', 'active')
-      .single();
+      .maybeSingle(); // Use maybeSingle() to allow 0 or 1 results (fixes 406 error)
 
     if (error || !integration) {
       console.error('Integration not found or inactive:', error);
@@ -108,7 +108,7 @@ export class MLTokenManager {
       .select('*')
       .eq('tenant_id', tenantId)
       .eq('status', 'active')
-      .single();
+      .maybeSingle(); // Use maybeSingle() to allow 0 or 1 results (fixes 406 error)
 
     if (error || !integration) {
       return null;

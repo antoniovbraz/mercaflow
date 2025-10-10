@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       .from('ml_webhook_logs')
       .select('id')
       .eq('notification_id', notificationId)
-      .single();
+      .maybeSingle(); // Use maybeSingle() to allow 0 or 1 results (fixes 406 error)
 
     if (existingNotification) {
       console.log('⚠️ Notification already processed:', notificationId);
