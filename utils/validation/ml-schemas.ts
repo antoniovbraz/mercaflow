@@ -19,10 +19,11 @@ import { z } from 'zod';
 /**
  * OAuth 2.0 Token Response from ML
  * Returned when exchanging code for tokens
+ * Note: ML API returns "Bearer" (capitalized), not "bearer"
  */
 export const MLTokenResponseSchema = z.object({
   access_token: z.string().min(1, 'Access token cannot be empty'),
-  token_type: z.literal('bearer'),
+  token_type: z.enum(['bearer', 'Bearer']), // Accept both lowercase and capitalized
   expires_in: z.number().int().positive('Expires in must be positive'),
   scope: z.string(),
   user_id: z.number().int().positive('User ID must be positive'),
