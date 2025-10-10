@@ -98,6 +98,155 @@ meuloja.mercaflow.com.br
 - Linktree: Lista de links (estático)
 - MercaFlow: **Site completo** com SEO, analytics, conversão
 
+---
+
+## 🔌 FUNDAÇÃO TÉCNICA: POWERED BY MERCADO LIVRE APIS
+
+### Por que isso importa?
+
+Muitos concorrentes **reinventam a roda**, construindo scrapers, cálculos complexos e integrações frágeis.
+
+**MercaFlow é diferente**: **Maximizamos APIs nativas do ML** antes de construir features próprias.
+
+---
+
+### 🎯 **Estratégia Híbrida: ML APIs + Nossa Inteligência**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ML Fornece (APIs Nativas)    │  MercaFlow Adiciona         │
+├───────────────────────────────┼──────────────────────────────┤
+│ Preço sugerido (baseline)     │ Elasticidade-preço própria  │
+│ Dados de 15-20 concorrentes   │ Análise de tendências       │
+│ Histórico mudanças (90 dias)  │ Previsão de demanda         │
+│ Métricas de visitas           │ Detecção de anomalias       │
+│ Status vs mercado             │ Alertas inteligentes        │
+│ Automação de preço            │ Simulador de cenários       │
+└───────────────────────────────┴──────────────────────────────┘
+```
+
+**Diferencial**: Não mostramos apenas os números do ML — **adicionamos camada de inteligência**.
+
+---
+
+### 📊 **APIs do Mercado Livre que Usamos**
+
+#### **1. Price Suggestions API** — Baseline Competitivo
+```typescript
+// ML analisa 15-20 concorrentes e retorna:
+{
+  "suggested_price": 127,        // Preço ideal segundo ML
+  "current_price": 150,          // Seu preço atual
+  "status": "with_benchmark_highest", // 🔴 Você está CARO
+  "metadata": {
+    "graph": [  // 🔥 Dados dos concorrentes
+      { "price": 120, "sold_quantity": 450 },
+      { "price": 127, "sold_quantity": 380 }
+    ]
+  }
+}
+```
+
+**Como MercaFlow usa**:
+- ✅ Exibimos: "ML sugere R$127, mas nossa elasticidade recomenda R$125"
+- ✅ Comparamos: Você vs. Top 5 concorrentes (preço + vendas)
+- ✅ Alertamos: "Preço 18% acima mercado. Risco de perder vendas!"
+
+---
+
+#### **2. Metrics API** — Visitas e Conversão
+```typescript
+// ML fornece visitas por produto/período:
+{
+  "item_id": "MLB123",
+  "total_visits": 1250,
+  "details": [
+    { "date": "2024-10-01", "visits": 120 },
+    { "date": "2024-10-02", "visits": 135 }
+  ]
+}
+```
+
+**Como MercaFlow usa**:
+- ✅ Calculamos: Taxa de conversão = vendas / visitas
+- ✅ Detectamos: "Visitas caíram 40% após mudança de preço"
+- ✅ Recomendamos: "Preço atual: bom tráfego mas baixa conversão (-3%)"
+
+---
+
+#### **3. Pricing Automation API** — Histórico de Preços
+```typescript
+// ML rastreia TODAS mudanças de preço:
+{
+  "content": [
+    {
+      "date_time": "2024-10-08T15:26:15Z",
+      "price": 127,
+      "percent_change": -8,
+      "event": "PriceAdjusted"
+    }
+  ]
+}
+```
+
+**Como MercaFlow usa**:
+- ✅ Correlacionamos: Mudança de preço × vendas × visitas
+- ✅ Calculamos: Elasticidade-preço histórica
+- ✅ Aprendemos: "Cada 10% desconto = +25% vendas (seu produto)"
+
+---
+
+#### **4. Items API** — Produtos e Vendas
+```typescript
+// Dados básicos já implementados:
+{
+  "id": "MLB123",
+  "sold_quantity": 450,  // 🔥 Essencial para elasticidade
+  "price": 150,
+  "available_quantity": 30
+}
+```
+
+---
+
+#### **5. Orders API** — Histórico de Vendas
+```typescript
+// Últimos 12 meses de vendas:
+{
+  "order_items": [{
+    "quantity": 1,
+    "unit_price": 150,
+    "sale_fee": 12  // 🔥 Comissão ML para calcular margem
+  }]
+}
+```
+
+---
+
+### 🎯 **Resultado da Estratégia Híbrida**
+
+| Feature MercaFlow | ML Fornece | MercaFlow Adiciona |
+|---|---|---|
+| **Recomendação de Preço** | Sugestão baseline (R$127) | Elasticidade otimizada (R$125) |
+| **Análise Competitiva** | 15-20 concorrentes | Tendências + alertas proativos |
+| **Elasticidade-Preço** | Histórico preços (90d) | Correlação preço × vendas × visitas |
+| **Taxa de Conversão** | Visitas por produto | Anomalias + benchmarks |
+| **Previsão de Demanda** | Histórico vendas | Prophet ML + sazonalidade BR |
+| **Alertas Inteligentes** | Webhooks real-time | Contexto + ações recomendadas |
+
+**Filosofia**:
+> **"ML APIs = Foundation. Nossa IA = Intelligence Layer."**
+
+Exemplo prático:
+```
+❌ Concorrente: "ML diz R$127"
+✅ MercaFlow: "ML diz R$127, mas seu produto tem elasticidade 0.6 
+               (inelástico). Recomendamos R$135 = +R$8 margem × 450 
+               vendas/mês = +R$3.600/mês sem perder vendas."
+```
+
+---
+
 **Value Add**:
 - Vendedor ganha **tráfego próprio** (não depende só do marketplace)
 - Pode fazer marketing (Google Ads, Instagram) para **seu site**

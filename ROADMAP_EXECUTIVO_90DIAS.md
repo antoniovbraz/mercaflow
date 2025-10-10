@@ -66,15 +66,20 @@ Tempo: 2 dias
 
 #### **Semana 2 (Dias 8-14): Performance & RBAC**
 
-**Day 8-9: Cache Estratégico**
+**Day 8-9: Cache Estratégico + Metrics API** 🔴 **ATUALIZADO**
 ```bash
 1. Setup Upstash Redis (free tier)
 2. Cachear dashboard stats (5min TTL)
 3. Cachear listas (2min TTL)
-4. Medir performance (before/after)
+4. 🆕 Implementar Metrics API (visitas + perguntas)
+   - Endpoint: /api/ml/metrics/visits
+   - Tabela: ml_visits (item_id, date, visits, user_id)
+   - Sync diário últimos 90 dias
+5. Dashboard: Card "Visitas vs Vendas"
+6. Medir performance (before/after)
 
-Tempo: 2 dias
-Benefício: Dashboard 5-10x mais rápido
+Tempo: 2 dias (cache: 1d, Metrics API: 1d)
+Benefício: Dashboard 5-10x mais rápido + dados para elasticidade
 ```
 
 **Day 10-12: Validação de Permissões**
@@ -92,12 +97,20 @@ Benefício: Dashboard 5-10x mais rápido
 Tempo: 3 dias
 ```
 
-**Day 13-14: Testes & Deploy**
+**Day 13-14: Histórico de Preços + Testes** 🔴 **ATUALIZADO**
 ```bash
-1. Suite E2E (Playwright)
-2. Fluxos críticos (login → sync → dashboard)
-3. Deploy staging
-4. Smoke tests
+1. 🆕 Rastreamento Histórico de Preços
+   - Webhook handler: detectar mudança preço
+   - Tabela: ml_price_history (item_id, old_price, new_price, changed_at)
+   - Validar 100% capturas
+2. Suite E2E (Playwright)
+3. Fluxos críticos (login → sync → dashboard)
+4. Deploy staging
+5. Smoke tests
+
+Tempo: 2 dias (histórico: 0.5d, testes: 1.5d)
+Crítico: Histórico de preços ESSENCIAL para elasticidade
+```
 
 Tempo: 2 dias
 ```
@@ -114,22 +127,47 @@ Tempo: 2 dias
 
 **Por que começar com IA?** É o diferencial. Sem IA = só mais um dashboard.
 
-**Day 15-21: Elasticidade-Preço (7 dias)**
+**Day 14.5: Price Suggestions API** 🆕 **ADICIONADO**
 ```bash
-Feature: Calcular elasticidade-preço
+🔥 Implementar ANTES da Semana 3 (meio dia)
+
+Endpoint: /api/ml/price-suggestions/[itemId]
+- Busca sugestão ML + dados concorrentes
+- Tabela: ml_price_suggestions (histórico)
+- Cache: 1h (sugestões mudam pouco)
+
+Dashboard Card: "Análise Competitiva"
+- Status: highest/high/ok/lowest
+- Top 5 concorrentes (preço + vendas)
+- Alertas automáticos
+
+Tempo: 4 horas
+Bloqueante: Elasticidade precisa desse baseline!
+```
+
+**Day 15-21: Elasticidade-Preço APRIMORADA (7 dias)** 🔴 **ATUALIZADO**
+```bash
+Feature: Elasticidade-preço com ML Intelligence
+
+🆕 NOVA ABORDAGEM (híbrida):
+- Input 1: ML Suggestions API (baseline mercado)
+- Input 2: ml_price_history (nosso tracking)
+- Input 3: Orders API (sold_quantity)
+- Input 4: Metrics API (visits)
 
 Algoritmo:
-1. Histórico preços × vendas
-2. Calcular slope (ΔQtd / ΔPreço)
-3. Classificar (elástico/unitário/inelástico)
-4. Gerar recomendação
+1. Calcular elasticidade: e = (ΔVendas% / ΔPreço%)
+2. Ponderar com conversão: vendas/visitas
+3. Comparar com ML suggestion
+4. Gerar recomendação otimizada
 
 Tasks:
-Day 15-16: Schema + migration
-Day 17-18: Algoritmo backend
-Day 19-20: UI/UX (Recharts)
+Day 15-16: Schema + algoritmo híbrido
+Day 17-18: Backend (combinar 4 fontes de dados)
+Day 19-20: UI (gráfico + comparação ML vs nossa recomendação)
 Day 21: Validar com 3 sellers
 
+Diferencial: Combinamos inteligência ML + nossa análise!
 Impacto: CRÍTICO - core value
 ```
 
