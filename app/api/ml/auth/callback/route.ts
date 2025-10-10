@@ -147,6 +147,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     console.log('Integration saved successfully for tenant:', stateRecord.tenant_id);
 
+    // Trigger initial product sync in background (non-blocking)
+    // Don't await - let it run asynchronously
+    fetch(new URL('/api/ml/products/sync-all', request.url).toString(), {
+      method: 'POST',
+      headers: {
+        'Cookie': request.headers.get('cookie') || '',
+      },
+    }).catch(error => {
+      console.error('Failed to trigger initial product sync:', error);
+      // Don't fail the OAuth flow if sync fails
+    });
+
+    console.log('Initial product sync triggered in background');
+
     // Clean up used OAuth state
     await supabase
       .from('ml_oauth_states')
