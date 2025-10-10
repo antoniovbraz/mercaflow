@@ -54,7 +54,7 @@ export async function GET(): Promise<NextResponse> {
       .select('*')
       .eq('tenant_id', tenantId)
       .eq('status', 'active') // Only fetch active integrations
-      .single();
+      .maybeSingle();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
       console.error('Error fetching ML integration:', error);
