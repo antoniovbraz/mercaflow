@@ -252,17 +252,73 @@ app/api/ml/webhooks/notifications/route.ts
 
 ---
 
-## 🎉 Conclusão
+### **Fix #7: Referências incorretas de campos no banco (CRÍTICO)** ❌→✅
 
-**Dia 2 está 95% completo em produção.** Três erros críticos foram identificados via Vercel logs e corrigidos sequencialmente:
+**Commit**: e76028a  
+**Data**: 10/10/2025 02:43 UTC  
+**Severidade**: 🔴 CRÍTICA - Bloqueava TODOS os endpoints de API
 
-1. ✅ **Validação de token type** - ML API inconsistência
-2. ✅ **Queries Supabase 406** - Uso incorreto de .single()
-3. ✅ **Webhook duplicate check** - Mesma causa, contexto diferente
+**Sintoma nos Logs Vercel**:
+```javascript
+GET /api/dashboard/summary 404 (Not Found)
+GET /api/ml/items 404 (Not Found)
+GET /rest/v1/profiles?user_id=eq.103c4689... 400 (Bad Request)
+GET /rest/v1/ml_integration_summary?...&status=eq.active 406 (Not Acceptable)
+```
 
-A implementação da validação Zod expôs problemas existentes no código que não eram visíveis antes da validação strict. **Isso demonstra o valor da validação rigorosa: ela não apenas previne novos bugs, mas também revela bugs latentes.**
+**Causa Raiz**:
+Bug crítico generalizado: múltiplas rotas de API estavam usando `profiles.user_id` quando o campo correto é `profiles.id`. A arquitetura do MercaFlow usa:
+- **Tabela `profiles`**: `id` como chave primária (UUID do usuário Supabase Auth)
+- **Outras tabelas**: `user_id` como FK para `profiles.id`
+
+Confusão causada por convenções de naming diferentes entre Supabase Auth e tabelas customizadas.
+
+**Arquivos Corrigidos**:
+```typescript
+// app/api/dashboard/summary/route.ts - Linha 21
+- .eq('user_id', user.id)
++ .eq('id', user.id)
+
+// app/api/ml/webhooks/route.ts - Linha 21  
+- .eq('user_id', user.id)
++ .eq('id', user.id)
+
+// app/api/ml/status/route.ts - Linha 22
+- .eq('user_id', user.id)
++ .eq('id', user.id)
+
+// app/api/ml/integration/route.ts - Linha 22
+- .eq('user_id', user.id)
++ .eq('id', user.id)
+
+// app/api/ml/integration/status/route.ts - Linha 56
+// Bonus fix: VIEW query causando 406
+- .single()
++ .maybeSingle()
+```
+
+**Impacto**:
+- ✅ Dashboard summary: 404 → 200 OK
+- ✅ ML items endpoint: 404 → 200 OK (auth agora funciona)
+- ✅ ML integration summary: 406 → 200 OK
+- ✅ Todas as queries de perfil: 400 Bad Request → 200 OK
+
+**Status**: Deployed (commit e76028a)
 
 ---
 
-**Documentação gerada automaticamente em 10/10/2025 02:10 UTC**
-**Commit de referência: 76cb51d**
+## 🎉 Conclusão
+
+**Dia 2 está 98% completo em produção.** Quatro problemas críticos foram identificados via Vercel logs e corrigidos sequencialmente:
+
+1. ✅ **Validação de token type** - ML API inconsistência (commit 76cb51d)
+2. ✅ **Queries Supabase 406** - Uso incorreto de .single() (commit 76cb51d)
+3. ✅ **RLS INSERT Policy** - Faltava WITH CHECK clause (commit 3d0ee33)
+4. ✅ **Campos de banco incorretos** - profiles.user_id vs profiles.id (commit e76028a) 🔴
+
+O Fix #7 foi o mais crítico, bloqueando TODOS os endpoints de API por usar campo errado. A implementação da validação Zod expôs problemas existentes no código que não eram visíveis antes da validação strict. **Isso demonstra o valor da validação rigorosa: ela não apenas previne novos bugs, mas também revela bugs latentes.**
+
+---
+
+**Documentação atualizada em 10/10/2025 02:44 UTC**
+**Commit de referência: e76028a**
