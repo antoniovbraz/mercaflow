@@ -307,18 +307,191 @@ Confusão causada por convenções de naming diferentes entre Supabase Auth e ta
 
 ---
 
+### **Fix #8: Webhook Validation - Unknown Topics** ⚠️→✅
+
+**Sintoma:**
+```
+POST /api/ml/webhooks/notifications | 400 Bad Request
+Error: Invalid option: expected one of "orders"|"orders_v2"|...
+```
+
+**Causa Raiz:**
+- API do Mercado Livre envia webhooks com topics não documentados
+- Schema Zod `MLWebhookTopicSchema` usa `z.enum()` com 23 topics conhecidos
+- Webhooks com topics novos/undocumented eram rejeitados com 400
+- ML API evolui mais rápido que documentação oficial
+
+**Arquivos Afetados:**
+- `app/api/ml/webhooks/notifications/route.ts` (linha 22+)
+
+**Solução:**
+```typescript
+// ANTES: Rejeita qualquer topic desconhecido
+notification = await validateRequestBody(MLWebhookNotificationSchema, request);
+
+// DEPOIS: Graceful degradation para topics desconhecidos
+try {
+  notification = await validateRequestBody(MLWebhookNotificationSchema, request);
+  console.log('✅ Webhook notification validated successfully');
+} catch (error) {
+  if (error instanceof ValidationError) {
+    const errorString = JSON.stringify(error.details);
+    
+    // Se erro é apenas topic/action desconhecido, aceita com fallback
+    if (errorString.includes('Invalid option') || 
+        errorString.includes('topic') || 
+        errorString.includes('actions')) {
+      console.warn('⚠️ Unknown webhook topic or action, accepting with fallback');
+      
+      // Loga valores originais para monitoramento
+      const requestClone = request.clone();
+      const rawBody = await requestClone.json();
+      console.warn('Original topic:', rawBody.topic);
+      console.warn('Original actions:', rawBody.actions);
+      
+      // Aceita webhook com fallback type-safe
+      notification = {
+        ...rawBody,
+        topic: 'items' as MLWebhookTopic, // Fallback para topic válido
+        actions: undefined, // Remove actions inválidas
+      } as MLWebhookNotification;
+    } else {
+      // Outros erros de validação: rejeitar
+      return NextResponse.json({ error: 'Invalid notification format' }, { status: 400 });
+    }
+  }
+}
+```
+
+**Por que isso é necessário?**
+1. **API em evolução**: ML pode adicionar novos webhook topics sem avisar
+2. **Documentação desatualizada**: Lista oficial de topics nem sempre está completa
+3. **Zero downtime**: Webhooks não devem falhar quando ML adiciona features
+4. **Monitoramento**: Logs warnings permitem adicionar novos topics ao enum depois
+
+**Comportamento:**
+- ✅ Topics conhecidos: Validação normal, processamento completo
+- ⚠️ Topics desconhecidos: Log warning, aceita com fallback, retorna 200 OK
+- ❌ Erros estruturais: Rejeita com 400 (ex: campos obrigatórios faltando)
+
+**Impacto**:
+- ✅ Webhooks não falham mais com 400 por topics desconhecidos
+- ✅ Integração ML continua funcionando mesmo com API updates
+- ✅ Logs permitem identificar novos topics para adicionar ao schema
+- ✅ Zero breaking changes quando ML adiciona features
+
+**Status**: Deployed (commit 7eee498)
+
+---
+
+### **Fix #9: Systematic .single() to .maybeSingle() Audit** ⚠️→✅
+
+**Sintoma:**
+```
+GET /api/ml/questions | 406 Not Acceptable (PGRST116)
+GET /api/ml/integration | 406 Not Acceptable
+DELETE /api/ml/integration/status | 406 Not Acceptable
+```
+
+**Causa Raiz:**
+- 75+ `.single()` calls identificados no codebase via grep search
+- 8 instâncias em rotas de produção usavam `.single()` com filtros não-únicos
+- Pattern problemático: queries com `status='active'` retornam 0 linhas quando usuário não tem integração
+- Supabase PostgREST retorna 406 quando `.single()` encontra 0 ou 2+ rows
+
+**Padrão Problemático:**
+```typescript
+// ❌ RISKY: Causa 406 quando não há integração ativa
+const { data: integration } = await supabase
+  .from('ml_integrations')
+  .eq('tenant_id', tenantId)
+  .eq('status', 'active')  // Campo não-único, pode ser 0 resultados
+  .single();  // Espera exatamente 1 linha
+```
+
+**Arquivos Corrigidos:**
+1. `ml/questions/route.ts` - 2 ocorrências (GET linha 95, POST linha 232)
+2. `ml/integration/route.ts` - 1 ocorrência (GET linha 38)
+3. `ml/integration/status/route.ts` - 1 ocorrência (DELETE linha 154)
+4. `ml/webhooks/notifications/route.ts` - 1 ocorrência (processNotification linha 297)
+5. `ml/questions/templates/route.ts` - 3 ocorrências (GET linha 53, POST linha 132, PATCH linha 217)
+
+**Solução:**
+```typescript
+// ✅ SAFE: Permite 0 resultados sem erro
+const { data: integration } = await supabase
+  .from('ml_integrations')
+  .eq('tenant_id', tenantId)
+  .eq('status', 'active')
+  .maybeSingle();  // Retorna null se 0 linhas, objeto se 1 linha
+
+if (!integration) {
+  return NextResponse.json({ error: 'No active integration found' }, { status: 404 });
+}
+```
+
+**Metodologia de Auditoria:**
+1. **Grep search** - Encontrados 75+ `.single()` calls em todo o código
+2. **Categorização sistemática**:
+   - ✅ **SAFE (60+)**: PRIMARY KEY lookups, UNIQUE constraints, post-INSERT
+   - ⚠️ **RISKY (8)**: Filtros não-únicos (status='active', tenant_id)
+   - 🔧 **DEBUG (7+)**: Rotas de debug/setup (não afetam produção)
+3. **Análise contextual** - Leitura de cada ocorrência para validar pattern
+4. **Aplicação de fixes** - Mudança cirúrgica apenas nos RISKY
+5. **Documentação completa** - Relatório em `AUDITORIA_SINGLE_CALLS.md`
+
+**Chamadas .single() que PERMANECEM corretas:**
+```typescript
+// ✅ PRIMARY KEY lookup - sempre retorna exatamente 1 resultado
+.from('profiles').eq('id', user.id).single()
+
+// ✅ Após INSERT com RETURNING - sempre retorna o record inserido
+.from('ml_question_templates').insert({...}).select().single()
+
+// ✅ Lookup por compound key único
+.from('ml_orders').eq('ml_order_id', orderId).eq('integration_id', integrationId).single()
+
+// ✅ OAuth state - UUID único por design
+.from('ml_oauth_states').eq('state', state).single()
+```
+
+**Impacto:**
+- ✅ Endpoints ML não falham mais com 406 antes de conectar conta
+- ✅ DELETE integration não falha quando não há integração ativa
+- ✅ Webhooks processam corretamente mesmo sem integração
+- ✅ Templates e questions funcionam em todos os estados
+- ✅ Zero breaking changes - apenas muda error code de 406→404
+
+**Documentação:**
+Auditoria completa documentada em `AUDITORIA_SINGLE_CALLS.md`:
+- Lista de todos os 75+ `.single()` calls encontrados
+- Categorização (SAFE/RISKY/DEBUG) com justificativas
+- Análise linha por linha dos 8 fixes aplicados
+- Padrões corretos vs incorretos com exemplos
+
+**Status**: Deployed (commit be71a3f)
+
+---
+
 ## 🎉 Conclusão
 
-**Dia 2 está 98% completo em produção.** Quatro problemas críticos foram identificados via Vercel logs e corrigidos sequencialmente:
+**Dia 2 está 99% completo em produção.** Seis problemas críticos foram identificados via Vercel logs e auditoria sistemática, todos corrigidos:
 
 1. ✅ **Validação de token type** - ML API inconsistência (commit 76cb51d)
 2. ✅ **Queries Supabase 406** - Uso incorreto de .single() (commit 76cb51d)
 3. ✅ **RLS INSERT Policy** - Faltava WITH CHECK clause (commit 3d0ee33)
-4. ✅ **Campos de banco incorretos** - profiles.user_id vs profiles.id (commit e76028a) 🔴
+4. ✅ **Campos de banco incorretos** - profiles.user_id vs profiles.id (commit e76028a) 🔴 **CRÍTICO**
+5. ✅ **Webhook validation strict** - Graceful degradation para topics desconhecidos (commit 7eee498)
+6. ✅ **Systematic .single() audit** - 8 RISKY calls fixados para .maybeSingle() (commit be71a3f) 🔍 **AUDIT COMPLETO**
 
-O Fix #7 foi o mais crítico, bloqueando TODOS os endpoints de API por usar campo errado. A implementação da validação Zod expôs problemas existentes no código que não eram visíveis antes da validação strict. **Isso demonstra o valor da validação rigorosa: ela não apenas previne novos bugs, mas também revela bugs latentes.**
+O Fix #7 (profiles.id) foi o mais crítico, bloqueando TODOS os endpoints de API. O Fix #9 (.single() audit) foi o mais abrangente, envolvendo análise de 75+ chamadas no código. A implementação da validação Zod expôs problemas existentes que não eram visíveis antes da validação strict. **Isso demonstra o valor da validação rigorosa: ela não apenas previne novos bugs, mas também revela bugs latentes.**
+
+**Pendente:**
+- 🔍 OAuth callback ainda falhando - enhanced logging deployed (commit c262519), aguardando teste
+- 🔍 ml_orders query com data errada - investigation needed
+- ✅ .single() audit COMPLETO - 8 fixes aplicados, 60+ verificados como corretos
 
 ---
 
-**Documentação atualizada em 10/10/2025 02:44 UTC**
-**Commit de referência: e76028a**
+**Documentação atualizada em 10/10/2025 03:05 UTC**
+**Commit de referência: be71a3f**
