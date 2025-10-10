@@ -35,7 +35,7 @@ export async function GET() {
       .select('*')
       .eq('tenant_id', profile.id)
       .eq('status', 'active')
-      .single()
+      .maybeSingle() // Use maybeSingle() to allow 0 results without 406 error
 
     if (integrationError) {
       console.error('ML Integration Error:', integrationError)

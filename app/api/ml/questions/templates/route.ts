@@ -50,7 +50,7 @@ export async function GET(): Promise<NextResponse> {
       .select('id')
       .eq('tenant_id', tenantId)
       .eq('status', 'active')
-      .single();
+      .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
 
     if (!integration) {
       return NextResponse.json(
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .select('id')
       .eq('tenant_id', tenantId)
       .eq('status', 'active')
-      .single();
+      .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
 
     if (!integration) {
       return NextResponse.json(
@@ -214,7 +214,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       .select('id')
       .eq('tenant_id', tenantId)
       .eq('status', 'active')
-      .single();
+      .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
 
     if (!integration) {
       return NextResponse.json(

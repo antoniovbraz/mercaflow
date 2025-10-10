@@ -294,7 +294,7 @@ async function processItemNotification(
       .select('id, tenant_id')
       .eq('ml_user_id', notification.user_id.toString())
       .eq('status', 'active')
-      .single();
+      .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
 
     if (!integration) {
       console.log(`⚠️ No active integration found for ML user ${notification.user_id}`);

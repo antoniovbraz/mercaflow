@@ -151,7 +151,7 @@ export async function DELETE(): Promise<NextResponse> {
       .select('id')
       .eq('tenant_id', tenantId)
       .eq('status', 'active')
-      .single();
+      .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
 
     if (findError || !integration) {
       return NextResponse.json(

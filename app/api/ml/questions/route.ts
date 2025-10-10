@@ -92,7 +92,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .select('*')
       .eq('tenant_id', tenantId)
       .eq('status', 'active')
-      .single();
+      .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
 
     if (error || !integration) {
       console.error('No ML integration found for tenant:', tenantId);
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .select('*')
       .eq('tenant_id', tenantId)
       .eq('status', 'active')
-      .single();
+      .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
 
     if (error || !integration) {
       return NextResponse.json(
