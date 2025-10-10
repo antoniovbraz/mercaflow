@@ -695,13 +695,28 @@ export type MLWebhookNotification = z.infer<typeof MLWebhookNotificationSchema>;
 /**
  * Processed Notification Schema
  * After fetching resource data and processing
+ * Note: Cannot use .extend() on schemas with .refine(), so we recreate the full schema
  */
-export const ProcessedNotificationSchema = MLWebhookNotificationSchema.extend({
+export const ProcessedNotificationSchema = z.object({
+  _id: z.string().or(z.number()).optional(),
+  id: z.string().or(z.number()).optional(),
+  resource: z.string().min(1, 'Resource is required'),
+  user_id: z.number().int().positive(),
+  topic: MLWebhookTopicSchema,
+  application_id: z.number().int().positive(),
+  attempts: z.number().int().nonnegative(),
+  sent: z.string().datetime(),
+  received: z.string().datetime(),
+  actions: z.array(MLWebhookActionSchema).optional(),
+  // Additional fields for processed notification
   resource_data: z.record(z.string(), z.unknown()).optional(),
   processed_at: z.string().datetime(),
   status: z.enum(['success', 'error', 'skipped']),
   error_message: z.string().optional(),
-});
+}).refine(
+  (data) => data._id !== undefined || data.id !== undefined,
+  { message: 'Either _id or id must be present' }
+);
 
 export type ProcessedNotification = z.infer<typeof ProcessedNotificationSchema>;
 
