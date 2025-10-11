@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { logger } from '@/utils/logger';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const tokenManager = new MLTokenManager();
 
@@ -189,7 +190,7 @@ async function gatherHistoricalData(
   itemId: string,
   integrationId: string,
   periodDays: number,
-  supabase: any
+  supabase: SupabaseClient
 ): Promise<Array<{
   date: string;
   old_price: number;

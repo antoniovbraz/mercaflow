@@ -369,7 +369,7 @@ function aggregateTimeSeries(data: MetricsDataPoint[], period: 'weekly' | 'month
         }
       });
       return acc;
-    }, {} as any);
+    }, {} as Record<string, number>);
 
     const averages: Record<string, number> = {};
     Object.keys(totals).forEach(key => {
