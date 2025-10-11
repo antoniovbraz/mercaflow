@@ -87,30 +87,32 @@ export function MLProductManager() {
 
   const loadStats = useCallback(async () => {
     try {
-      // Fetch total count (all items)
-      const totalResponse = await fetch(`/api/ml/items?limit=1`);
-      const totalData: ProductsResponse = await totalResponse.json();
-      
-      // Fetch active count
-      const activeResponse = await fetch(`/api/ml/items?status=active&limit=1`);
-      const activeData: ProductsResponse = await activeResponse.json();
-      
-      // Fetch paused count
-      const pausedResponse = await fetch(`/api/ml/items?status=paused&limit=1`);
-      const pausedData: ProductsResponse = await pausedResponse.json();
-      
-      // Calculate total sold (need to fetch all for this - use cached total)
-      // For now, just show 0 or fetch from cache
-      
+      // Use dedicated stats endpoint for accurate and fast statistics
+      const response = await fetch('/api/ml/stats');
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to load statistics');
+      }
+
+      const statsData = await response.json();
+
       setStats({
-        total: totalData.paging.total,
-        active: activeData.paging.total,
-        paused: pausedData.paging.total,
-        sold: 0, // We'll update this with a separate calculation
+        total: statsData.total || 0,
+        active: statsData.active || 0,
+        paused: statsData.paused || 0,
+        sold: statsData.sold || 0,
       });
-      
+
     } catch (err) {
       console.error('Failed to load stats:', err);
+      // Fallback to basic stats if dedicated endpoint fails
+      setStats({
+        total: 0,
+        active: 0,
+        paused: 0,
+        sold: 0,
+      });
     }
   }, []);
 
