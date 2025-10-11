@@ -54,7 +54,7 @@ export async function POST() {
     // Initialize token manager for ML API calls
     const tokenManager = new MLTokenManager();
     
-    // Fetch ALL products with pagination
+    // Fetch ALL products with pagination - prioritize active listings
     let allProducts: Array<Record<string, unknown>> = [];
     let offset = 0;
     const limit = 50; // ML API max per page
@@ -99,9 +99,14 @@ export async function POST() {
         allProducts = [...allProducts, ...products];
         totalFetched += products.length;
         
-        // Check if there are more pages
-        hasMore = paging.offset + paging.limit < paging.total;
-        offset += limit;
+        // Check if there are more pages - fix pagination logic
+        const currentOffset = offset;
+        const nextOffset = offset + limit;
+        hasMore = nextOffset < paging.total;
+        
+        console.log(`📄 Pagination check: offset=${currentOffset}, limit=${limit}, total=${paging.total}, nextOffset=${nextOffset}, hasMore=${hasMore}`);
+        
+        offset = nextOffset;
         
         // Safety check: prevent infinite loops
         if (offset > 10000) {
@@ -118,17 +123,27 @@ export async function POST() {
 
     console.log(`📊 Total products fetched from ML: ${allProducts.length}`);
     
-    // Log sample of fetched products
-    if (allProducts.length > 0) {
-      console.log(`📋 Sample products:`, allProducts.slice(0, 2).map(p => ({
-        id: p.id,
-        title: p.title,
-        status: p.status,
-        price: p.price
-      })));
-    } else {
-      console.log(`⚠️ No products fetched from ML API`);
-    }
+    // Sort products: active first, then paused, then others
+    allProducts.sort((a, b) => {
+      const statusOrder = { 'active': 0, 'paused': 1, 'closed': 2 };
+      const statusA = statusOrder[a.status as keyof typeof statusOrder] ?? 3;
+      const statusB = statusOrder[b.status as keyof typeof statusOrder] ?? 3;
+      
+      if (statusA !== statusB) {
+        return statusA - statusB;
+      }
+      
+      // If same status, sort by title
+      return String(a.title || '').localeCompare(String(b.title || ''));
+    });
+    
+    console.log(`📋 Products sorted: active first, then paused, then closed`);
+    console.log(`📋 Status distribution:`, {
+      active: allProducts.filter(p => p.status === 'active').length,
+      paused: allProducts.filter(p => p.status === 'paused').length,
+      closed: allProducts.filter(p => p.status === 'closed').length,
+      other: allProducts.filter(p => !['active', 'paused', 'closed'].includes(p.status as string)).length
+    });
 
     // Now sync all products to database
     let syncedCount = 0;
