@@ -1,11 +1,11 @@
 /**
- * ML Metrics API - Optimized
+ * ML Aggregated Metrics API
  *
- * Provides comprehensive metrics with intelligent caching and aggregation
- * Supports visits, questions, phone views with time-based analysis
+ * Provides aggregated metrics across multiple types in a single request
+ * Useful for dashboard views and comprehensive analytics
  *
- * Endpoint: GET /api/ml/metrics?type=visits&period=30d&aggregate=daily
- * ML APIs: Users visits, Items visits, Contacts questions, Phone views
+ * Endpoint: GET /api/ml/metrics/aggregated?types=visits,questions&period=30d&aggregate=weekly
+ * ML APIs: Multiple metrics endpoints combined
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,9 +16,9 @@ import { logger } from '@/utils/logger';
 
 const tokenManager = new MLTokenManager();
 
-interface MetricsRequest {
-  type: 'visits' | 'visits_time_window' | 'questions' | 'questions_time_window' | 'phone_views' | 'phone_views_time_window';
-  period?: string; // '7d', '30d', '90d', etc.
+interface AggregatedMetricsRequest {
+  types: string[]; // Array of metric types to aggregate
+  period?: string;
   aggregate?: 'daily' | 'weekly' | 'monthly';
   date_from?: string;
   date_to?: string;
@@ -32,39 +32,44 @@ interface MLIntegration {
   tenant_id: string;
 }
 
-interface MetricsDataPoint {
-  date?: string;
-  visits?: number;
-  questions?: number;
-  phone_views?: number;
-  [key: string]: string | number | undefined;
-}
-
-interface MetricsData {
-  results?: MetricsDataPoint[];
-  total_visits?: number;
-  total?: number;
-  api_url?: string;
-  [key: string]: MetricsDataPoint[] | number | string | undefined;
-}
-
-interface MetricsResponse {
-  type: string;
-  period: string;
-  aggregate: string;
-  data: MetricsData;
+interface MetricResult {
+  data: Record<string, unknown>;
   summary: {
     total: number;
     average: number;
     trend: 'up' | 'down' | 'stable';
     trend_percentage: number;
   };
+  api_url: string;
+  error?: string;
+}
+
+interface AggregatedMetricsResponse {
+  types: string[];
+  period: string;
+  aggregate: string;
+  metrics: Record<string, {
+    data: Record<string, unknown>;
+    summary: {
+      total: number;
+      average: number;
+      trend: 'up' | 'down' | 'stable';
+      trend_percentage: number;
+    };
+    api_url: string;
+    error?: string;
+  }>;
+  overall_summary: {
+    total_metrics: number;
+    successful_requests: number;
+    failed_requests: number;
+    average_trend: 'up' | 'down' | 'stable';
+  };
   cache_info: {
     cached: boolean;
     cache_key: string;
     expires_at?: string;
   };
-  api_url: string;
   last_updated: string;
 }
 
@@ -102,87 +107,100 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Parse request parameters
     const { searchParams } = new URL(request.url);
-    const metricsRequest: MetricsRequest = {
-      type: (searchParams.get('type') || 'visits') as MetricsRequest['type'],
+    const typesParam = searchParams.get('types');
+
+    if (!typesParam) {
+      return NextResponse.json(
+        {
+          error: 'types parameter is required',
+          example: 'types=visits,questions,phone_views'
+        },
+        { status: 400 }
+      );
+    }
+
+    const requestData: AggregatedMetricsRequest = {
+      types: typesParam.split(',').map(t => t.trim()),
       period: searchParams.get('period') || '30d',
-      aggregate: (searchParams.get('aggregate') || 'daily') as MetricsRequest['aggregate'],
+      aggregate: (searchParams.get('aggregate') || 'daily') as AggregatedMetricsRequest['aggregate'],
       date_from: searchParams.get('date_from') || undefined,
       date_to: searchParams.get('date_to') || undefined,
       item_ids: searchParams.get('item_ids')?.split(','),
       user_id: searchParams.get('user_id') || undefined
     };
 
-    // Validate metric type
+    // Validate metric types
     const validTypes = ['visits', 'visits_time_window', 'questions', 'questions_time_window', 'phone_views', 'phone_views_time_window'];
-    if (!validTypes.includes(metricsRequest.type)) {
+    const invalidTypes = requestData.types.filter(type => !validTypes.includes(type));
+
+    if (invalidTypes.length > 0) {
       return NextResponse.json(
         {
-          error: 'Invalid metric type',
+          error: 'Invalid metric types',
+          invalid_types: invalidTypes,
           valid_types: validTypes
         },
         { status: 400 }
       );
     }
 
-    logger.info(`Fetching metrics: ${metricsRequest.type} for period: ${metricsRequest.period}`);
+    logger.info(`Fetching aggregated metrics: ${requestData.types.join(', ')} for period: ${requestData.period}`);
 
-    // Check cache first (except for real-time requests)
+    // Check cache first
     const cacheKey = buildCacheKey(
       CachePrefix.ML_USER,
-      `${tenantId}_${metricsRequest.type}_${metricsRequest.period}_${metricsRequest.aggregate}`
+      `aggregated_${tenantId}_${requestData.types.sort().join('_')}_${requestData.period}_${requestData.aggregate}`
     );
 
     let cached = false;
     let cacheExpiry: string | undefined;
 
-    // Use cache for non-real-time requests (older than 1 day)
-    const shouldUseCache = !isRealTimeRequest(metricsRequest);
-    let metricsData: MetricsData | null = null;
+    // Use cache for non-real-time requests
+    const shouldUseCache = !isRealTimeRequest(requestData);
+
+    let aggregatedData: Record<string, any> | null = null;
 
     if (shouldUseCache) {
       try {
-        metricsData = await getCached(
+        aggregatedData = await getCached(
           cacheKey,
-          async () => fetchMetricsFromML(metricsRequest, integration),
-          { ttl: CacheTTL.MEDIUM, context: { tenantId, type: metricsRequest.type } }
+          async () => fetchAggregatedMetrics(requestData, integration),
+          { ttl: CacheTTL.MEDIUM, context: { tenantId, types: requestData.types } }
         );
         cached = true;
         cacheExpiry = new Date(Date.now() + CacheTTL.MEDIUM * 1000).toISOString();
-        logger.info(`Using cached metrics data for key: ${cacheKey}`);
+        logger.info(`Using cached aggregated metrics data for key: ${cacheKey}`);
       } catch (cacheError) {
         logger.warn('Cache operation failed, fetching fresh data:', cacheError);
-        // Fall back to fresh data
       }
     }
 
     // Fetch from ML API if not cached
-    if (!metricsData) {
-      metricsData = await fetchMetricsFromML(metricsRequest, integration);
+    if (!aggregatedData) {
+      aggregatedData = await fetchAggregatedMetrics(requestData, integration);
     }
 
-    // Process and aggregate data
-    const processedData = processMetricsData(metricsData, metricsRequest);
-    const summary = calculateMetricsSummary(processedData);
+    // Calculate overall summary
+    const overallSummary = calculateOverallSummary(aggregatedData);
 
-    const response: MetricsResponse = {
-      type: metricsRequest.type,
-      period: metricsRequest.period!,
-      aggregate: metricsRequest.aggregate!,
-      data: processedData,
-      summary,
+    const response: AggregatedMetricsResponse = {
+      types: requestData.types,
+      period: requestData.period!,
+      aggregate: requestData.aggregate!,
+      metrics: aggregatedData,
+      overall_summary: overallSummary,
       cache_info: {
         cached,
         cache_key: cacheKey,
         expires_at: cacheExpiry
       },
-      api_url: metricsData.api_url || '',
       last_updated: new Date().toISOString()
     };
 
     return NextResponse.json(response);
 
   } catch (error) {
-    logger.error('ML Metrics GET Error:', error);
+    logger.error('ML Aggregated Metrics GET Error:', error);
 
     if (error instanceof Error && error.message.includes('Insufficient role')) {
       return NextResponse.json(
@@ -199,31 +217,77 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 /**
- * Determine if this is a real-time request that shouldn't use cache
+ * Determine if this is a real-time request
  */
-function isRealTimeRequest(request: MetricsRequest): boolean {
-  // Real-time if requesting data from the last 24 hours
+function isRealTimeRequest(request: AggregatedMetricsRequest): boolean {
   if (request.date_to) {
     const dateTo = new Date(request.date_to);
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     return dateTo > oneDayAgo;
   }
-
-  // Real-time if period is very short (1d or 7d)
   return request.period === '1d' || request.period === '7d';
 }
 
 /**
- * Fetch metrics from ML API based on type
+ * Fetch aggregated metrics from multiple ML API endpoints
  */
-async function fetchMetricsFromML(request: MetricsRequest, integration: MLIntegration): Promise<MetricsData> {
+async function fetchAggregatedMetrics(request: AggregatedMetricsRequest, integration: MLIntegration): Promise<Record<string, any>> {
+  const results: Record<string, any> = {};
+
+  // Fetch each metric type concurrently
+  const promises = request.types.map(async (type) => {
+    try {
+      const metricsRequest = {
+        type: type as any,
+        period: request.period,
+        aggregate: request.aggregate,
+        date_from: request.date_from,
+        date_to: request.date_to,
+        item_ids: request.item_ids,
+        user_id: request.user_id
+      };
+
+      const data = await fetchMetricsFromML(metricsRequest, integration);
+
+      // Calculate summary for this metric
+      const summary = calculateMetricsSummary(data);
+
+      results[type] = {
+        data,
+        summary,
+        api_url: data.api_url || ''
+      };
+    } catch (error) {
+      logger.warn(`Failed to fetch ${type} metrics:`, error);
+      results[type] = {
+        data: null,
+        summary: {
+          total: 0,
+          average: 0,
+          trend: 'stable' as const,
+          trend_percentage: 0
+        },
+        api_url: '',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  });
+
+  await Promise.all(promises);
+  return results;
+}
+
+/**
+ * Fetch metrics from ML API (simplified version for aggregation)
+ */
+async function fetchMetricsFromML(request: any, integration: MLIntegration): Promise<any> {
   const { type, period, date_from, date_to, item_ids, user_id } = request;
   const mlUserId = user_id || integration.ml_user_id;
 
   let apiUrl = '';
   const baseUrl = 'https://api.mercadolibre.com';
 
-  // Parse period (e.g., '30d' -> last: 30, unit: day)
+  // Parse period
   const periodMatch = period?.match(/^(\d+)([dwMy])$/);
   const last = periodMatch ? parseInt(periodMatch[1]) : 30;
   const unit = periodMatch ? periodMatch[2].replace('d', 'day').replace('w', 'week').replace('M', 'month').replace('y', 'year') : 'day';
@@ -280,7 +344,6 @@ async function fetchMetricsFromML(request: MetricsRequest, integration: MLIntegr
       throw new Error(`Unsupported metric type: ${type}`);
   }
 
-  // Fetch from ML API
   const response = await fetch(apiUrl, {
     headers: {
       'Authorization': `Bearer ${integration.access_token}`,
@@ -290,12 +353,10 @@ async function fetchMetricsFromML(request: MetricsRequest, integration: MLIntegr
 
   if (!response.ok) {
     const errorText = await response.text();
-    logger.error(`ML Metrics API error: ${response.status} - ${errorText}`);
     throw new Error(`ML API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
-
   return {
     ...data,
     api_url: apiUrl
@@ -303,91 +364,9 @@ async function fetchMetricsFromML(request: MetricsRequest, integration: MLIntegr
 }
 
 /**
- * Process and aggregate metrics data
+ * Calculate metrics summary (simplified version)
  */
-function processMetricsData(data: MetricsData, request: MetricsRequest): MetricsData {
-  const { aggregate } = request;
-
-  // If no aggregation needed, return as-is
-  if (!aggregate || aggregate === 'daily') {
-    return data;
-  }
-
-  // Implement aggregation logic based on type
-  if (data && typeof data === 'object') {
-    // For time window data, aggregate by week/month
-    if (aggregate === 'weekly' && data.results) {
-      return {
-        ...data,
-        results: aggregateTimeSeries(data.results, 'weekly')
-      };
-    } else if (aggregate === 'monthly' && data.results) {
-      return {
-        ...data,
-        results: aggregateTimeSeries(data.results, 'monthly')
-      };
-    }
-  }
-
-  return data;
-}
-
-/**
- * Aggregate time series data
- */
-function aggregateTimeSeries(data: MetricsDataPoint[], period: 'weekly' | 'monthly'): MetricsDataPoint[] {
-  if (!Array.isArray(data)) return data;
-
-  const aggregated: { [key: string]: MetricsDataPoint[] } = {};
-
-  data.forEach(item => {
-    if (item.date) {
-      const date = new Date(item.date);
-      let key: string;
-
-      if (period === 'weekly') {
-        const weekStart = new Date(date);
-        weekStart.setDate(date.getDate() - date.getDay()); // Start of week
-        key = weekStart.toISOString().split('T')[0];
-      } else { // monthly
-        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      }
-
-      if (!aggregated[key]) {
-        aggregated[key] = [];
-      }
-      aggregated[key].push(item);
-    }
-  });
-
-  // Calculate averages for each period
-  return Object.entries(aggregated).map(([periodKey, items]) => {
-    const totals = items.reduce((acc: Record<string, number>, item: MetricsDataPoint) => {
-      Object.keys(item).forEach(key => {
-        if (typeof item[key] === 'number') {
-          acc[key] = (acc[key] || 0) + item[key];
-        }
-      });
-      return acc;
-    }, {} as any);
-
-    const averages: Record<string, number> = {};
-    Object.keys(totals).forEach(key => {
-      averages[key] = Math.round((totals[key] / items.length) * 100) / 100;
-    });
-
-    return {
-      date: periodKey,
-      ...averages,
-      sample_size: items.length
-    };
-  });
-}
-
-/**
- * Calculate metrics summary with trend analysis
- */
-function calculateMetricsSummary(data: MetricsData): MetricsResponse['summary'] {
+function calculateMetricsSummary(data: any): { total: number; average: number; trend: 'up' | 'down' | 'stable'; trend_percentage: number } {
   let total = 0;
   let average = 0;
   let trend: 'up' | 'down' | 'stable' = 'stable';
@@ -395,14 +374,12 @@ function calculateMetricsSummary(data: MetricsData): MetricsResponse['summary'] 
 
   try {
     if (data && typeof data === 'object') {
-      // Extract numeric values
       const values: number[] = [];
 
       if (Array.isArray(data)) {
-        // Time series data
-        data.forEach((item: MetricsDataPoint) => {
+        data.forEach((item: any) => {
           if (typeof item === 'object') {
-            Object.values(item).forEach(val => {
+            Object.values(item).forEach((val: any) => {
               if (typeof val === 'number') {
                 values.push(val);
                 total += val;
@@ -414,11 +391,9 @@ function calculateMetricsSummary(data: MetricsData): MetricsResponse['summary'] 
           }
         });
       } else if (data.total_visits !== undefined) {
-        // Visits summary
         total = data.total_visits;
         values.push(total);
       } else if (data.total !== undefined) {
-        // Questions/Phone views summary
         total = data.total;
         values.push(total);
       }
@@ -426,7 +401,6 @@ function calculateMetricsSummary(data: MetricsData): MetricsResponse['summary'] 
       if (values.length > 0) {
         average = total / values.length;
 
-        // Calculate trend (compare first half vs second half)
         const midPoint = Math.floor(values.length / 2);
         const firstHalf = values.slice(0, midPoint);
         const secondHalf = values.slice(midPoint);
@@ -454,5 +428,45 @@ function calculateMetricsSummary(data: MetricsData): MetricsResponse['summary'] 
     average: Math.round(average * 100) / 100,
     trend,
     trend_percentage: Math.round(trendPercentage * 100) / 100
+  };
+}
+
+/**
+ * Calculate overall summary across all metrics
+ */
+function calculateOverallSummary(metrics: Record<string, any>): AggregatedMetricsResponse['overall_summary'] {
+  const types = Object.keys(metrics);
+  let successfulRequests = 0;
+  let failedRequests = 0;
+  const trends: ('up' | 'down' | 'stable')[] = [];
+
+  types.forEach(type => {
+    const metric = metrics[type];
+    if (metric.error) {
+      failedRequests++;
+    } else {
+      successfulRequests++;
+      trends.push(metric.summary.trend);
+    }
+  });
+
+  // Calculate average trend
+  let averageTrend: 'up' | 'down' | 'stable' = 'stable';
+  if (trends.length > 0) {
+    const upCount = trends.filter(t => t === 'up').length;
+    const downCount = trends.filter(t => t === 'down').length;
+
+    if (upCount > downCount) {
+      averageTrend = 'up';
+    } else if (downCount > upCount) {
+      averageTrend = 'down';
+    }
+  }
+
+  return {
+    total_metrics: types.length,
+    successful_requests: successfulRequests,
+    failed_requests: failedRequests,
+    average_trend: averageTrend
   };
 }

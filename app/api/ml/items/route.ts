@@ -148,12 +148,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         });
 
         // If we have cached products and they're recent (< 1 hour), return them
+        // But only for small requests (pagination), not for large counts (stats)
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-        const hasRecentCache = cachedProducts.length > 0 && 
+        const hasRecentCache = cachedProducts.length > 0 &&
                               // eslint-disable-next-line @typescript-eslint/no-explicit-any
                               cachedProducts.some((p: any) => p.last_synced_at > oneHourAgo);
 
-        if (hasRecentCache && cachedProducts.length >= requestedLimit) {
+        // For large limits (like stats requests), always fetch fresh data
+        // For small limits (pagination), use cache if available
+        const shouldUseCache = hasRecentCache && requestedLimit <= 50 && cachedProducts.length >= requestedLimit;
+
+        if (shouldUseCache) {
           logger.info(`Returning cached products: ${cachedProducts.length} items`);
           return {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
