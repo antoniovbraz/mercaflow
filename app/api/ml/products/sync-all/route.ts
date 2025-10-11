@@ -75,10 +75,20 @@ export async function POST() {
         );
 
         if (!response.ok) {
-          throw new Error(`ML API error: ${response.status} ${response.statusText}`);
+          const errorText = await response.text();
+          console.error(`❌ ML API error: ${response.status} ${response.statusText}`, errorText);
+          throw new Error(`ML API error: ${response.status} ${response.statusText} - ${errorText}`);
         }
 
         const data = await response.json();
+        
+        // Log API response details for debugging
+        console.log(`🔍 ML API response:`, {
+          hasResults: !!data.results,
+          resultsCount: data.results?.length || 0,
+          paging: data.paging,
+          totalInPaging: data.paging?.total || 0
+        });
         
         // ML returns { results: [...], paging: {...} }
         const products = data.results || [];
@@ -107,10 +117,24 @@ export async function POST() {
     }
 
     console.log(`📊 Total products fetched from ML: ${allProducts.length}`);
+    
+    // Log sample of fetched products
+    if (allProducts.length > 0) {
+      console.log(`📋 Sample products:`, allProducts.slice(0, 2).map(p => ({
+        id: p.id,
+        title: p.title,
+        status: p.status,
+        price: p.price
+      })));
+    } else {
+      console.log(`⚠️ No products fetched from ML API`);
+    }
 
     // Now sync all products to database
     let syncedCount = 0;
     let errorCount = 0;
+
+    console.log(`💾 Starting database sync for ${allProducts.length} products...`);
 
     for (const mlProduct of allProducts) {
       try {
@@ -131,6 +155,8 @@ export async function POST() {
           last_synced_at: new Date().toISOString(),
         };
 
+        console.log(`💾 Upserting product ${mlProduct.id}: ${mlProduct.title}`);
+
         const { error: upsertError } = await supabase
           .from('ml_products')
           .upsert(productData, {
@@ -138,13 +164,14 @@ export async function POST() {
           });
 
         if (upsertError) {
-          console.error(`Error upserting product ${mlProduct.id}:`, upsertError);
+          console.error(`❌ Error upserting product ${mlProduct.id}:`, upsertError);
           errorCount++;
         } else {
           syncedCount++;
+          console.log(`✅ Successfully upserted product ${mlProduct.id}`);
         }
       } catch (error) {
-        console.error(`Error processing product ${mlProduct.id}:`, error);
+        console.error(`❌ Error processing product ${mlProduct.id}:`, error);
         errorCount++;
       }
     }
