@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { logger } from '@/utils/logger';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const tokenManager = new MLTokenManager();
 
@@ -37,6 +38,23 @@ interface ElasticityData {
   }>;
   calculated_elasticity: number;
   confidence_level: 'high' | 'medium' | 'low';
+}
+
+interface ItemData {
+  ml_item_id: string;
+  price: number;
+}
+
+interface IntegrationData {
+  id: string;
+  access_token: string;
+}
+
+interface AutomationParameters {
+  target_margin?: number;
+  max_price_change?: number;
+  min_sales_threshold?: number;
+  elasticity_period_days?: number;
 }
 
 interface AutomationResult {
@@ -123,11 +141,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         break;
 
       case 'competitor_matching':
-        result = await runCompetitorMatchingAutomation(itemData, integration, parameters, supabase);
+        result = await runCompetitorMatchingAutomation(itemData, integration, parameters);
         break;
 
       case 'margin_optimization':
-        result = await runMarginOptimizationAutomation(itemData, integration, parameters, supabase);
+        result = await runMarginOptimizationAutomation(itemData, integration, parameters);
         break;
 
       default:
@@ -191,15 +209,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
  * Estratégia baseada em elasticidade-preço
  */
 async function runElasticityBasedAutomation(
-  itemData: { ml_item_id: string; price: number },
-  integration: { id: string; access_token: string },
-  parameters: {
-    target_margin?: number;
-    max_price_change?: number;
-    min_sales_threshold?: number;
-    elasticity_period_days?: number;
-  },
-  supabase: any
+  itemData: ItemData,
+  integration: IntegrationData,
+  parameters: AutomationParameters,
+  supabase: SupabaseClient
 ): Promise<AutomationResult> {
   const periodDays = parameters.elasticity_period_days || 30;
   const maxChange = parameters.max_price_change || 0.1; // 10%
@@ -260,10 +273,9 @@ async function runElasticityBasedAutomation(
  * Estratégia baseada em matching de concorrentes
  */
 async function runCompetitorMatchingAutomation(
-  itemData: any,
-  integration: any,
-  parameters: any,
-  supabase: any
+  itemData: ItemData,
+  integration: IntegrationData,
+  parameters: AutomationParameters
 ): Promise<AutomationResult> {
   try {
     // Buscar sugestões de preço do ML
@@ -325,10 +337,9 @@ async function runCompetitorMatchingAutomation(
  * Estratégia baseada em otimização de margem
  */
 async function runMarginOptimizationAutomation(
-  itemData: any,
-  integration: any,
-  parameters: any,
-  supabase: any
+  itemData: ItemData,
+  integration: IntegrationData,
+  parameters: AutomationParameters
 ): Promise<AutomationResult> {
   const targetMargin = parameters.target_margin || 0.2; // 20%
   const maxChange = parameters.max_price_change || 0.1; // 10%

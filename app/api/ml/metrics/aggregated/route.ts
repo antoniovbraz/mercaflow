@@ -16,8 +16,18 @@ import { logger } from '@/utils/logger';
 
 const tokenManager = new MLTokenManager();
 
+interface MetricsRequest {
+  type: 'visits' | 'visits_time_window' | 'questions' | 'questions_time_window' | 'phone_views' | 'phone_views_time_window';
+  period?: string;
+  aggregate?: 'daily' | 'weekly' | 'monthly';
+  date_from?: string;
+  date_to?: string;
+  item_ids?: string[];
+  user_id?: string;
+}
+
 interface AggregatedMetricsRequest {
-  types: string[]; // Array of metric types to aggregate
+  types: string[];
   period?: string;
   aggregate?: 'daily' | 'weekly' | 'monthly';
   date_from?: string;
@@ -42,6 +52,14 @@ interface MetricResult {
   };
   api_url: string;
   error?: string;
+}
+
+interface MLApiResponse extends Record<string, unknown> {
+  api_url: string;
+}
+
+interface AggregatedMetricsData {
+  [metricType: string]: MetricResult;
 }
 
 interface AggregatedMetricsResponse {
@@ -158,7 +176,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Use cache for non-real-time requests
     const shouldUseCache = !isRealTimeRequest(requestData);
 
-    let aggregatedData: Record<string, any> | null = null;
+    let aggregatedData: AggregatedMetricsData | null = null;
 
     if (shouldUseCache) {
       try {
@@ -231,14 +249,14 @@ function isRealTimeRequest(request: AggregatedMetricsRequest): boolean {
 /**
  * Fetch aggregated metrics from multiple ML API endpoints
  */
-async function fetchAggregatedMetrics(request: AggregatedMetricsRequest, integration: MLIntegration): Promise<Record<string, any>> {
-  const results: Record<string, any> = {};
+async function fetchAggregatedMetrics(request: AggregatedMetricsRequest, integration: MLIntegration): Promise<Record<string, MetricResult>> {
+  const results: Record<string, MetricResult> = {};
 
   // Fetch each metric type concurrently
   const promises = request.types.map(async (type) => {
     try {
-      const metricsRequest = {
-        type: type as any,
+      const metricsRequest: MetricsRequest = {
+        type: type as MetricsRequest['type'],
         period: request.period,
         aggregate: request.aggregate,
         date_from: request.date_from,
@@ -255,12 +273,12 @@ async function fetchAggregatedMetrics(request: AggregatedMetricsRequest, integra
       results[type] = {
         data,
         summary,
-        api_url: data.api_url || ''
+        api_url: data.api_url
       };
     } catch (error) {
       logger.warn(`Failed to fetch ${type} metrics:`, error);
       results[type] = {
-        data: null,
+        data: {},
         summary: {
           total: 0,
           average: 0,
@@ -280,7 +298,7 @@ async function fetchAggregatedMetrics(request: AggregatedMetricsRequest, integra
 /**
  * Fetch metrics from ML API (simplified version for aggregation)
  */
-async function fetchMetricsFromML(request: any, integration: MLIntegration): Promise<any> {
+async function fetchMetricsFromML(request: MetricsRequest, integration: MLIntegration): Promise<MLApiResponse> {
   const { type, period, date_from, date_to, item_ids, user_id } = request;
   const mlUserId = user_id || integration.ml_user_id;
 
@@ -366,7 +384,7 @@ async function fetchMetricsFromML(request: any, integration: MLIntegration): Pro
 /**
  * Calculate metrics summary (simplified version)
  */
-function calculateMetricsSummary(data: any): { total: number; average: number; trend: 'up' | 'down' | 'stable'; trend_percentage: number } {
+function calculateMetricsSummary(data: Record<string, unknown>): { total: number; average: number; trend: 'up' | 'down' | 'stable'; trend_percentage: number } {
   let total = 0;
   let average = 0;
   let trend: 'up' | 'down' | 'stable' = 'stable';
@@ -377,9 +395,9 @@ function calculateMetricsSummary(data: any): { total: number; average: number; t
       const values: number[] = [];
 
       if (Array.isArray(data)) {
-        data.forEach((item: any) => {
-          if (typeof item === 'object') {
-            Object.values(item).forEach((val: any) => {
+        data.forEach((item: unknown) => {
+          if (typeof item === 'object' && item !== null) {
+            Object.values(item).forEach((val: unknown) => {
               if (typeof val === 'number') {
                 values.push(val);
                 total += val;
@@ -390,10 +408,10 @@ function calculateMetricsSummary(data: any): { total: number; average: number; t
             total += item;
           }
         });
-      } else if (data.total_visits !== undefined) {
+      } else if (typeof data.total_visits === 'number') {
         total = data.total_visits;
         values.push(total);
-      } else if (data.total !== undefined) {
+      } else if (typeof data.total === 'number') {
         total = data.total;
         values.push(total);
       }
@@ -434,7 +452,7 @@ function calculateMetricsSummary(data: any): { total: number; average: number; t
 /**
  * Calculate overall summary across all metrics
  */
-function calculateOverallSummary(metrics: Record<string, any>): AggregatedMetricsResponse['overall_summary'] {
+function calculateOverallSummary(metrics: Record<string, MetricResult>): AggregatedMetricsResponse['overall_summary'] {
   const types = Object.keys(metrics);
   let successfulRequests = 0;
   let failedRequests = 0;
