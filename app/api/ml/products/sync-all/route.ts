@@ -153,21 +153,20 @@ export async function POST() {
 
     for (const mlProduct of allProducts) {
       try {
-        // Upsert product to database
+        // Upsert product to database - only fields that exist in schema
         const productData = {
           integration_id: integration.id,
-          ml_item_id: mlProduct.id,
-          title: mlProduct.title,
-          status: mlProduct.status,
-          price: mlProduct.price,
-          available_quantity: mlProduct.available_quantity || 0,
-          sold_quantity: mlProduct.sold_quantity || 0,
-          condition: mlProduct.condition,
-          listing_type_id: mlProduct.listing_type_id,
-          permalink: mlProduct.permalink,
-          thumbnail: mlProduct.thumbnail,
-          category_id: mlProduct.category_id,
+          ml_item_id: String(mlProduct.id),
+          title: String(mlProduct.title || 'Untitled'),
+          status: String(mlProduct.status || 'unknown'),
+          price: typeof mlProduct.price === 'number' ? mlProduct.price : 0,
+          available_quantity: typeof mlProduct.available_quantity === 'number' ? mlProduct.available_quantity : 0,
+          sold_quantity: typeof mlProduct.sold_quantity === 'number' ? mlProduct.sold_quantity : 0,
+          permalink: mlProduct.permalink ? String(mlProduct.permalink) : null,
+          category_id: mlProduct.category_id ? String(mlProduct.category_id) : null,
           last_synced_at: new Date().toISOString(),
+          // Store full ML data in ml_data JSONB field for reference
+          ml_data: mlProduct,
         };
 
         console.log(`💾 Upserting product ${mlProduct.id}: ${mlProduct.title}`);
@@ -175,7 +174,7 @@ export async function POST() {
         const { error: upsertError } = await supabase
           .from('ml_products')
           .upsert(productData, {
-            onConflict: 'ml_item_id,integration_id',
+            onConflict: 'integration_id,ml_item_id',
           });
 
         if (upsertError) {
