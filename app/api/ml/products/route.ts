@@ -47,13 +47,50 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const tenantId = profile?.tenant_id || user.id;
 
+    // Check if this is a diagnostic request
+    const url = new URL(request.url);
+    const isDiagnostic = url.searchParams.get('diagnostic') === 'true';
+
     // Get ML integration for this tenant
     const { data: integration, error: integrationError } = await supabase
       .from('ml_integrations')
-      .select('id')
+      .select('*')
       .eq('tenant_id', tenantId)
       .eq('status', 'active')
       .single();
+
+    if (isDiagnostic) {
+      // Return diagnostic information
+      const { count: productCount } = await supabase
+        .from('ml_products')
+        .select('*', { count: 'exact', head: true })
+        .eq('integration_id', integration?.id || 'none');
+
+      const { data: syncLogs } = await supabase
+        .from('ml_sync_logs')
+        .select('*')
+        .eq('integration_id', integration?.id || 'none')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      return NextResponse.json({
+        diagnostic: {
+          userId: user.id,
+          tenantId,
+          integration: integration ? {
+            id: integration.id,
+            ml_user_id: integration.ml_user_id,
+            status: integration.status,
+            last_sync_at: integration.last_sync_at,
+            auto_sync_enabled: integration.auto_sync_enabled,
+            sync_frequency_minutes: integration.sync_frequency_minutes
+          } : null,
+          integrationError: integrationError?.message,
+          productCount,
+          recentSyncLogs: syncLogs || []
+        }
+      });
+    }
 
     if (integrationError || !integration) {
       return NextResponse.json(
