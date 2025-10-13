@@ -53,6 +53,7 @@ export function MLProductManager() {
   const [stats, setStats] = useState<ProductStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -153,6 +154,35 @@ export function MLProductManager() {
       loadProducts(),
       loadStats()
     ]);
+  };
+
+  const syncProducts = async () => {
+    try {
+      setSyncing(true);
+
+      const response = await fetch('/api/products/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fullSync: true }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`Sincronização concluída! ${result.synced} produtos sincronizados.`);
+        // Recarregar produtos após sincronização
+        await refreshProducts();
+      } else {
+        alert(`Erro na sincronização: ${result.error || 'Erro desconhecido'}`);
+      }
+    } catch (error) {
+      console.error('Sync error:', error);
+      alert('Erro ao sincronizar produtos. Tente novamente.');
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const loadMore = () => {
@@ -276,6 +306,16 @@ export function MLProductManager() {
                 disabled={refreshing}
               >
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={syncProducts}
+                disabled={syncing}
+              >
+                <TrendingUp className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Sincronizando...' : 'Sincronizar'}
               </Button>
               
               <Button size="sm">

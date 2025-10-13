@@ -135,6 +135,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    // Debug: Log integration and product info
+    logger.info('Products query debug:', {
+      integrationId: integration.id,
+      tenantId,
+      productCount: count,
+      hasProducts: (products || []).length > 0,
+      firstProduct: products?.[0] ? {
+        id: products[0].id,
+        ml_item_id: products[0].ml_item_id,
+        title: products[0].title,
+        status: products[0].status
+      } : null
+    });
+
     // Transform products to match expected interface
     const transformedProducts: MLProduct[] = (products || []).map(product => ({
       id: product.id,
