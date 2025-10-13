@@ -185,6 +185,29 @@ export function MLProductManager() {
     }
   };
 
+  const refreshToken = async () => {
+    try {
+      setSyncing(true);
+
+      const response = await fetch('/api/ml/refresh-token', {
+        method: 'POST',
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('Token renovado com sucesso! Agora tente sincronizar os produtos.');
+      } else {
+        alert(`Erro ao renovar token: ${result.error || 'Erro desconhecido'}`);
+      }
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      alert('Erro ao renovar token. Tente novamente.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const loadMore = () => {
     if (!loading && hasMore) {
       loadProducts(false, currentPage + 1);
@@ -306,6 +329,16 @@ export function MLProductManager() {
                 disabled={refreshing}
               >
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refreshToken}
+                disabled={syncing}
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                Renovar Token
               </Button>
 
               <Button
