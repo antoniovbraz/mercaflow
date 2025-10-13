@@ -296,17 +296,24 @@ export class MLTokenManager {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<Response> {
+    console.log('🔑 Making ML request for integration:', integrationId, 'endpoint:', endpoint);
+    
     const token = await this.getValidToken(integrationId);
     
     if (!token) {
+      console.error('❌ No valid ML token available for integration:', integrationId);
       throw new Error('No valid ML token available');
     }
+
+    console.log('✅ Got valid token, making request...');
 
     const url = endpoint.startsWith('http') 
       ? endpoint 
       : `${this.ML_API_BASE}${endpoint}`;
 
-    return fetch(url, {
+    console.log('🌐 Request URL:', url);
+
+    const response = await fetch(url, {
       ...options,
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -314,6 +321,10 @@ export class MLTokenManager {
         ...options.headers,
       },
     });
+
+    console.log('📡 Response status:', response.status, response.statusText);
+
+    return response;
   }
 
   /**

@@ -101,13 +101,40 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Full sync - fetch all items from ML
       console.log('🔄 Starting full product sync');
 
+      // Debug: Log integration details
+      console.log('🔍 Integration details:', {
+        id: integration.id,
+        ml_user_id: integration.ml_user_id,
+        token_expires_at: integration.token_expires_at,
+        status: integration.status,
+        current_time: new Date().toISOString()
+      });
+
       const mlResponse = await tokenManager.makeMLRequest(
         integration.id,
         `/users/${integration.ml_user_id}/items?limit=50`
       );
 
+      // Debug: Log response details
+      console.log('📡 ML API Response:', {
+        status: mlResponse.status,
+        statusText: mlResponse.statusText,
+        headers: Object.fromEntries(mlResponse.headers.entries()),
+        url: mlResponse.url
+      });
+
       if (!mlResponse.ok) {
-        throw new Error('Failed to fetch items from ML');
+        // Try to get error details from response
+        let errorDetails = 'Unknown error';
+        try {
+          const errorData = await mlResponse.text();
+          console.error('❌ ML API Error Response:', errorData);
+          errorDetails = errorData;
+        } catch (e) {
+          console.error('❌ Could not read error response:', e);
+        }
+
+        throw new Error(`Failed to fetch items from ML: ${mlResponse.status} ${mlResponse.statusText} - ${errorDetails}`);
       }
 
       const data = await mlResponse.json();
