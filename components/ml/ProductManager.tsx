@@ -26,38 +26,16 @@ import { ptBR } from 'date-fns/locale';
 
 interface MLProduct {
   id: string;
+  ml_item_id: string;
   title: string;
-  category_id: string;
-  currency_id: string;
+  category_id: string | null;
   price: number;
   available_quantity: number;
   sold_quantity: number;
-  condition: string;
-  listing_type_id: string;
   status: string;
   permalink: string;
-  thumbnail: string;
-  date_created: string;
-  last_updated: string;
-  pictures?: Array<{
-    id: string;
-    url: string;
-    secure_url: string;
-  }>;
-  attributes?: Array<{
-    id: string;
-    name: string;
-    value_name?: string;
-  }>;
-}
-
-interface ProductsResponse {
-  results: MLProduct[];
-  paging: {
-    total: number;
-    limit: number;
-    offset: number;
-  };
+  last_synced_at: string;
+  ml_data?: Record<string, unknown>;
 }
 
 interface ProductStats {
@@ -127,34 +105,34 @@ export function MLProductManager() {
       setError(null);
       
       const params = new URLSearchParams({
-        offset: (page * ITEMS_PER_PAGE).toString(),
+        page: (page + 1).toString(), // API uses 1-based pagination
         limit: ITEMS_PER_PAGE.toString(),
       });
 
       if (searchQuery.trim()) {
-        params.append('q', searchQuery.trim());
+        params.append('search', searchQuery.trim());
       }
 
       if (statusFilter !== 'all') {
         params.append('status', statusFilter);
       }
 
-      const response = await fetch(`/api/ml/items?${params}`);
+      const response = await fetch(`/api/ml/products?${params}`);
       
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to load products');
       }
       
-      const data: ProductsResponse = await response.json();
-      
+      const data = await response.json();
+
       if (reset) {
-        setProducts(data.results);
+        setProducts(data.products);
       } else {
-        setProducts(prev => [...prev, ...data.results]);
+        setProducts(prev => [...prev, ...data.products]);
       }
-      
-      setHasMore(data.results.length === ITEMS_PER_PAGE);
+
+      setHasMore(data.pagination.hasNext);
       setCurrentPage(page);
       
     } catch (err) {
@@ -203,23 +181,10 @@ export function MLProductManager() {
     }
   };
 
-  const getConditionLabel = (condition: string) => {
-    switch (condition) {
-      case 'new':
-        return 'Novo';
-      case 'used':
-        return 'Usado';
-      case 'not_specified':
-        return 'Não especificado';
-      default:
-        return condition;
-    }
-  };
-
-  const formatCurrency = (price: number, currency: string) => {
+  const formatCurrency = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: currency === 'ARS' ? 'ARS' : 'BRL',
+      currency: 'BRL',
     }).format(price);
   };
 
@@ -373,9 +338,9 @@ export function MLProductManager() {
               <div className="flex gap-4">
                 {/* Product Image */}
                 <div className="w-20 h-20 bg-muted rounded-lg overflow-hidden flex-shrink-0">
-                  {product.thumbnail ? (
+                  {product.ml_data?.thumbnail ? (
                     <Image
-                      src={product.thumbnail}
+                      src={product.ml_data.thumbnail as string}
                       alt={product.title}
                       width={80}
                       height={80}
@@ -396,7 +361,7 @@ export function MLProductManager() {
                         {product.title}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        ID: {product.id} • {getConditionLabel(product.condition)}
+                        ID: {product.ml_item_id} • ML Item: {product.id}
                       </p>
                     </div>
                     
@@ -411,7 +376,7 @@ export function MLProductManager() {
                     <div>
                       <div className="text-muted-foreground">Preço</div>
                       <div className="font-medium">
-                        {formatCurrency(product.price, product.currency_id)}
+                        {formatCurrency(product.price)}
                       </div>
                     </div>
                     
@@ -429,7 +394,7 @@ export function MLProductManager() {
                       <div className="text-muted-foreground">Atualizado</div>
                       <div className="font-medium">
                         {formatDistanceToNow(
-                          new Date(product.last_updated),
+                          new Date(product.last_synced_at),
                           { addSuffix: true, locale: ptBR }
                         )}
                       </div>
