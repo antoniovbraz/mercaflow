@@ -19,6 +19,8 @@ app/                     # Next.js 15 App Router pages and API routes
 supabase/migrations/     # Database schema and RLS policies (YYYYMMDDHHMMSS naming)
 components/              # Reusable components with shadcn/ui
 docs/pt/                 # Portuguese documentation (Brazilian market focus)
+utils/mercadolivre/      # ML token management and API integrations
+utils/validation/        # Zod schemas for type-safe API validation
 ```
 
 ## Critical Patterns & Workflows
@@ -66,6 +68,7 @@ const mlResponse = await fetch(`https://api.mercadolibre.com/users/${userId}/ite
 - Use `/my/received_questions/search?api_version=4` for questions
 - Handle rate limiting and token refresh automatically
 - Webhook endpoints in `/app/api/ml/webhooks/`
+- Token encryption using AES-256-GCM in `utils/mercadolivre/token-manager.ts`
 
 ### 5. Database Migration Strategy
 Migrations follow strict naming convention: `YYYYMMDDHHMMSS_descriptive_name.sql`
@@ -73,13 +76,38 @@ Migrations follow strict naming convention: `YYYYMMDDHHMMSS_descriptive_name.sql
 - Always use RLS policies, never bypass with service role client
 - Current system uses hierarchical role model in `profiles.role` field
 
+### 6. Validation & Type Safety
+```typescript
+// Use Zod schemas for all API validation
+import { validateOutput } from '@/utils/validation'
+const validatedData = validateOutput(MLTokenResponseSchema, apiResponse)
+```
+
+### 7. Error Handling Patterns
+```typescript
+// API routes follow consistent error handling
+try {
+  const user = await getCurrentUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+  // ... business logic
+} catch (error) {
+  console.error('Operation failed:', error)
+  return NextResponse.json(
+    { error: error instanceof Error ? error.message : 'Unknown error' },
+    { status: 500 }
+  )
+}
+```
+
 ## Development Workflows
 
 ### Build & Run
 ```bash
 npm install          # Install dependencies
 npm run dev         # Development server (localhost:3000)
-npm run dev:turbo   # Turbo mode for faster development
+npm run dev:turbo   # Turbo mode for faster development (recommended)
 npm run build       # Production build
 npm run type-check  # TypeScript validation (strict mode)
 npm run lint        # ESLint validation
@@ -97,6 +125,12 @@ npx supabase db push                              # Apply migrations to remote
 1. **Sign up**: User registers → email confirmation required → profile created automatically
 2. **Sign in**: Credentials validated → session created → role-based dashboard access
 3. **Role management**: Super admins can promote users via `/dashboard` interface
+
+### ML Integration Setup
+1. Register app at [Mercado Livre Developers](https://developers.mercadolibre.com.br/)
+2. Configure OAuth redirect URI: `https://yourdomain.com/api/ml/oauth/callback`
+3. Set environment variables: `ML_CLIENT_ID`, `ML_CLIENT_SECRET`
+4. Implement webhook endpoints for real-time updates
 
 ## File Structure Conventions
 
@@ -117,6 +151,9 @@ npx supabase db push                              # Apply migrations to remote
 - `utils/supabase/client.ts` - Client-side client for components
 - `utils/supabase/middleware.ts` - Session refresh logic
 - `utils/supabase/tenancy.ts` - Multi-tenant helper functions
+- `utils/mercadolivre/token-manager.ts` - ML OAuth token management
+- `utils/mercadolivre/product-sync.ts` - ML product synchronization
+- `utils/validation/` - Zod schemas for API validation
 
 ## Security Considerations
 - **Never use service role key** in frontend code
@@ -124,6 +161,8 @@ npx supabase db push                              # Apply migrations to remote
 - **RLS policies** handle multi-tenant data isolation automatically
 - **Custom JWT claims** provide role information for fine-grained access control
 - **Tenant validation** required for all cross-tenant operations
+- **AES-256-GCM encryption** for sensitive ML tokens
+- **Zod validation** for all external API inputs
 
 ## Brazilian Market Specifics
 - All user-facing content in **Portuguese (pt-BR)**
@@ -138,6 +177,7 @@ npx supabase db push                              # Apply migrations to remote
 - Server Components by default, Client Components only when needed
 - Error handling with try/catch and proper user feedback
 - Component library: shadcn/ui with Radix UI primitives
+- Consistent API response format: `{ success: boolean, data?: any, error?: string }`
 
 ## Common Gotchas
 - Middleware only refreshes sessions - **no redirects** (handled by Server Components)
@@ -146,3 +186,5 @@ npx supabase db push                              # Apply migrations to remote
 - Database schema changes require migrations, not direct ALTER statements
 - Always validate tenant access for multi-tenant operations
 - ML API calls require proper error handling for rate limits and token refresh
+- Use `getCurrentTenantId()` before any tenant-scoped database operations
+- Webhook processing should be asynchronous and idempotent

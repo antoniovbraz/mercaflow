@@ -112,7 +112,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       const mlResponse = await tokenManager.makeMLRequest(
         integration.id,
-        `/users/${integration.ml_user_id}/items?limit=50`
+        `/users/${integration.ml_user_id}/items/search?limit=50`
       );
 
       // Debug: Log response details

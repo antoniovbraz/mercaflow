@@ -331,6 +331,12 @@ export class MLTokenManager {
    * Encrypt token for database storage
    */
   private encryptToken(token: string): string {
+    // Check if token is already encrypted (has ':' separator and starts with hex)
+    if (token.includes(':') && /^[0-9a-f]+:/.test(token)) {
+      console.log('🔐 Token appears to be already encrypted, returning as-is');
+      return token;
+    }
+
     const algorithm = 'aes-256-cbc';
     const key = crypto.scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
     const iv = crypto.randomBytes(16);
@@ -351,6 +357,12 @@ export class MLTokenManager {
     
     if (!encryptedToken || typeof encryptedToken !== 'string') {
       throw new Error('Token is null or not a string');
+    }
+
+    // Check if token is already raw (not encrypted) - ML tokens start with 'TG-'
+    if (encryptedToken.startsWith('TG-') || encryptedToken.startsWith('TG_')) {
+      console.log('🔐 Token appears to be raw (not encrypted), returning as-is');
+      return encryptedToken;
     }
 
     const parts = encryptedToken.split(':');
