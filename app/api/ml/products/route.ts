@@ -19,6 +19,9 @@ interface MLProduct {
   permalink: string;
   category_id: string | null;
   last_synced_at: string;
+  thumbnail?: string;
+  condition?: string;
+  listing_type_id?: string;
   ml_data?: Record<string, unknown>;
 }
 
@@ -45,14 +48,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const tenantId = profile?.tenant_id || user.id;
 
     // Get ML integration for this tenant
-    const integration = await supabase
+    const { data: integration, error: integrationError } = await supabase
       .from('ml_integrations')
       .select('id')
       .eq('tenant_id', tenantId)
       .eq('status', 'active')
       .single();
 
-    if (!integration) {
+    if (integrationError || !integration) {
       return NextResponse.json(
         { error: 'No active ML integration found' },
         { status: 404 }
@@ -107,6 +110,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       permalink: product.permalink,
       category_id: product.category_id,
       last_synced_at: product.last_synced_at,
+      thumbnail: product.thumbnail,
+      condition: product.condition,
+      listing_type_id: product.listing_type_id,
       ml_data: product.ml_data,
     }));
 

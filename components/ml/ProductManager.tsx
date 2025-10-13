@@ -35,6 +35,9 @@ interface MLProduct {
   status: string;
   permalink: string;
   last_synced_at: string;
+  thumbnail?: string;
+  condition?: string;
+  listing_type_id?: string;
   ml_data?: Record<string, unknown>;
 }
 
@@ -338,13 +341,13 @@ export function MLProductManager() {
               <div className="flex gap-4">
                 {/* Product Image */}
                 <div className="w-20 h-20 bg-muted rounded-lg overflow-hidden flex-shrink-0">
-                  {product.ml_data?.thumbnail ? (
+                  {(product.thumbnail || product.ml_data?.thumbnail) ? (
                     <Image
-                      src={product.ml_data.thumbnail as string}
+                      src={(product.thumbnail || product.ml_data?.thumbnail) as string}
                       alt={product.title}
                       width={80}
                       height={80}
-                      className="w-full h-full object-cover"
+                      className="object-cover rounded-md"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
