@@ -35,20 +35,51 @@ export async function POST() {
     // Force token refresh
     console.log('🔄 Forcing token refresh for integration:', integration.id);
 
-    const newToken = await tokenManager['refreshToken'](integration);
+    // First, try to get a fresh token using the existing refresh token
+    let newToken: string | null = null;
+    
+    try {
+      newToken = await tokenManager['refreshToken'](integration);
+      console.log('✅ Token refreshed successfully via refresh token');
+    } catch (refreshError) {
+      console.error('❌ Refresh token failed:', refreshError);
+      
+      // If refresh token is corrupted, try to get a new access token using stored credentials
+      console.log('🔄 Attempting to get new access token...');
+      
+      try {
+        // Try to make a request that will trigger token refresh automatically
+        const testResponse = await tokenManager.makeMLRequest(
+          integration.id,
+          '/users/me'
+        );
+        
+        if (testResponse.ok) {
+          console.log('✅ Token was refreshed automatically by makeMLRequest');
+          newToken = 'refreshed_via_request';
+        } else {
+          console.error('❌ Automatic token refresh also failed');
+        }
+      } catch (autoRefreshError) {
+        console.error('❌ Automatic token refresh failed:', autoRefreshError);
+      }
+    }
 
     if (newToken) {
       return NextResponse.json({
         success: true,
         message: 'Token refreshed successfully',
         integration_id: integration.id,
-        token_expires_at: integration.token_expires_at
+        method: newToken === 'refreshed_via_request' ? 'automatic' : 'manual'
       });
     } else {
-      return NextResponse.json(
-        { error: 'Failed to refresh token' },
-        { status: 500 }
-      );
+      // If all methods fail, suggest re-authorization
+      return NextResponse.json({
+        success: false,
+        error: 'Token refresh failed. Please re-authorize your Mercado Livre account.',
+        suggestion: 'Go to Settings > Integrations and reconnect your ML account',
+        integration_id: integration.id
+      }, { status: 500 });
     }
 
   } catch (error) {

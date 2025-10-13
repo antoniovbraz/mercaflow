@@ -195,14 +195,42 @@ export function MLProductManager() {
 
       const result = await response.json();
 
-      if (response.ok) {
-        alert('Token renovado com sucesso! Agora tente sincronizar os produtos.');
+      if (response.ok && result.success) {
+        alert(`Token renovado com sucesso! (${result.method}) Agora tente sincronizar os produtos.`);
       } else {
-        alert(`Erro ao renovar token: ${result.error || 'Erro desconhecido'}`);
+        if (result.suggestion) {
+          alert(`${result.error}\n\n${result.suggestion}`);
+        } else {
+          alert(`Erro ao renovar token: ${result.error || 'Erro desconhecido'}`);
+        }
       }
     } catch (error) {
       console.error('Token refresh error:', error);
-      alert('Erro ao renovar token. Tente novamente.');
+      alert('Erro ao renovar token. Verifique os logs para mais detalhes.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const reAuthorize = async () => {
+    try {
+      setSyncing(true);
+
+      const response = await fetch('/api/ml/re-auth', {
+        method: 'POST',
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.oauth_url) {
+        // Redirect to Mercado Livre OAuth
+        window.location.href = result.oauth_url;
+      } else {
+        alert(`Erro ao iniciar re-autorização: ${result.error || 'Erro desconhecido'}`);
+      }
+    } catch (error) {
+      console.error('Re-auth error:', error);
+      alert('Erro ao iniciar re-autorização. Tente novamente.');
     } finally {
       setSyncing(false);
     }
@@ -339,6 +367,15 @@ export function MLProductManager() {
               >
                 <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
                 Renovar Token
+              </Button>
+
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={reAuthorize}
+                disabled={syncing}
+              >
+                Re-autorizar ML
               </Button>
 
               <Button

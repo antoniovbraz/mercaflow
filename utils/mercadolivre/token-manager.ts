@@ -347,30 +347,47 @@ export class MLTokenManager {
    * Decrypt token from database
    */
   private decryptToken(encryptedToken: string): string {
+    console.log('🔐 Attempting to decrypt token, length:', encryptedToken.length);
+    
+    if (!encryptedToken || typeof encryptedToken !== 'string') {
+      throw new Error('Token is null or not a string');
+    }
+
     const parts = encryptedToken.split(':');
+    console.log('🔐 Token parts count:', parts.length);
     
     // Handle both old format (iv:authTag:encrypted) and new format (iv:encrypted)
     if (parts.length < 2) {
-      throw new Error('Invalid token format');
+      console.error('❌ Invalid token format: not enough parts', { partsCount: parts.length, tokenStart: encryptedToken.substring(0, 50) });
+      throw new Error('Invalid token format: not enough parts');
     }
     
     const ivHex = parts[0];
     const encrypted = parts.length === 3 ? parts[2] : parts[1];
     
     if (!ivHex || !encrypted) {
-      throw new Error('Invalid token format');
+      console.error('❌ Invalid token format: missing iv or encrypted data', { ivHex: !!ivHex, encrypted: !!encrypted });
+      throw new Error('Invalid token format: missing components');
     }
+
+    console.log('🔐 Decrypting with IV length:', ivHex.length, 'encrypted length:', encrypted.length);
     
-    const algorithm = 'aes-256-cbc';
-    const key = crypto.scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
-    const iv = Buffer.from(ivHex, 'hex');
-    
-    const decipher = crypto.createDecipheriv(algorithm, key, iv);
-    
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    
-    return decrypted;
+    try {
+      const algorithm = 'aes-256-cbc';
+      const key = crypto.scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
+      const iv = Buffer.from(ivHex, 'hex');
+      
+      const decipher = crypto.createDecipheriv(algorithm, key, iv);
+      
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      
+      console.log('✅ Token decrypted successfully');
+      return decrypted;
+    } catch (error) {
+      console.error('❌ Decryption failed:', error);
+      throw new Error(`Token decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   /**
