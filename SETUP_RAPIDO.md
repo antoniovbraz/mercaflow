@@ -7,14 +7,17 @@ Siga estes passos **na ordem**:
 ---
 
 ## 1️⃣ Instalar Dependências
+
 ```powershell
 npm install
 ```
+
 ⏱️ **Aguarde:** ~2 minutos
 
 ---
 
 ## 2️⃣ Criar Arquivo de Variáveis de Ambiente
+
 ```powershell
 copy .env.example .env.local
 ```
@@ -43,6 +46,7 @@ ENCRYPTION_KEY=sua-chave-de-32-caracteres-aqui
 ```
 
 ### 🟡 OPCIONAL (pode deixar vazio):
+
 ```bash
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
@@ -55,11 +59,13 @@ SENTRY_AUTH_TOKEN=
 ## 4️⃣ Configurar Banco de Dados
 
 ### Conectar ao Supabase:
+
 ```powershell
 npx supabase link --project-ref SEU_PROJECT_REF
 ```
 
 ### Aplicar Migrations (criar tabelas):
+
 ```powershell
 npx supabase db push
 ```
@@ -67,11 +73,13 @@ npx supabase db push
 ---
 
 ## 5️⃣ Rodar o Projeto
+
 ```powershell
 npm run dev
 ```
 
 ### ✅ Pronto!
+
 Acesse: **http://localhost:3000**
 
 ---
@@ -101,17 +109,20 @@ npm run dev
 ## ❓ Onde conseguir as credenciais?
 
 ### Supabase:
+
 1. Acesse: https://supabase.com/
 2. Crie projeto (grátis)
 3. Settings → API
 4. Copie as 3 chaves
 
 ### Mercado Livre:
+
 1. Acesse: https://developers.mercadolibre.com.br/
 2. Meus Apps → Criar Aplicação
 3. Copie Client ID e Secret Key
 
 ### Chave de Criptografia:
+
 ```powershell
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
@@ -121,17 +132,20 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ## 🆘 Problemas?
 
 ### "Port 3000 already in use"
+
 ```powershell
 npx kill-port 3000
 ```
 
 ### "Cannot find module"
+
 ```powershell
 Remove-Item -Recurse -Force node_modules
 npm install
 ```
 
 ### Variáveis não carregam
+
 - Salve o `.env.local`
 - Pare o servidor (Ctrl + C)
 - Rode `npm run dev` novamente

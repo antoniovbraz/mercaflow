@@ -52,6 +52,7 @@ npm install
 ```
 
 **O que acontece:**
+
 - ✅ Cria uma pasta `node_modules` com todas as bibliotecas
 - ✅ Cria/atualiza o arquivo `package-lock.json`
 - ⏱️ Pode demorar 1-3 minutos dependendo da internet
@@ -114,6 +115,7 @@ SENTRY_AUTH_TOKEN=
 ### 3.3 Como conseguir as credenciais?
 
 #### **Supabase** (Banco de Dados):
+
 1. Acesse: https://supabase.com/
 2. Crie uma conta (gratuito)
 3. Crie um novo projeto
@@ -124,6 +126,7 @@ SENTRY_AUTH_TOKEN=
    - `service_role` → `SUPABASE_SERVICE_ROLE_KEY`
 
 #### **Mercado Livre** (Integração):
+
 1. Acesse: https://developers.mercadolibre.com.br/
 2. Faça login com sua conta do Mercado Livre
 3. Vá em **Meus Apps** → **Criar Aplicação**
@@ -134,6 +137,7 @@ SENTRY_AUTH_TOKEN=
    - `Secret Key` → `ML_CLIENT_SECRET`
 
 #### **Chave de Criptografia**:
+
 Gere uma string aleatória de 32+ caracteres. Exemplo:
 
 ```powershell
@@ -153,6 +157,7 @@ npx supabase link --project-ref SEU_PROJECT_REF
 ```
 
 **Como encontrar o PROJECT_REF:**
+
 - Acesse: https://supabase.com/dashboard/project/SEU_PROJETO/settings/general
 - Copie o **Reference ID**
 
@@ -164,6 +169,7 @@ npx supabase db push
 ```
 
 **O que acontece:**
+
 - ✅ Cria todas as tabelas necessárias
 - ✅ Configura permissões (RLS policies)
 - ✅ Cria funções e triggers
@@ -180,6 +186,7 @@ npm run dev
 ```
 
 **O que você verá:**
+
 ```
   ▲ Next.js 15.5.4
   - Local:        http://localhost:3000
@@ -315,6 +322,7 @@ mercaflow/
 ### 1. **Erro: "Cannot find module"**
 
 **Solução:**
+
 ```powershell
 # Deletar node_modules e reinstalar
 Remove-Item -Recurse -Force node_modules
@@ -324,6 +332,7 @@ npm install
 ### 2. **Erro: "Port 3000 already in use"**
 
 **Solução:**
+
 ```powershell
 # Matar processo na porta 3000
 npx kill-port 3000
@@ -335,6 +344,7 @@ npm run dev -- -p 3001
 ### 3. **Erro de autenticação Supabase**
 
 **Solução:**
+
 - Verifique se as variáveis `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` estão corretas
 - Certifique-se que não há espaços extras
 - Reinicie o servidor (`Ctrl + C` e `npm run dev` novamente)
@@ -342,6 +352,7 @@ npm run dev -- -p 3001
 ### 4. **Erro de migrations do Supabase**
 
 **Solução:**
+
 ```powershell
 # Resetar migrations e aplicar novamente
 npx supabase db reset
@@ -351,6 +362,7 @@ npx supabase db push
 ### 5. **Erro: "ENCRYPTION_KEY must be at least 32 characters"**
 
 **Solução:**
+
 ```powershell
 # Gerar nova chave
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"

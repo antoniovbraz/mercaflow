@@ -1,6 +1,7 @@
 ---
 applyTo: "**/*.ts,**/*.tsx"
 ---
+
 # TypeScript and React Coding Standards - MercaFlow
 
 Apply the [general coding guidelines](./copilot-standards-general.md) to all code.
@@ -10,6 +11,7 @@ Apply the [general coding guidelines](./copilot-standards-general.md) to all cod
 ### 1. Type Definitions
 
 #### Use Proper Types
+
 ```typescript
 // ✅ Good
 interface Product {
@@ -28,6 +30,7 @@ interface Product {
 ```
 
 #### Prefer Interfaces for Objects
+
 ```typescript
 // ✅ Good - Use interface for data structures
 interface User {
@@ -38,7 +41,9 @@ interface User {
 
 // ✅ Good - Use type for unions and primitives
 type UserRole = "super_admin" | "admin" | "user";
-type ApiResponse<T> = { success: true; data: T } | { success: false; error: string };
+type ApiResponse<T> =
+  | { success: true; data: T }
+  | { success: false; error: string };
 
 // ❌ Bad - Don't use type when interface is more appropriate
 type User = {
@@ -48,6 +53,7 @@ type User = {
 ```
 
 #### Use Const Assertions
+
 ```typescript
 // ✅ Good
 const CACHE_TTL = {
@@ -67,16 +73,19 @@ const CACHE_TTL = {
 ### 2. Null Safety
 
 #### Use Optional Chaining and Nullish Coalescing
+
 ```typescript
 // ✅ Good
 const userName = user?.profile?.name ?? "Usuário";
 const products = response?.data ?? [];
 
 // ❌ Bad
-const userName = user && user.profile && user.profile.name ? user.profile.name : "Usuário";
+const userName =
+  user && user.profile && user.profile.name ? user.profile.name : "Usuário";
 ```
 
 #### Define Optional Properties Correctly
+
 ```typescript
 // ✅ Good
 interface MLIntegration {
@@ -96,6 +105,7 @@ interface MLIntegration {
 ### 3. Function Types
 
 #### Use Explicit Return Types
+
 ```typescript
 // ✅ Good
 async function getProducts(tenantId: string): Promise<Product[]> {
@@ -104,7 +114,7 @@ async function getProducts(tenantId: string): Promise<Product[]> {
     .from("products")
     .select("*")
     .eq("tenant_id", tenantId);
-  
+
   if (error) throw error;
   return data ?? [];
 }
@@ -116,9 +126,12 @@ async function getProducts(tenantId: string) {
 ```
 
 #### Use Type Guards
+
 ```typescript
 // ✅ Good
-function isMLError(error: unknown): error is { message: string; status: number } {
+function isMLError(
+  error: unknown
+): error is { message: string; status: number } {
   return (
     typeof error === "object" &&
     error !== null &&
@@ -132,7 +145,10 @@ try {
   await mlApiCall();
 } catch (error) {
   if (isMLError(error)) {
-    logger.error("ML API error", { status: error.status, message: error.message });
+    logger.error("ML API error", {
+      status: error.status,
+      message: error.message,
+    });
   }
 }
 ```
@@ -140,6 +156,7 @@ try {
 ### 4. Generics
 
 #### Use Generics for Reusable Functions
+
 ```typescript
 // ✅ Good
 async function cacheGet<T>(key: string): Promise<T | null> {
@@ -153,6 +170,7 @@ const products = await cacheGet<Product[]>("products:123");
 ```
 
 #### Constrain Generics When Needed
+
 ```typescript
 // ✅ Good
 interface HasTenantId {
@@ -170,6 +188,7 @@ async function validateTenantResource<T extends HasTenantId>(
 ### 5. Enums vs Union Types
 
 #### Prefer Union Types
+
 ```typescript
 // ✅ Good - Union types are more flexible
 type OrderStatus = "pending" | "paid" | "shipped" | "delivered" | "cancelled";
@@ -185,6 +204,7 @@ enum OrderStatus {
 ### 6. Utility Types
 
 #### Use Built-in Utility Types
+
 ```typescript
 // ✅ Good
 type PartialProduct = Partial<Product>; // All properties optional
@@ -203,6 +223,7 @@ type ProductUpdate = Partial<Omit<Product, "id" | "tenant_id" | "created_at">>;
 ### 1. Component Structure
 
 #### Functional Components with TypeScript
+
 ```typescript
 // ✅ Good - Explicit props interface
 interface ProductCardProps {
@@ -215,9 +236,7 @@ export function ProductCard({ product, onEdit, className }: ProductCardProps) {
   return (
     <div className={className}>
       <h3>{product.name}</h3>
-      {onEdit && (
-        <button onClick={() => onEdit(product.id)}>Editar</button>
-      )}
+      {onEdit && <button onClick={() => onEdit(product.id)}>Editar</button>}
     </div>
   );
 }
@@ -229,22 +248,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 ```
 
 #### Server Components (Default in Next.js 15)
+
 ```typescript
 // ✅ Good - Server Component (no "use client")
 import { getCurrentUser } from "@/utils/supabase/server";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
-  
+
   if (!user) {
     redirect("/login");
   }
-  
+
   return <div>Olá, {user.email}</div>;
 }
 ```
 
 #### Client Components (When Needed)
+
 ```typescript
 // ✅ Good - Client Component with hooks
 "use client";
@@ -258,13 +279,11 @@ interface CounterProps {
 
 export function Counter({ initialCount = 0 }: CounterProps) {
   const [count, setCount] = useState(initialCount);
-  
+
   return (
     <div>
       <p>Contagem: {count}</p>
-      <Button onClick={() => setCount(count + 1)}>
-        Incrementar
-      </Button>
+      <Button onClick={() => setCount(count + 1)}>Incrementar</Button>
     </div>
   );
 }
@@ -273,12 +292,13 @@ export function Counter({ initialCount = 0 }: CounterProps) {
 ### 2. Hooks Usage
 
 #### Follow Hooks Rules
+
 ```typescript
 // ✅ Good
 function useProducts(tenantId: string) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     async function fetchProducts() {
       setLoading(true);
@@ -289,37 +309,49 @@ function useProducts(tenantId: string) {
         setLoading(false);
       }
     }
-    
+
     fetchProducts();
   }, [tenantId]); // Dependencies array
-  
+
   return { products, loading };
 }
 
 // ❌ Bad - Conditional hooks
 function useProducts(tenantId?: string) {
   if (!tenantId) return { products: [], loading: false };
-  
+
   // This violates hooks rules
   const [products, setProducts] = useState<Product[]>([]);
 }
 ```
 
 #### Custom Hooks Naming
+
 ```typescript
 // ✅ Good - Start with "use"
-function useAuth() { /* ... */ }
-function useCurrentTenant() { /* ... */ }
-function useMLIntegration() { /* ... */ }
+function useAuth() {
+  /* ... */
+}
+function useCurrentTenant() {
+  /* ... */
+}
+function useMLIntegration() {
+  /* ... */
+}
 
 // ❌ Bad
-function getAuth() { /* ... */ }
-function currentTenant() { /* ... */ }
+function getAuth() {
+  /* ... */
+}
+function currentTenant() {
+  /* ... */
+}
 ```
 
 ### 3. Component Props
 
 #### Destructure Props
+
 ```typescript
 // ✅ Good
 interface ButtonProps {
@@ -328,8 +360,16 @@ interface ButtonProps {
   disabled?: boolean;
 }
 
-export function CustomButton({ label, onClick, disabled = false }: ButtonProps) {
-  return <button onClick={onClick} disabled={disabled}>{label}</button>;
+export function CustomButton({
+  label,
+  onClick,
+  disabled = false,
+}: ButtonProps) {
+  return (
+    <button onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  );
 }
 
 // ❌ Bad - Using props object
@@ -339,6 +379,7 @@ export function CustomButton(props: ButtonProps) {
 ```
 
 #### Spread Remaining Props
+
 ```typescript
 // ✅ Good - For wrapper components
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -360,6 +401,7 @@ export function Input({ label, error, ...props }: InputProps) {
 ### 4. Event Handlers
 
 #### Type Events Properly
+
 ```typescript
 // ✅ Good
 function SearchForm() {
@@ -367,11 +409,11 @@ function SearchForm() {
     e.preventDefault();
     // Handle form submission
   };
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log(e.target.value);
   };
-  
+
   return (
     <form onSubmit={handleSubmit}>
       <input onChange={handleChange} />
@@ -381,6 +423,7 @@ function SearchForm() {
 ```
 
 #### Use Callbacks for Child Events
+
 ```typescript
 // ✅ Good
 interface ProductListProps {
@@ -404,6 +447,7 @@ export function ProductList({ products, onProductClick }: ProductListProps) {
 ### 5. Styling with Tailwind
 
 #### Use Tailwind Classes
+
 ```typescript
 // ✅ Good - Tailwind with conditional classes
 import { cn } from "@/lib/utils";
@@ -416,11 +460,13 @@ interface CardProps {
 
 export function Card({ title, featured = false, className }: CardProps) {
   return (
-    <div className={cn(
-      "rounded-lg border p-4",
-      featured && "border-blue-500 bg-blue-50",
-      className
-    )}>
+    <div
+      className={cn(
+        "rounded-lg border p-4",
+        featured && "border-blue-500 bg-blue-50",
+        className
+      )}
+    >
       <h3 className="text-lg font-semibold">{title}</h3>
     </div>
   );
@@ -428,6 +474,7 @@ export function Card({ title, featured = false, className }: CardProps) {
 ```
 
 #### Component Variants with CVA
+
 ```typescript
 // ✅ Good - For complex variants
 import { cva, type VariantProps } from "class-variance-authority";
@@ -460,9 +507,18 @@ interface ButtonProps
   children: React.ReactNode;
 }
 
-export function Button({ variant, size, className, children, ...props }: ButtonProps) {
+export function Button({
+  variant,
+  size,
+  className,
+  children,
+  ...props
+}: ButtonProps) {
   return (
-    <button className={cn(buttonVariants({ variant, size }), className)} {...props}>
+    <button
+      className={cn(buttonVariants({ variant, size }), className)}
+      {...props}
+    >
       {children}
     </button>
   );
@@ -472,6 +528,7 @@ export function Button({ variant, size, className, children, ...props }: ButtonP
 ### 6. Data Fetching Patterns
 
 #### Server Components (Preferred)
+
 ```typescript
 // ✅ Good - Fetch in Server Component
 import { createClient } from "@/utils/supabase/server";
@@ -482,12 +539,13 @@ export default async function ProductsPage() {
     .from("products")
     .select("*")
     .order("created_at", { ascending: false });
-  
+
   return <ProductList products={products ?? []} />;
 }
 ```
 
 #### Client Components (When Interactivity Needed)
+
 ```typescript
 // ✅ Good - Client-side fetch with loading state
 "use client";
@@ -497,7 +555,7 @@ import { useEffect, useState } from "react";
 export function ProductsClient() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     async function fetchProducts() {
       const response = await fetch("/api/products");
@@ -505,12 +563,12 @@ export function ProductsClient() {
       setProducts(data.products);
       setLoading(false);
     }
-    
+
     fetchProducts();
   }, []);
-  
+
   if (loading) return <div>Carregando...</div>;
-  
+
   return <ProductList products={products} />;
 }
 ```
@@ -518,6 +576,7 @@ export function ProductsClient() {
 ### 7. Forms and Validation
 
 #### Use Zod for Form Validation
+
 ```typescript
 // ✅ Good
 "use client";
@@ -535,19 +594,19 @@ type ProductFormData = z.infer<typeof productSchema>;
 
 export function ProductForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
+
     const data = {
       name: formData.get("name") as string,
       price: Number(formData.get("price")),
       sku: formData.get("sku") as string,
     };
-    
+
     const result = productSchema.safeParse(data);
-    
+
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.errors.forEach((err) => {
@@ -558,11 +617,11 @@ export function ProductForm() {
       setErrors(fieldErrors);
       return;
     }
-    
+
     // Submit validated data
     await createProduct(result.data);
   };
-  
+
   return (
     <form onSubmit={handleSubmit}>
       <input name="name" />
@@ -576,6 +635,7 @@ export function ProductForm() {
 ### 8. Performance Optimization
 
 #### Memoization
+
 ```typescript
 // ✅ Good - Memoize expensive computations
 import { useMemo } from "react";
@@ -584,16 +644,18 @@ function ProductAnalytics({ products }: { products: Product[] }) {
   const statistics = useMemo(() => {
     return {
       total: products.length,
-      averagePrice: products.reduce((sum, p) => sum + p.price, 0) / products.length,
+      averagePrice:
+        products.reduce((sum, p) => sum + p.price, 0) / products.length,
       topProducts: products.sort((a, b) => b.sales - a.sales).slice(0, 5),
     };
   }, [products]);
-  
+
   return <div>{/* Render statistics */}</div>;
 }
 ```
 
 #### Callback Memoization
+
 ```typescript
 // ✅ Good - Prevent unnecessary re-renders
 import { useCallback } from "react";
@@ -602,11 +664,15 @@ function ProductList({ products }: { products: Product[] }) {
   const handleDelete = useCallback(async (productId: string) => {
     await deleteProduct(productId);
   }, []); // Empty deps if it doesn't depend on props/state
-  
+
   return (
     <>
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} onDelete={handleDelete} />
+        <ProductCard
+          key={product.id}
+          product={product}
+          onDelete={handleDelete}
+        />
       ))}
     </>
   );
@@ -620,6 +686,7 @@ function ProductList({ products }: { products: Product[] }) {
 ### 1. Supabase Client Usage
 
 #### Server Components
+
 ```typescript
 // ✅ Good - Server Component
 import { createClient } from "@/utils/supabase/server";
@@ -627,17 +694,18 @@ import { getCurrentUser } from "@/utils/supabase/roles";
 
 export default async function ProtectedPage() {
   const user = await getCurrentUser();
-  
+
   if (!user) {
     redirect("/login");
   }
-  
+
   const supabase = await createClient();
   // Use supabase...
 }
 ```
 
 #### Client Components
+
 ```typescript
 // ✅ Good - Client Component
 "use client";
@@ -646,11 +714,11 @@ import { createClient } from "@/utils/supabase/client";
 
 export function LogoutButton() {
   const supabase = createClient();
-  
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
-  
+
   return <button onClick={handleLogout}>Sair</button>;
 }
 ```
@@ -677,36 +745,38 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-    
+
     // 2. Get tenant context
     const tenantId = await getCurrentTenantId();
     if (!tenantId) {
       return NextResponse.json({ error: "No tenant found" }, { status: 400 });
     }
-    
+
     // 3. Parse and validate input
     const body = await request.json();
     const result = productSchema.safeParse(body);
-    
+
     if (!result.success) {
       return NextResponse.json(
         { error: "Invalid input", details: result.error.errors },
         { status: 400 }
       );
     }
-    
+
     // 4. Business logic
     const product = await createProduct({
       ...result.data,
       tenant_id: tenantId,
       user_id: user.id,
     });
-    
+
     // 5. Success response
     return NextResponse.json({ success: true, data: product });
-    
   } catch (error) {
-    logger.error("Failed to create product", { error, endpoint: "/api/products" });
+    logger.error("Failed to create product", {
+      error,
+      endpoint: "/api/products",
+    });
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
@@ -725,11 +795,11 @@ import { logger } from "@/utils/logger";
 
 async function syncMLProducts(integrationId: string) {
   const tokenManager = new MLTokenManager();
-  
+
   try {
     // Get valid token (auto-refreshes if needed)
     const accessToken = await tokenManager.getValidToken(integrationId);
-    
+
     // Call ML API
     const response = await fetch(
       "https://api.mercadolibre.com/users/me/items/search",
@@ -737,20 +807,19 @@ async function syncMLProducts(integrationId: string) {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
-    
+
     if (!response.ok) {
       throw new Error(`ML API error: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     // Validate response
     const validatedItems = data.results.map((item: unknown) =>
       validateOutput(MLItemSchema, item)
     );
-    
+
     return validatedItems;
-    
   } catch (error) {
     logger.error("ML sync failed", { error, integrationId });
     throw error;
@@ -763,6 +832,7 @@ async function syncMLProducts(integrationId: string) {
 ## Common Pitfalls to Avoid
 
 ### ❌ Don't Mix Client and Server Logic
+
 ```typescript
 // ❌ Bad - Can't use server-only functions in Client Component
 "use client";
@@ -785,6 +855,7 @@ export default async function ProfilePage() {
 ```
 
 ### ❌ Don't Forget Tenant Context
+
 ```typescript
 // ❌ Bad - No tenant validation
 async function deleteProduct(productId: string) {
@@ -795,16 +866,17 @@ async function deleteProduct(productId: string) {
 async function deleteProduct(productId: string) {
   const tenantId = await getCurrentTenantId();
   const product = await getProduct(productId);
-  
+
   if (product.tenant_id !== tenantId) {
     throw new Error("Access denied");
   }
-  
+
   await supabase.from("products").delete().eq("id", productId);
 }
 ```
 
 ### ❌ Don't Trust Client Input
+
 ```typescript
 // ❌ Bad - No validation
 export async function POST(request: NextRequest) {
@@ -815,10 +887,12 @@ export async function POST(request: NextRequest) {
 // ✅ Good - Validate and sanitize
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { productId } = z.object({
-    productId: z.string().uuid()
-  }).parse(body);
-  
+  const { productId } = z
+    .object({
+      productId: z.string().uuid(),
+    })
+    .parse(body);
+
   await deleteProduct(productId);
 }
 ```

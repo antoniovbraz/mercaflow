@@ -7,9 +7,11 @@ Este diretório contém os **padrões de código oficiais** do MercaFlow para ga
 ## 📚 Documentos Disponíveis
 
 ### 1. [copilot-standards-general.md](./copilot-standards-general.md)
+
 **Aplica-se a:** Todos os arquivos (`**/*`)
 
 Padrões gerais que se aplicam a todo o projeto:
+
 - ✅ Princípios de segurança
 - ✅ Arquitetura multi-tenant
 - ✅ Convenções de nomenclatura
@@ -21,9 +23,11 @@ Padrões gerais que se aplicam a todo o projeto:
 - ✅ Code review
 
 ### 2. [copilot-standards-typescript.md](./copilot-standards-typescript.md)
+
 **Aplica-se a:** Arquivos TypeScript e React (`**/*.ts`, `**/*.tsx`)
 
 Padrões específicos para código TypeScript e React:
+
 - ✅ Type definitions e interfaces
 - ✅ Null safety
 - ✅ Componentes React funcionais
@@ -35,9 +39,11 @@ Padrões específicos para código TypeScript e React:
 - ✅ Padrões específicos do MercaFlow (Supabase, ML API)
 
 ### 3. [copilot-instructions.md](./copilot-instructions.md)
+
 **Aplica-se a:** Referência técnica completa
 
 Guia técnico abrangente para desenvolvimento:
+
 - ✅ Arquitetura do projeto
 - ✅ Padrões críticos de implementação
 - ✅ Workflows de integração
@@ -51,6 +57,7 @@ O GitHub Copilot lê automaticamente os arquivos com frontmatter `applyTo` e apl
 ---
 applyTo: "**/*.ts,**/*.tsx"
 ---
+
 # Seus padrões aqui
 ```
 
@@ -64,11 +71,13 @@ applyTo: "**/*.ts,**/*.tsx"
 ### Exemplo de Uso
 
 Quando você escreve:
+
 ```typescript
 // Pedir ao Copilot: "Criar componente de produto"
 ```
 
 O Copilot aplicará automaticamente:
+
 - Padrões gerais de segurança e multi-tenancy
 - Padrões TypeScript (interfaces, tipos)
 - Padrões React (functional components, hooks)
@@ -81,10 +90,12 @@ O Copilot aplicará automaticamente:
 ### Para Desenvolvedores Iniciantes
 
 1. **Comece com:** `copilot-standards-general.md`
+
    - Leia as seções: "Core Principles" e "File Organization"
    - Entenda os princípios de segurança e multi-tenancy
 
 2. **Depois leia:** `copilot-standards-typescript.md`
+
    - Foque na seção "Component Structure"
    - Veja exemplos de ✅ Good vs ❌ Bad
 
@@ -101,6 +112,7 @@ O Copilot aplicará automaticamente:
 ## 🎯 Principais Regras a Memorizar
 
 ### Segurança
+
 ```typescript
 // ❌ NUNCA use service role em operações de usuário
 // ❌ NUNCA confie em dados do cliente sem validação
@@ -109,6 +121,7 @@ O Copilot aplicará automaticamente:
 ```
 
 ### Multi-tenancy
+
 ```typescript
 // ✅ SEMPRE obtenha tenant_id antes de operações
 const tenantId = await getCurrentTenantId();
@@ -120,6 +133,7 @@ if (resource.tenant_id !== tenantId) {
 ```
 
 ### Supabase Clients
+
 ```typescript
 // Server Component
 import { createClient } from "@/utils/supabase/server";
@@ -131,32 +145,43 @@ const supabase = createClient(); // Sem await
 ```
 
 ### TypeScript
+
 ```typescript
 // ✅ Use interfaces para objetos
-interface Product { /* ... */ }
+interface Product {
+  /* ... */
+}
 
 // ✅ Use types para unions
 type Status = "active" | "inactive";
 
 // ✅ Evite any, prefira unknown
-function handleError(error: unknown) { /* ... */ }
+function handleError(error: unknown) {
+  /* ... */
+}
 ```
 
 ### React
+
 ```typescript
 // ✅ Componentes funcionais
-export function Component({ prop }: Props) { /* ... */ }
+export function Component({ prop }: Props) {
+  /* ... */
+}
 
 // ✅ Hooks no topo, sem condicionais
 const [state, setState] = useState();
 
 // ✅ Tipagem explícita de eventos
-const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => { /* ... */ };
+const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  /* ... */
+};
 ```
 
 ## 🔍 Exemplos Práticos
 
 ### Criar um Componente
+
 ```typescript
 // 1. Defina a interface
 interface ProductCardProps {
@@ -169,15 +194,14 @@ export function ProductCard({ product, onEdit }: ProductCardProps) {
   return (
     <div className="rounded-lg border p-4">
       <h3 className="text-lg font-semibold">{product.name}</h3>
-      {onEdit && (
-        <button onClick={() => onEdit(product.id)}>Editar</button>
-      )}
+      {onEdit && <button onClick={() => onEdit(product.id)}>Editar</button>}
     </div>
   );
 }
 ```
 
 ### Criar uma API Route
+
 ```typescript
 // app/api/products/route.ts
 import { NextRequest, NextResponse } from "next/server";
@@ -192,16 +216,15 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-    
+
     // 2. Tenant context
     const tenantId = await getCurrentTenantId();
-    
+
     // 3. Business logic
     const products = await getProducts(tenantId);
-    
+
     // 4. Success response
     return NextResponse.json({ success: true, data: products });
-    
   } catch (error) {
     logger.error("API error", { error, endpoint: "/api/products" });
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
@@ -210,6 +233,7 @@ export async function GET(request: NextRequest) {
 ```
 
 ### Integração Mercado Livre
+
 ```typescript
 import { MLTokenManager } from "@/utils/mercadolivre/token-manager";
 import { validateOutput, MLItemSchema } from "@/utils/validation";
@@ -217,11 +241,11 @@ import { validateOutput, MLItemSchema } from "@/utils/validation";
 async function syncProducts(integrationId: string) {
   const tokenManager = new MLTokenManager();
   const token = await tokenManager.getValidToken(integrationId);
-  
+
   const response = await fetch("https://api.mercadolibre.com/...", {
     headers: { Authorization: `Bearer ${token}` },
   });
-  
+
   const data = await response.json();
   return validateOutput(MLItemSchema, data);
 }
@@ -245,16 +269,19 @@ Use este checklist ao revisar PRs:
 ## 🛠️ Ferramentas de Suporte
 
 ### TypeScript
+
 ```bash
 npm run type-check  # Validar tipos
 ```
 
 ### ESLint
+
 ```bash
 npm run lint       # Validar código
 ```
 
 ### Prettier
+
 ```bash
 npm run format     # Formatar código (se configurado)
 ```

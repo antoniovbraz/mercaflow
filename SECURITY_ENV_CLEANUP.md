@@ -7,11 +7,13 @@ O arquivo `.env.production` foi **commitado acidentalmente** no repositório Git
 ## 🔒 Status Atual
 
 ✅ **Ações já realizadas**:
+
 - `.env.production` removido do índice Git (`git rm --cached`)
 - Commit de remoção criado
 - `.gitignore` já estava configurado corretamente
 
 ❌ **Pendente - CRÍTICO**:
+
 - Limpar histórico Git (arquivo ainda está em commits antigos)
 - Force push para GitHub (sobrescrever histórico remoto)
 - **ROTAR TODAS AS CREDENCIAIS** expostas
@@ -25,6 +27,7 @@ O arquivo `.env.production` foi **commitado acidentalmente** no repositório Git
 **Antes de limpar o Git**, você precisa **invalidar e regenerar** todas as credenciais que estavam em `.env.production`:
 
 #### Supabase
+
 1. Acesse: https://app.supabase.com/project/_/settings/api
 2. Clique em "Reset database password"
 3. Regenere `SUPABASE_SERVICE_ROLE_KEY`:
@@ -33,30 +36,35 @@ O arquivo `.env.production` foi **commitado acidentalmente** no repositório Git
 4. Atualize `.env.local` com novas credenciais
 
 #### Mercado Livre
+
 1. Acesse: https://developers.mercadolibre.com.br/
 2. Applications > Seu App > Edit
 3. Clique em "Regenerate Secret Key"
 4. Atualize `ML_CLIENT_SECRET` em `.env.local`
 
 #### Upstash Redis
+
 1. Acesse: https://console.upstash.com/
 2. Seu Database > Details
 3. Click "Rotate Token" (ou crie novo token)
 4. Atualize `UPSTASH_REDIS_REST_TOKEN`
 
 #### OpenAI
+
 1. Acesse: https://platform.openai.com/api-keys
 2. Revoke a chave exposta
 3. Crie nova chave
 4. Atualize `OPENAI_API_KEY`
 
 #### Sentry
+
 1. Acesse: https://sentry.io/settings/
 2. Auth Tokens > Revoke token exposto
 3. Crie novo token
 4. Atualize `SENTRY_AUTH_TOKEN`
 
 #### Encryption Keys
+
 1. Gere novas chaves:
    ```powershell
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
@@ -175,6 +183,7 @@ fi
 ```
 
 Tornar executável:
+
 ```powershell
 # No Git Bash
 chmod +x .git/hooks/pre-commit
@@ -215,4 +224,3 @@ Se suspeitar que credenciais foram usadas maliciosamente:
 
 **Criado**: 18 de Outubro de 2025  
 **Prioridade**: 🚨 **CRÍTICA - EXECUTAR IMEDIATAMENTE**
-
