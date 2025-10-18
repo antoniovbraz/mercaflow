@@ -1,6 +1,143 @@
+/**
+ * ML Webhooks Endpoint
+ * 
+ * Receives webhook notifications from Mercado Livre
+ * and processes them asynchronously for cache invalidation
+ * and data synchronization.
+ * 
+ * @security Uses service role for webhook inserts (ML doesn't send auth)
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { logger } from '@/utils/logger';
 
+/**
+ * POST /api/ml/webhooks - Receive webhook notifications from ML
+ * 
+ * CRITICAL: Must return HTTP 200 in < 500ms or ML will retry
+ * Process webhook asynchronously to meet this requirement
+ */
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const startTime = Date.now();
+  
+  try {
+    // Parse webhook payload
+    const webhook = await request.json();
+    
+    // Validate webhook structure
+    if (!webhook.resource || !webhook.topic || !webhook.user_id) {
+      logger.warn('Invalid webhook payload received', { webhook });
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    }
+
+    // Log webhook receipt
+    logger.info('🔔 ML Webhook received', {
+      topic: webhook.topic,
+      resource: webhook.resource,
+      userId: webhook.user_id,
+      attempts: webhook.attempts || 1,
+    });
+
+    // Return 200 immediately (ML requirement: < 500ms)
+    const response = NextResponse.json(
+      { received: true, timestamp: new Date().toISOString() },
+      { status: 200 }
+    );
+
+    // Process webhook asynchronously (don't await)
+    processWebhookAsync(webhook).catch(error => {
+      logger.error('Webhook async processing failed', error, { webhook });
+    });
+
+    const processingTime = Date.now() - startTime;
+    logger.debug('Webhook response sent', { processingTime, webhook: webhook.topic });
+
+    return response;
+
+  } catch (error) {
+    const processingTime = Date.now() - startTime;
+    logger.error('Webhook POST error', error, { processingTime });
+    
+    // Still return 200 to avoid retry storm
+    return NextResponse.json(
+      { received: true, error: 'Processing error' },
+      { status: 200 }
+    );
+  }
+}
+
+/**
+ * Process webhook asynchronously (non-blocking)
+ */
+async function processWebhookAsync(webhook: any): Promise<void> {
+  try {
+    // Use service role client for webhook logging (no auth context)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    
+    const supabase = createServiceClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+    // Save webhook to database
+    const { error: insertError } = await supabase
+      .from('ml_webhook_logs')
+      .insert({
+        notification_id: webhook._id || webhook.id,
+        topic: webhook.topic,
+        resource: webhook.resource,
+        user_id: webhook.user_id?.toString(),
+        application_id: webhook.application_id?.toString(),
+        attempts: webhook.attempts || 1,
+        sent_at: webhook.sent ? new Date(webhook.sent) : null,
+        received_at: webhook.received ? new Date(webhook.received) : null,
+        processed_at: new Date(),
+        status: 'processed',
+        resource_data: webhook,
+      });
+
+    if (insertError) {
+      logger.error('Failed to save webhook to database', insertError, { webhook });
+    } else {
+      logger.info('✅ Webhook saved to database', {
+        topic: webhook.topic,
+        notificationId: webhook._id || webhook.id,
+      });
+    }
+
+    // TODO: Invalidate cache based on webhook topic
+    await invalidateCache(webhook);
+
+  } catch (error) {
+    logger.error('Webhook async processing error', error);
+    throw error;
+  }
+}
+
+/**
+ * Invalidate cache based on webhook topic
+ * TODO: Implement Redis cache invalidation
+ */
+async function invalidateCache(webhook: any): Promise<void> {
+  // Implementation will use Redis commands:
+  // - items: del ml:items:{item_id}
+  // - orders: del ml:orders:*
+  // - questions: del ml:questions:*
+  // For now, just log
+  logger.debug('Cache invalidation triggered', {
+    topic: webhook.topic,
+    resource: webhook.resource,
+  });
+}
+
+/**
+ * GET /api/ml/webhooks - List webhook logs (authenticated)
+ */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
