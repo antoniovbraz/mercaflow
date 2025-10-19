@@ -1,17 +1,7 @@
-/**
- * ML Orders API - List and manage orders
- * 
- * GET /api/ml/orders - List orders with pagination and filtering
- * POST /api/ml/orders - Sync orders, update local data, calculate analytics
- * 
- * @refactored Replaced console.log/error with logger, improved error handling
- */
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, getCurrentUser } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager'
-import { logger } from '@/utils/logger'
 import { 
   OrdersSearchQuerySchema,
   validateQueryParams,
@@ -101,7 +91,7 @@ export async function GET(request: NextRequest) {
         const { data: orders, error: ordersError } = await query
 
         if (ordersError) {
-            logger.error('Failed to fetch orders from database', { error: ordersError })
+            console.error('Erro ao buscar pedidos:', ordersError)
             return NextResponse.json({ error: 'Erro ao buscar pedidos' }, { status: 500 })
         }
 
@@ -124,7 +114,7 @@ export async function GET(request: NextRequest) {
         })
 
     } catch (error) {
-        logger.error('ML Orders GET Error', { error })
+        console.error('Erro na API de pedidos:', error)
         return NextResponse.json(
             { error: 'Erro interno do servidor' },
             { status: 500 }
@@ -192,7 +182,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, result })
 
     } catch (error) {
-        logger.error('ML Orders POST Error', { error })
+        console.error('Erro na API de pedidos (POST):', error)
         return NextResponse.json(
             { error: 'Erro interno do servidor' },
             { status: 500 }
@@ -242,7 +232,7 @@ async function syncOrdersFromML(integration: any, supabase: any) {
                     })
 
                 if (upsertError) {
-                    logger.error('Failed to upsert order', { error: upsertError, orderId: mlOrder.id })
+                    console.error('Erro ao inserir pedido:', upsertError)
                     errorCount++
                 } else {
                     syncedCount++
@@ -254,7 +244,7 @@ async function syncOrdersFromML(integration: any, supabase: any) {
                 }
 
             } catch (itemError) {
-                logger.error('Failed to process individual order', { error: itemError, orderId: mlOrder.id })
+                console.error('Erro ao processar pedido individual:', itemError)
                 errorCount++
             }
         }
@@ -266,7 +256,7 @@ async function syncOrdersFromML(integration: any, supabase: any) {
         }
 
     } catch (error) {
-        logger.error('Failed to sync orders from ML', { error })
+        console.error('Erro na sincronização de pedidos:', error)
         throw error
     }
 }
@@ -310,7 +300,7 @@ async function syncOrderItems(orderId: string, items: any[], integrationId: stri
         }
 
     } catch (error) {
-        logger.error('Failed to sync order items', { error, orderId })
+        console.error('Erro ao sincronizar itens do pedido:', error)
     }
 }
 
@@ -398,7 +388,7 @@ async function calculateOrderAnalytics(integrationId: string, supabase: any) {
         }
 
     } catch (error) {
-        logger.error('Failed to calculate order analytics', { error })
+        console.error('Erro ao calcular analytics:', error)
         throw error
     }
 }

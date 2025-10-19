@@ -1,35 +1,40 @@
 /**
- * ML Products API
- *
- * Returns ML products from database with pagination and filtering
+ * ML Products API - List products from database
+ * 
+ * GET /api/ml/products - Returns paginated list of ML products
+ * 
+ * Features:
+ * - Pagination (page, limit)
+ * - Filtering (status, search)
+ * - Diagnostic mode (integration status)
+ * - Full tenant isolation via RLS
+ * 
+ * @refactored Uses MLProductRepository + MLIntegrationRepository
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser, createClient } from '@/utils/supabase/server';
+import { getCurrentUser } from '@/utils/supabase/server';
+import { getCurrentTenantId } from '@/utils/supabase/tenancy';
 import { logger } from '@/utils/logger';
+import { MLProductRepository } from '@/utils/mercadolivre/repositories/MLProductRepository';
+import { MLIntegrationRepository } from '@/utils/mercadolivre/repositories/MLIntegrationRepository';
+import { MLSyncLogRepository } from '@/utils/mercadolivre/repositories/MLSyncLogRepository';
+import type { MLSyncLog, MLProduct } from '@/utils/mercadolivre/types';
 
-interface MLProduct {
-  id: string;
-  ml_item_id: string;
-  title: string;
-  status: string;
-  price: number;
-  available_quantity: number;
-  sold_quantity: number;
-  permalink: string;
-  category_id: string | null;
-  last_sync_at: string;
-  thumbnail?: string;
-  condition?: string;
-  listing_type_id?: string;
-  ml_data?: Record<string, unknown>;
-}
-
+/**
+ * GET /api/ml/products
+ * 
+ * Query params:
+ * - page: Page number (default: 1)
+ * - limit: Items per page (default: 20, max: 100)
+ * - status: Filter by status (active, paused, closed, etc.)
+ * - search: Search in title (case-insensitive)
+ * - diagnostic: Return diagnostic info (true/false)
+ */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    // Verify authentication
+    // 1. Authentication
     const user = await getCurrentUser();
-
     if (!user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -37,158 +42,164 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Get user profile to find correct tenant_id
-    const supabase = await createClient();
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('tenant_id')
-      .eq('id', user.id)
-      .single();
+    // 2. Get tenant context
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: 'Tenant not found' },
+        { status: 400 }
+      );
+    }
 
-    const tenantId = profile?.tenant_id || user.id;
+    // 3. Initialize repositories
+    const integrationRepo = new MLIntegrationRepository();
+    const productRepo = new MLProductRepository();
+    const syncLogRepo = new MLSyncLogRepository();
 
-    // Check if this is a diagnostic request
+    // 4. Get active integrations
+    const integrations = await integrationRepo.findByTenant(tenantId);
+    const integration = integrations.find(i => i.status === 'active') || null;
+    
+    // 5. Check for diagnostic mode
     const url = new URL(request.url);
     const isDiagnostic = url.searchParams.get('diagnostic') === 'true';
 
-    // Get ML integration for this tenant
-    const { data: integration, error: integrationError } = await supabase
-      .from('ml_integrations')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('status', 'active')
-      .single();
-
     if (isDiagnostic) {
       // Return diagnostic information
-      const { count: productCount } = await supabase
-        .from('ml_products')
-        .select('*', { count: 'exact', head: true })
-        .eq('integration_id', integration?.id || 'none');
+      if (!integration) {
+        return NextResponse.json({
+          diagnostic: {
+            userId: user.id,
+            tenantId,
+            integration: null,
+            error: 'No active ML integration found',
+            productCount: 0,
+            recentSyncLogs: []
+          }
+        });
+      }
 
-      const { data: syncLogs } = await supabase
-        .from('ml_sync_logs')
-        .select('*')
-        .eq('integration_id', integration?.id || 'none')
-        .order('created_at', { ascending: false })
-        .limit(3);
+      const productCount = await productRepo.count(integration.id);
+      const recentSyncLogs = await syncLogRepo.findByIntegration(integration.id, { limit: 3 });
 
       return NextResponse.json({
         diagnostic: {
           userId: user.id,
           tenantId,
-          integration: integration ? {
+          integration: {
             id: integration.id,
             ml_user_id: integration.ml_user_id,
             status: integration.status,
             last_sync_at: integration.last_sync_at,
             auto_sync_enabled: integration.auto_sync_enabled,
             sync_frequency_minutes: integration.sync_frequency_minutes
-          } : null,
-          integrationError: integrationError?.message,
+          },
           productCount,
-          recentSyncLogs: syncLogs || []
+          recentSyncLogs: recentSyncLogs.slice(0, 3).map((log) => ({
+            id: log.id,
+            sync_type: log.sync_type,
+            status: log.status,
+            created_at: log.created_at,
+            completed_at: log.completed_at,
+            error_message: log.error_message
+          }))
         }
       });
     }
 
-    if (integrationError || !integration) {
+    // 6. Require integration for normal listing
+    if (!integration) {
       return NextResponse.json(
-        { error: 'No active ML integration found' },
+        { error: 'No active ML integration found. Please connect your Mercado Livre account.' },
         { status: 404 }
       );
     }
 
-    // Parse query parameters
-    const { searchParams } = new URL(request.url);
+    // 7. Parse query parameters
+    const { searchParams } = url;
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100); // Max 100 per page
-    const status = searchParams.get('status'); // Filter by status
-    const search = searchParams.get('search'); // Search in title
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100); // Max 100
+    const statusFilter = searchParams.get('status');
+    const searchFilter = searchParams.get('search');
 
     const offset = (page - 1) * limit;
 
-    // Build query
-    let query = supabase
-      .from('ml_products')
-      .select('*', { count: 'exact' })
-      .eq('integration_id', integration.id)
-      .order('last_sync_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    // Apply filters
-    if (status && status !== 'all') {
-      query = query.eq('status', status);
+    // 8. Build repository options
+    const options: { status?: string; limit?: number; offset?: number } = {
+      limit,
+      offset
+    };
+    
+    if (statusFilter && statusFilter !== 'all') {
+      options.status = statusFilter;
     }
 
-    if (search) {
-      query = query.ilike('title', `%${search}%`);
-    }
+    // 9. Fetch products from repository
+    const products = await productRepo.findByIntegration(
+      integration.id,
+      options
+    );
 
-    const { data: products, error, count } = await query;
-
-    if (error) {
-      logger.error('Error fetching products from database:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch products' },
-        { status: 500 }
+    // 10. Apply search filter if needed (manual filter since repo doesn't support search)
+    let filteredProducts = products;
+    if (searchFilter) {
+      filteredProducts = products.filter(p => 
+        p.title.toLowerCase().includes(searchFilter.toLowerCase())
       );
     }
 
-    // Debug: Log integration and product info
-    logger.info('Products query debug:', {
+    // 11. Get total count
+    const total = await productRepo.count(
+      integration.id,
+      statusFilter && statusFilter !== 'all' ? statusFilter : undefined
+    );
+
+    // 12. Calculate pagination
+    const totalPages = Math.ceil(total / limit);
+
+    logger.info('ML Products fetched', {
       integrationId: integration.id,
       tenantId,
-      productCount: count,
-      hasProducts: (products || []).length > 0,
-      firstProduct: products?.[0] ? {
-        id: products[0].id,
-        ml_item_id: products[0].ml_item_id,
-        title: products[0].title,
-        status: products[0].status
-      } : null
+      count: filteredProducts.length,
+      total,
+      page,
+      totalPages
     });
 
-    // Transform products to match expected interface
-    const transformedProducts: MLProduct[] = (products || []).map(product => ({
-      id: product.id,
-      ml_item_id: product.ml_item_id,
-      title: product.title,
-      status: product.status,
-      price: product.price,
-      available_quantity: product.available_quantity,
-      sold_quantity: product.sold_quantity,
-      permalink: product.permalink,
-      category_id: product.category_id,
-      last_sync_at: product.last_sync_at,
-      thumbnail: product.thumbnail,
-      condition: product.condition,
-      listing_type_id: product.listing_type_id,
-      ml_data: product.ml_data,
-    }));
-
-    const totalPages = Math.ceil((count || 0) / limit);
-
-    logger.info(`ML Products fetched: ${transformedProducts.length} products (page ${page}/${totalPages})`);
-
+    // 13. Return response
     return NextResponse.json({
-      products: transformedProducts,
+      products: filteredProducts.map((p) => ({
+        id: p.id,
+        ml_item_id: p.ml_item_id,
+        title: p.title,
+        status: p.status,
+        price: p.price,
+        available_quantity: p.available_quantity,
+        sold_quantity: p.sold_quantity,
+        permalink: p.permalink,
+        category_id: p.category_id,
+        last_sync_at: p.last_sync_at,
+        thumbnail: p.thumbnail,
+        condition: p.condition,
+        listing_type_id: p.listing_type_id,
+        ml_data: p.ml_data,
+      })),
       pagination: {
         page,
         limit,
-        total: count || 0,
+        total,
         totalPages,
         hasNext: page < totalPages,
         hasPrev: page > 1,
       },
       filters: {
-        status: status || 'all',
-        search: search || '',
+        status: statusFilter || 'all',
+        search: searchFilter || '',
       },
     });
 
   } catch (error) {
-    logger.error('ML Products GET Error:', error);
+    logger.error('ML Products GET Error', { error });
 
     if (error instanceof Error && error.message.includes('Insufficient role')) {
       return NextResponse.json(

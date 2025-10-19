@@ -2,13 +2,10 @@
  * ML Integration Status Endpoint
  * 
  * Returns the current status of ML integration for the authenticated user
- * 
- * @refactored Replaced console.error with logger
  */
 
 import { NextResponse } from 'next/server';
 import { createClient, getCurrentUser } from '@/utils/supabase/server';
-import { logger } from '@/utils/logger';
 
 interface IntegrationStatus {
   hasIntegration: boolean;
@@ -60,7 +57,7 @@ export async function GET(): Promise<NextResponse> {
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
-      logger.error('Failed to fetch ML integration', { error, tenantId });
+      console.error('Error fetching ML integration:', error);
       return NextResponse.json(
         { error: 'Failed to fetch integration status' },
         { status: 500 }
@@ -124,7 +121,7 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json(response);
 
   } catch (error) {
-    logger.error('ML Integration Status GET Error', { error });
+    console.error('ML Integration Status Error:', error);
     
     if (error instanceof Error && error.message.includes('Insufficient role')) {
       return NextResponse.json(
@@ -193,7 +190,7 @@ export async function DELETE(): Promise<NextResponse> {
       .eq('id', integration.id);
 
     if (deleteError) {
-      logger.error('Failed to delete integration', { error: deleteError, integrationId: integration.id });
+      console.error('Error deleting integration:', deleteError);
       return NextResponse.json(
         { error: 'Failed to delete integration' },
         { status: 500 }
@@ -217,7 +214,7 @@ export async function DELETE(): Promise<NextResponse> {
     });
 
   } catch (error) {
-    logger.error('ML Integration DELETE Error', { error });
+    console.error('ML Integration Revoke Error:', error);
     
     if (error instanceof Error && error.message.includes('Insufficient role')) {
       return NextResponse.json(
