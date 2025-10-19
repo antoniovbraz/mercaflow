@@ -95,21 +95,19 @@ async function processWebhookAsync(webhook: WebhookPayload): Promise<void> {
       },
     });
 
-    // Save webhook to database
+    // Save webhook to database (matching actual schema)
     const { error: insertError } = await supabase
       .from('ml_webhook_logs')
       .insert({
-        notification_id: webhook._id || webhook.id,
         topic: webhook.topic,
         resource: webhook.resource,
-        user_id: webhook.user_id?.toString(),
-        application_id: webhook.application_id?.toString(),
-        attempts: webhook.attempts || 1,
-        sent_at: webhook.sent ? new Date(webhook.sent) : null,
-        received_at: webhook.received ? new Date(webhook.received) : null,
-        processed_at: new Date(),
-        status: 'processed',
-        resource_data: webhook,
+        user_id: parseInt(webhook.user_id) || null,
+        application_id: parseInt(webhook.application_id) || null,
+        status: 'success',
+        payload: webhook, // Store full webhook as JSONB
+        received_at: new Date().toISOString(),
+        processed_at: new Date().toISOString(),
+        retry_count: (typeof webhook.attempts === 'number' ? webhook.attempts - 1 : 0),
       });
 
     if (insertError) {
@@ -117,7 +115,7 @@ async function processWebhookAsync(webhook: WebhookPayload): Promise<void> {
     } else {
       logger.info('✅ Webhook saved to database', {
         topic: webhook.topic,
-        notificationId: webhook._id || webhook.id,
+        resource: webhook.resource,
       });
     }
 
@@ -186,18 +184,17 @@ export async function GET(request: NextRequest) {
       .from('ml_webhook_logs')
       .select(`
         id,
-        notification_id,
         topic,
         resource,
         user_id,
         application_id,
-        attempts,
-        sent_at,
         received_at,
         processed_at,
         status,
         error_message,
-        resource_data,
+        payload,
+        retry_count,
+        processing_duration_ms,
         created_at
       `)
       .order('created_at', { ascending: false })

@@ -48,9 +48,9 @@ export async function GET(): Promise<NextResponse> {
       
     const tenantId = profile?.tenant_id || user.id;
     
-    // Get integration with summary data (only active ones)
+    // Get integration data (only active ones)
     const { data: integration, error } = await supabase
-      .from('ml_integration_summary')
+      .from('ml_integrations')
       .select('*')
       .eq('tenant_id', tenantId)
       .eq('status', 'active') // Only fetch active integrations
@@ -71,6 +71,29 @@ export async function GET(): Promise<NextResponse> {
       return NextResponse.json(response);
     }
 
+    // Get product count
+    const { count: productCount } = await supabase
+      .from('ml_products')
+      .select('*', { count: 'exact', head: true })
+      .eq('integration_id', integration.id);
+
+    // Get recent error logs count
+    const { count: errorCount } = await supabase
+      .from('ml_sync_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('integration_id', integration.id)
+      .eq('status', 'error')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()); // Last 24h
+
+    // Get last log timestamp
+    const { data: lastLog } = await supabase
+      .from('ml_sync_logs')
+      .select('created_at')
+      .eq('integration_id', integration.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     // Check if token is close to expiry (within 1 hour)
     const expiresAt = new Date(integration.token_expires_at);
     const now = new Date();
@@ -89,9 +112,9 @@ export async function GET(): Promise<NextResponse> {
         last_sync_at: integration.last_sync_at,
         scopes: integration.scopes,
         auto_sync_enabled: integration.auto_sync_enabled,
-        product_count: integration.product_count || 0,
-        error_count: integration.error_count || 0,
-        last_log_at: integration.last_log_at,
+        product_count: productCount || 0,
+        error_count: errorCount || 0,
+        last_log_at: lastLog?.created_at,
       },
     };
 

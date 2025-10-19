@@ -113,7 +113,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .from('ml_products')
       .select('*', { count: 'exact' })
       .eq('integration_id', integration.id)
-      .order('last_synced_at', { ascending: false })
+      .order('last_sync_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
     // Apply filters
@@ -160,7 +160,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       sold_quantity: product.sold_quantity,
       permalink: product.permalink,
       category_id: product.category_id,
-      last_synced_at: product.last_synced_at,
+      last_synced_at: product.last_sync_at, // Fixed: use last_sync_at from database
       thumbnail: product.thumbnail,
       condition: product.condition,
       listing_type_id: product.listing_type_id,
