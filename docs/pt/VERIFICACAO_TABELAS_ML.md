@@ -1,8 +1,10 @@
-# 🔍 GUIA DE VERIFICAÇÃO DAS TABELAS ML
+# Verificação de Tabelas ML no Supabase
+
+Este guia mostra como verificar se as tabelas do Mercado Livre foram criadas corretamente no seu banco de dados Supabase.
 
 ## 📋 Scripts Disponíveis
 
-Foram criados 2 scripts SQL para verificação:
+Temos 3 scripts SQL para verificação:
 
 1. **`verify-ml-tables-simple.sql`** ⭐ **RECOMENDADO**
    - Verificação rápida e simplificada
@@ -14,11 +16,17 @@ Foram criados 2 scripts SQL para verificação:
    - 10 tipos de verificações
    - Inclui indexes, constraints, triggers, policies
 
+3. **`verify-complete-schema.sql`** 🔍 **AUDITORIA COMPLETA**
+   - Verifica **TODO O SCHEMA** do Supabase
+   - 17 seções de análise
+   - Inclui: todas as tabelas, FKs, RLS, triggers, functions, enums, espaço em disco
+   - Ideal para auditoria completa do banco de dados
+
 ---
 
 ## 🚀 COMO USAR
 
-### Opção 1: Script Simples (Recomendado)
+### Opção 1: Script Simples ⭐ (Recomendado para verificação rápida)
 
 1. **Acesse o Supabase Dashboard:**
    ```
@@ -41,7 +49,7 @@ Foram criados 2 scripts SQL para verificação:
 
 ---
 
-### Opção 2: Script Completo (Detalhado)
+### Opção 2: Script Completo (Tabelas ML detalhado)
 
 1. **Acesse o Supabase Dashboard SQL Editor**
 
@@ -63,6 +71,40 @@ Foram criados 2 scripts SQL para verificação:
    - Triggers
    - Verificação de colunas críticas
    - Resumo final
+
+---
+
+### Opção 3: Script de Auditoria Completa 🔍 (TODO O SCHEMA)
+
+1. **Acesse o Supabase Dashboard SQL Editor**
+
+2. **Copie o conteúdo de:**
+   ```
+   scripts/verify-complete-schema.sql
+   ```
+
+3. **Cole e execute**
+
+4. **Você verá 17 seções de análise completa:**
+   - **Seção 1**: Resumo geral do banco (total de tabelas, colunas, indexes, etc)
+   - **Seção 2**: Todas as tabelas do schema public (não apenas ML)
+   - **Seção 3**: Detalhes de colunas de TODAS as tabelas
+   - **Seção 4**: Todos os indexes
+   - **Seção 5**: Todas as constraints (PK, FK, UNIQUE, CHECK)
+   - **Seção 6**: Relacionamentos (Foreign Keys)
+   - **Seção 7**: Status RLS de todas as tabelas
+   - **Seção 8**: Todos os triggers
+   - **Seção 9**: Functions/Procedures
+   - **Seção 10**: Enums (tipos customizados)
+   - **Seção 11**: Contagem de registros em todas as tabelas
+   - **Seção 12**: Verificação específica das tabelas ML
+   - **Seção 13**: Verificação do sistema de autenticação (profiles, tenants, etc)
+   - **Seção 14**: Estatísticas de espaço em disco
+   - **Seção 15**: Grafo de dependências (quais tabelas referenciam quais)
+   - **Seção 16**: Schemas e Extensions instaladas
+   - **Seção 17**: Resumo final
+
+**⚠️ IMPORTANTE**: Este script verifica TUDO no banco, não apenas as tabelas ML. Use quando precisar de uma auditoria completa.
 
 ---
 
