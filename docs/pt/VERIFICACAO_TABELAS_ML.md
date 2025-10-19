@@ -16,11 +16,17 @@ Temos 3 scripts SQL para verificação:
    - 10 tipos de verificações
    - Inclui indexes, constraints, triggers, policies
 
-3. **`verify-complete-schema.sql`** 🔍 **AUDITORIA COMPLETA**
+3. **`verify-complete-schema.sql`** 🔍 **AUDITORIA COMPLETA** (múltiplos resultados)
    - Verifica **TODO O SCHEMA** do Supabase
    - 17 seções de análise
    - Inclui: todas as tabelas, FKs, RLS, triggers, functions, enums, espaço em disco
-   - Ideal para auditoria completa do banco de dados
+   - ⚠️ Supabase SQL Editor só mostra o último resultado
+
+4. **`verify-schema-single-result.sql`** ⭐ **RECOMENDADO PARA SUPABASE**
+   - Mesma verificação completa do schema
+   - **RETORNA UM ÚNICO RESULTADO** consolidado
+   - Funciona perfeitamente no Supabase SQL Editor
+   - 14 seções em uma única tabela de resultados
 
 ---
 
@@ -105,6 +111,39 @@ Temos 3 scripts SQL para verificação:
    - **Seção 17**: Resumo final
 
 **⚠️ IMPORTANTE**: Este script verifica TUDO no banco, não apenas as tabelas ML. Use quando precisar de uma auditoria completa.
+
+**⚠️ LIMITAÇÃO**: Supabase SQL Editor só mostra o último SELECT, então você verá apenas a mensagem final de conclusão.
+
+---
+
+### Opção 4: Script Completo de Resultado Único ⭐ (RECOMENDADO PARA SUPABASE)
+
+1. **Acesse o Supabase Dashboard SQL Editor**
+
+2. **Copie o conteúdo de:**
+   ```
+   scripts/verify-schema-single-result.sql
+   ```
+
+3. **Cole e execute**
+
+4. **Você verá UMA ÚNICA TABELA com todas as 14 seções:**
+   - **Seção 1**: Resumo geral (6 métricas)
+   - **Seção 2**: Lista de todas as tabelas com contagem de colunas e status RLS
+   - **Seção 3**: Tabelas ML específicas com verificação de integridade
+   - **Seção 4**: Verificação crítica de ml_integrations (access_token vs encrypted_access_token)
+   - **Seção 5**: Todas as colunas de ml_integrations com tipos e nullable
+   - **Seção 6**: Indexes das tabelas ML
+   - **Seção 7**: Foreign Keys completas (origem → destino, ON DELETE)
+   - **Seção 8**: RLS Policies detalhadas (roles, USING, WITH CHECK)
+   - **Seção 9**: Triggers (eventos, timing)
+   - **Seção 10**: Contagem de registros em TODAS as tabelas
+   - **Seção 11**: Sistema de autenticação (profiles, tenants, etc)
+   - **Seção 12**: Enums (tipos customizados com valores)
+   - **Seção 13**: Extensions instaladas
+   - **Seção 14**: Estatísticas de espaço em disco (top 20 maiores tabelas)
+
+**✅ VANTAGEM**: Este script usa uma tabela temporária para consolidar TUDO em um único resultado, perfeito para o Supabase SQL Editor!
 
 ---
 
