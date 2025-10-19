@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   MessageCircle,
@@ -25,6 +24,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { QuestionCardSkeleton } from '@/components/ui/skeleton-variants';
+import { NoQuestions, NoData, ErrorState } from '@/components/ui/empty-state-variants';
 
 interface MLQuestion {
   id: number;
@@ -250,14 +251,24 @@ export function MLQuestionManager() {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center p-6">
-          <div className="flex items-center space-x-2">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Carregando perguntas...</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="space-y-3">
+              <div className="h-8 w-64 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 w-96 bg-gray-100 rounded animate-pulse" />
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Questions List Skeleton */}
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <QuestionCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
     );
   }
 
@@ -330,12 +341,19 @@ export function MLQuestionManager() {
         </CardContent>
       </Card>
 
-      {/* Error Alert */}
+      {/* Error State */}
       {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <ErrorState
+          title="Erro ao carregar perguntas"
+          description={error}
+          action={{
+            label: "Tentar Novamente",
+            onClick: () => {
+              setError(null);
+              fetchQuestions();
+            },
+          }}
+        />
       )}
 
       {/* Main Content */}
@@ -348,17 +366,23 @@ export function MLQuestionManager() {
         <TabsContent value="questions" className="space-y-4">
           {/* Questions List */}
           {questions.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-medium mb-2">Nenhuma pergunta encontrada</h3>
-                <p className="text-sm text-muted-foreground">
-                  {selectedStatus === 'UNANSWERED' 
-                    ? 'Não há perguntas pendentes no momento.'
-                    : 'Nenhuma pergunta corresponde aos filtros selecionados.'}
-                </p>
-              </CardContent>
-            </Card>
+            <NoQuestions
+              action={{
+                label: selectedStatus === 'ALL' ? "Atualizar" : "Ver Todas",
+                onClick: () => {
+                  if (selectedStatus === 'ALL') {
+                    fetchQuestions();
+                  } else {
+                    setSelectedStatus('ALL');
+                  }
+                },
+                variant: "outline"
+              }}
+              secondaryAction={{
+                label: "Ver Tutorial",
+                onClick: () => window.open('/ajuda/perguntas', '_self'),
+              }}
+            />
           ) : (
             <div className="space-y-4">
               {questions.map((question) => (
@@ -562,13 +586,15 @@ export function MLQuestionManager() {
 
               {/* Templates List */}
               {templates.length === 0 ? (
-                <div className="text-center py-8">
-                  <Bot className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="font-medium mb-2">Nenhum template criado</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Crie templates para respostas rápidas e padronizadas.
-                  </p>
-                </div>
+                <NoData
+                  title="Nenhum template criado"
+                  description="Crie templates para respostas rápidas e padronizadas. Isso economiza tempo ao responder perguntas frequentes."
+                  action={{
+                    label: "Criar Primeiro Template",
+                    onClick: () => setShowTemplateForm(true),
+                  }}
+                  bare
+                />
               ) : (
                 <div className="space-y-3">
                   {templates.map((template) => (

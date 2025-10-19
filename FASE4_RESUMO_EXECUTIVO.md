@@ -11,11 +11,13 @@
 ### 🔥 Rotas Críticas (3/3):
 
 1. ✅ **`/api/ml/products/sync-all`**
+
    - 250 → 95 linhas (-62%)
    - Usa MLProductService (multiget correto)
    - Pattern: IDs → batch 20 → /items?ids=...
 
 2. ✅ **`/api/ml/auth/callback`**
+
    - 226 → 336 linhas (+49%, mais estruturado)
    - Usa MLTokenService + MLIntegrationRepository
    - 10 seções bem documentadas
@@ -30,16 +32,19 @@
 ### 📋 Rotas Não-Críticas (4/4):
 
 4. ✅ **`/api/ml/products`** (GET)
+
    - 206 → 185 linhas (-10%)
    - Usa MLProductRepository
    - Pagination + filtering + diagnostic
 
 5. ✅ **`/api/ml/orders`** (GET + POST)
+
    - 497 linhas (logs melhorados)
    - Trocado console → logger
    - Sync + analytics mantidos
 
 6. ✅ **`/api/ml/questions`** (GET + POST)
+
    - 414 linhas (já estava correto!)
    - Usa logger estruturado
    - Cache Redis (5 min)
@@ -71,31 +76,33 @@
 
 ## 📊 Métricas
 
-| Métrica | Valor |
-|---------|-------|
-| **Rotas refatoradas** | **7/7 (100%)** |
-| Rotas críticas | 3/3 ✅ |
-| Rotas não-críticas | 4/4 ✅ |
-| Commits | 12 commits |
-| Linhas adicionadas | +2.476 |
-| Linhas removidas | -484 |
-| Type-safety | 100% |
-| Logger estruturado | 100% (zero console.log) |
-| **Confiança produção** | **95%** 🎯 |
-| RLS coverage | 100% |
-| console.log em produção | 0 |
+| Métrica                 | Valor                   |
+| ----------------------- | ----------------------- |
+| **Rotas refatoradas**   | **7/7 (100%)**          |
+| Rotas críticas          | 3/3 ✅                  |
+| Rotas não-críticas      | 4/4 ✅                  |
+| Commits                 | 12 commits              |
+| Linhas adicionadas      | +2.476                  |
+| Linhas removidas        | -484                    |
+| Type-safety             | 100%                    |
+| Logger estruturado      | 100% (zero console.log) |
+| **Confiança produção**  | **95%** 🎯              |
+| RLS coverage            | 100%                    |
+| console.log em produção | 0                       |
 
 ---
 
 ## 🚀 O Que Funciona Agora
 
 1. ✅ **OAuth Flow Completo**
+
    - Usuário conecta conta ML
    - Tokens criptografados (AES-256-GCM)
    - State validation com PKCE
    - Background sync trigger
 
 2. ✅ **Sincronização de Produtos**
+
    - Pattern correto: IDs → multiget
    - Batch de 20 em 20
    - 90+ produtos suportados

@@ -34,11 +34,14 @@
 Configure estas variáveis no Vercel Dashboard → Settings → Environment Variables:
 
 #### Supabase:
+
 - [ ] `NEXT_PUBLIC_SUPABASE_URL`
+
   - Exemplo: `https://xxxxxxxxxxxxxx.supabase.co`
   - Obter em: Supabase Dashboard → Settings → API
 
 - [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
   - Chave pública (anon key)
   - Obter em: Supabase Dashboard → Settings → API
 
@@ -48,11 +51,14 @@ Configure estas variáveis no Vercel Dashboard → Settings → Environment Vari
   - Obter em: Supabase Dashboard → Settings → API
 
 #### Mercado Livre OAuth:
+
 - [ ] `ML_CLIENT_ID`
+
   - Obter em: https://developers.mercadolibre.com.br/apps
   - ID do aplicativo ML
 
 - [ ] `ML_CLIENT_SECRET`
+
   - ⚠️ CRÍTICO: Manter secreto!
   - Secret do aplicativo ML
 
@@ -61,6 +67,7 @@ Configure estas variáveis no Vercel Dashboard → Settings → Environment Vari
   - Deve estar cadastrado no app ML
 
 #### Encryption:
+
 - [ ] `ENCRYPTION_KEY`
   - ⚠️ CRÍTICO: Manter secreto!
   - Mínimo 32 caracteres
@@ -68,7 +75,9 @@ Configure estas variáveis no Vercel Dashboard → Settings → Environment Vari
   - Usado para criptografar tokens ML
 
 #### Sentry (Opcional mas recomendado):
+
 - [ ] `SENTRY_DSN`
+
   - Para tracking de erros
   - Obter em: https://sentry.io
 
@@ -77,6 +86,7 @@ Configure estas variáveis no Vercel Dashboard → Settings → Environment Vari
   - Obter em: Sentry → Settings → Auth Tokens
 
 #### Next.js:
+
 - [ ] `NEXTAUTH_SECRET`
   - Se usar NextAuth
   - Gerar: `openssl rand -base64 32`
@@ -86,9 +96,11 @@ Configure estas variáveis no Vercel Dashboard → Settings → Environment Vari
 No Mercado Livre Developers (https://developers.mercadolibre.com.br/apps):
 
 - [ ] **Adicionar Redirect URI**
+
   - `https://seu-dominio.vercel.app/api/ml/auth/callback`
 
 - [ ] **Configurar Notifications URL (Webhooks)**
+
   - `https://seu-dominio.vercel.app/api/ml/webhooks/notifications`
   - Topics: `items`, `orders`, `questions`
 
@@ -100,11 +112,13 @@ No Mercado Livre Developers (https://developers.mercadolibre.com.br/apps):
 ### 4. Verificação Pós-Deploy
 
 - [ ] **Acessar URL de produção**
+
   - https://seu-dominio.vercel.app
 
 - [ ] **Verificar página inicial carrega**
 
 - [ ] **Fazer login**
+
   - Criar conta ou usar existente
 
 - [ ] **Verificar conexão com Supabase**
@@ -113,19 +127,23 @@ No Mercado Livre Developers (https://developers.mercadolibre.com.br/apps):
 ### 5. Teste do OAuth Flow
 
 - [ ] **Acessar Dashboard ML**
+
   - https://seu-dominio.vercel.app/dashboard/ml
 
 - [ ] **Clicar em "Conectar com Mercado Livre"**
 
 - [ ] **Autorizar no ML**
+
   - Redireciona para ML
   - Login no ML
   - Autoriza aplicativo
 
 - [ ] **Verificar redirect de volta**
+
   - Deve voltar para `/dashboard/ml?connected=success`
 
 - [ ] **Verificar integração salva**
+
   - Fazer GET `/api/ml/integration`
   - Deve retornar `{ connected: true, integration: {...} }`
 
@@ -137,22 +155,27 @@ No Mercado Livre Developers (https://developers.mercadolibre.com.br/apps):
 ### 6. Teste de Sincronização 🎯 **CRÍTICO**
 
 - [ ] **Trigger manual sync**
+
   - POST `/api/ml/products/sync-all`
   - Ou usar botão no dashboard
 
 - [ ] **Monitorar logs**
+
   - Vercel Dashboard → Functions → Logs
   - Procurar por "Products synced successfully"
 
 - [ ] **Verificar ml_products table**
+
   ```sql
   SELECT COUNT(*) FROM ml_products;
   ```
+
   - **Esperado**: 90+ registros
 
 - [ ] **Verificar dados dos produtos**
+
   ```sql
-  SELECT 
+  SELECT
     ml_item_id,
     title,
     price,
@@ -161,11 +184,12 @@ No Mercado Livre Developers (https://developers.mercadolibre.com.br/apps):
   FROM ml_products
   LIMIT 5;
   ```
+
   - Campos devem estar preenchidos corretamente
 
 - [ ] **Verificar sync logs**
   ```sql
-  SELECT 
+  SELECT
     sync_type,
     status,
     items_processed,
@@ -183,9 +207,11 @@ No Mercado Livre Developers (https://developers.mercadolibre.com.br/apps):
 ### 7. Teste de Listagem
 
 - [ ] **Acessar página de produtos**
+
   - https://seu-dominio.vercel.app/produtos
 
 - [ ] **Verificar produtos aparecem**
+
   - Deve mostrar 90+ produtos
   - Com imagens, preços, status
 
@@ -196,9 +222,11 @@ No Mercado Livre Developers (https://developers.mercadolibre.com.br/apps):
 ### 8. Monitoramento
 
 - [ ] **Configurar Sentry Alerts**
+
   - Erros críticos → Email/Slack
 
 - [ ] **Verificar logs no Vercel**
+
   - Acessar regularmente
   - Procurar por erros
 
@@ -209,10 +237,12 @@ No Mercado Livre Developers (https://developers.mercadolibre.com.br/apps):
 ### 9. Performance
 
 - [ ] **Verificar tempo de sync**
+
   - 90+ produtos deve levar <30 segundos
   - Se demorar muito, investigar
 
 - [ ] **Verificar uso de RAM**
+
   - Vercel Dashboard → Analytics
   - Não deve exceder limite da tier
 
@@ -227,11 +257,13 @@ No Mercado Livre Developers (https://developers.mercadolibre.com.br/apps):
 ### OAuth não funciona:
 
 1. **Verificar ML_REDIRECT_URI**
+
    - Deve ser EXATAMENTE o cadastrado no ML
    - Incluir protocolo (https://)
    - Sem trailing slash
 
 2. **Verificar ML_CLIENT_ID e ML_CLIENT_SECRET**
+
    - Copiar novamente do ML Dashboard
    - Sem espaços extras
 
@@ -242,16 +274,19 @@ No Mercado Livre Developers (https://developers.mercadolibre.com.br/apps):
 ### Sync falha:
 
 1. **Verificar tokens**
+
    ```sql
-   SELECT 
+   SELECT
      token_expires_at,
      status,
      last_error
    FROM ml_integrations;
    ```
+
    - Se expirado, fazer refresh manual
 
 2. **Verificar ENCRYPTION_KEY**
+
    - Deve ser o mesmo usado para criptografar
    - Se mudou, tokens ficam inválidos
 
@@ -263,12 +298,14 @@ No Mercado Livre Developers (https://developers.mercadolibre.com.br/apps):
 ### Produtos não aparecem:
 
 1. **Verificar RLS policies**
+
    ```sql
-   SELECT * FROM pg_policies 
+   SELECT * FROM pg_policies
    WHERE tablename = 'ml_products';
    ```
 
 2. **Verificar tenant_id**
+
    - User e integration devem ter mesmo tenant_id
 
 3. **Verificar diretamente no Supabase**
@@ -296,16 +333,19 @@ Considere o deploy bem-sucedido quando:
 ## 📞 SUPORTE
 
 **Documentação**:
+
 - `FASE4_REFATORACAO_COMPLETA.md` - Detalhes técnicos
 - `FASE4_RESUMO_EXECUTIVO.md` - Resumo rápido
 - `docs/pt/VERIFICACAO_TABELAS_ML.md` - SQL queries
 
 **Logs**:
+
 - Vercel: https://vercel.com/dashboard/logs
 - Sentry: https://sentry.io
 - Supabase: https://supabase.com/dashboard/logs
 
 **APIs**:
+
 - ML Docs: https://developers.mercadolibre.com.br/
 - Supabase Docs: https://supabase.com/docs
 

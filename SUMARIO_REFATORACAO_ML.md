@@ -8,18 +8,22 @@
 ## 🎯 O QUE FOI IDENTIFICADO
 
 ### Problema Principal
+
 ```
 ❌ PRODUTOS NÃO SINCRONIZANDO: 0 de 90+ produtos
 ```
 
 **Causa Raiz Descoberta:**
+
 1. ❌ **API ML usada INCORRETAMENTE**
+
    - `/users/{id}/items/search` retorna APENAS IDs (strings)
    - Código assumia que retornava objetos completos
    - Resultado: `mlProduct.id`, `mlProduct.title` etc eram `undefined`
    - Database error: "null value in column ml_item_id"
 
 2. ❌ **Migration dropou todas as tabelas**
+
    - Migration `20251018210135` fez DROP de tudo
    - Perdemos dados de integrações
    - Usuário precisa reconectar ML
@@ -31,9 +35,11 @@
    - RLS policies podem estar bloqueando
 
 ### Decisão Tomada
+
 ✅ **REFAZER TUDO DO ZERO**
 
 **Justificativa:**
+
 - Aplicação em desenvolvimento (sem usuários reais)
 - Mais rápido refazer bem do que arrumar gambiarras
 - Oportunidade de implementar best practices
@@ -45,26 +51,29 @@
 
 ### 1. Documentos de Planejamento
 
-| Arquivo | Descrição |
-|---------|-----------|
-| `REFATORACAO_COMPLETA_ML.md` | **Documento mestre** com análise completa, objetivos, schema novo do banco, arquitetura de serviços, decisões técnicas |
-| `GUIA_REFATORACAO_PASSO_A_PASSO.md` | **Guia de execução** com checklist completo de todas as tarefas, fase por fase, com comandos e código |
-| `scripts/diagnose_ml_database.sql` | **Script SQL** para diagnosticar estado atual do banco antes de começar refatoração |
+| Arquivo                             | Descrição                                                                                                              |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `REFATORACAO_COMPLETA_ML.md`        | **Documento mestre** com análise completa, objetivos, schema novo do banco, arquitetura de serviços, decisões técnicas |
+| `GUIA_REFATORACAO_PASSO_A_PASSO.md` | **Guia de execução** com checklist completo de todas as tarefas, fase por fase, com comandos e código                  |
+| `scripts/diagnose_ml_database.sql`  | **Script SQL** para diagnosticar estado atual do banco antes de começar refatoração                                    |
 
 ### 2. Plano de Execução (7 Fases)
 
 #### **Fase 0: Análise** (30min - 1h)
+
 - Backup do banco
 - Executar diagnóstico SQL
 - Documentar estado atual
 
 #### **Fase 1: Nova Migration** (2-3h)
+
 - DROP todas as tabelas ML
 - CREATE schema correto baseado na API oficial
 - RLS policies com `security_invoker = true`
 - Indexes otimizados
 
 #### **Fase 2: Camada de Serviços** (4-6h)
+
 - `MLApiClient` com retry logic
 - `MLTokenService` (refresh automático)
 - `MLProductService` (multiget CORRETO)
@@ -73,6 +82,7 @@
 - `Repositories` para acesso ao banco
 
 #### **Fase 3: API Routes** (2-3h)
+
 - Refatorar `/api/ml/auth/*`
 - Refatorar `/api/ml/products/*`
 - Refatorar `/api/ml/orders/*`
@@ -80,22 +90,26 @@
 - Refatorar `/api/ml/webhooks/*`
 
 #### **Fase 4: Frontend** (2-3h)
+
 - `ProductList`, `OrderList`, `QuestionList`
 - Dashboard principal `/ml`
 - Páginas de produtos, pedidos, perguntas
 
 #### **Fase 5: Testes** (3-4h)
+
 - Testes unitários (services, repositories)
 - Testes de integração (API routes)
 - Testes E2E (fluxo completo)
 - Alvo: 80%+ cobertura
 
 #### **Fase 6: Documentação** (1-2h)
+
 - README atualizado
 - `docs/pt/INTEGRACAO_ML.md` (arquitetura)
 - `docs/pt/TROUBLESHOOTING_ML.md` (guia)
 
 #### **Fase 7: Deploy** (1-2h)
+
 - Commit + push
 - Aguardar deploy Vercel
 - Reconectar conta ML
@@ -121,6 +135,7 @@ ml_sync_logs         -- Histórico de sincronizações
 ```
 
 ### Características
+
 - ✅ Normalizado (3NF)
 - ✅ RLS em todas as tabelas
 - ✅ Indexes otimizados
@@ -178,12 +193,12 @@ for (const batch of batches) {
   //   { code: 200, body: {id, title, price, ...} },
   //   { code: 200, body: {id, title, price, ...} }
   // ]
-  
+
   // 3. Extrair objetos completos
   const products = multigetResponse
     .filter(r => r.code === 200)
     .map(r => r.body);
-  
+
   // 4. Inserir no banco (agora com dados reais!)
   await upsertBatch(products);
 }
@@ -196,6 +211,7 @@ for (const batch of batches) {
 ### Passo 1: Diagnóstico ⏳ **FAZER AGORA**
 
 1. **Acesse Supabase Dashboard**
+
    ```
    https://supabase.com/dashboard/project/pnzbnciiokgiadkfgrcn
    ```
@@ -203,6 +219,7 @@ for (const batch of batches) {
 2. **Vá em: SQL Editor**
 
 3. **Copie e execute:**
+
    - Abra: `scripts/diagnose_ml_database.sql`
    - Copie todo o conteúdo
    - Cole no SQL Editor
@@ -226,6 +243,7 @@ for (const batch of batches) {
 ### Passo 3: Executar Refatoração
 
 **Com base na decisão:**
+
 - Seguir checklist do `GUIA_REFATORACAO_PASSO_A_PASSO.md`
 - Marcar cada item conforme completa
 - Testar após cada fase
@@ -235,6 +253,7 @@ for (const batch of batches) {
 ## 📊 CRITÉRIOS DE SUCESSO
 
 ### Must Have ✅
+
 - [ ] 90+ produtos sincronizando corretamente
 - [ ] Pedidos sendo buscados e exibidos
 - [ ] Perguntas sincronizando
@@ -243,6 +262,7 @@ for (const batch of batches) {
 - [ ] Zero erros em 24h
 
 ### Should Have 🎨
+
 - [ ] Testes automatizados (80%+)
 - [ ] Documentação completa
 - [ ] Logs estruturados
@@ -255,10 +275,12 @@ for (const batch of batches) {
 Antes de começarmos, preciso saber:
 
 1. **Quantas integrações ML ativas você tem agora?**
+
    - Nenhuma? (pode dropar tudo)
    - Uma ou mais? (precisamos migrar dados)
 
 2. **Há dados importantes no banco?**
+
    - Produtos históricos que não podem ser perdidos?
    - Pedidos antigos importantes?
    - Perguntas respondidas que devem ser preservadas?
@@ -279,6 +301,7 @@ Antes de começarmos, preciso saber:
 4. Vou criar a migration perfeita para seu caso
 
 **Arquivos de referência:**
+
 - `REFATORACAO_COMPLETA_ML.md` - Análise técnica completa
 - `GUIA_REFATORACAO_PASSO_A_PASSO.md` - Checklist de execução
 - `scripts/diagnose_ml_database.sql` - Script de diagnóstico

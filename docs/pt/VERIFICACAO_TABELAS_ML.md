@@ -7,16 +7,19 @@ Este guia mostra como verificar se as tabelas do Mercado Livre foram criadas cor
 Temos 3 scripts SQL para verificação:
 
 1. **`verify-ml-tables-simple.sql`** ⭐ **RECOMENDADO**
+
    - Verificação rápida e simplificada
    - 5 verificações essenciais
    - Resultado fácil de ler
 
-2. **`verify-ml-tables.sql`** 
+2. **`verify-ml-tables.sql`**
+
    - Verificação completa e detalhada
    - 10 tipos de verificações
    - Inclui indexes, constraints, triggers, policies
 
 3. **`verify-complete-schema.sql`** 🔍 **AUDITORIA COMPLETA** (múltiplos resultados)
+
    - Verifica **TODO O SCHEMA** do Supabase
    - 17 seções de análise
    - Inclui: todas as tabelas, FKs, RLS, triggers, functions, enums, espaço em disco
@@ -35,11 +38,13 @@ Temos 3 scripts SQL para verificação:
 ### Opção 1: Script Simples ⭐ (Recomendado para verificação rápida)
 
 1. **Acesse o Supabase Dashboard:**
+
    ```
    https://supabase.com/dashboard/project/YOUR_PROJECT_ID/sql/new
    ```
 
 2. **Copie o conteúdo de:**
+
    ```
    scripts/verify-ml-tables-simple.sql
    ```
@@ -60,6 +65,7 @@ Temos 3 scripts SQL para verificação:
 1. **Acesse o Supabase Dashboard SQL Editor**
 
 2. **Copie o conteúdo de:**
+
    ```
    scripts/verify-ml-tables.sql
    ```
@@ -85,6 +91,7 @@ Temos 3 scripts SQL para verificação:
 1. **Acesse o Supabase Dashboard SQL Editor**
 
 2. **Copie o conteúdo de:**
+
    ```
    scripts/verify-complete-schema.sql
    ```
@@ -121,6 +128,7 @@ Temos 3 scripts SQL para verificação:
 1. **Acesse o Supabase Dashboard SQL Editor**
 
 2. **Copie o conteúdo de:**
+
    ```
    scripts/verify-schema-single-result.sql
    ```
@@ -150,6 +158,7 @@ Temos 3 scripts SQL para verificação:
 ## ✅ O QUE ESPERAR (Resultados Corretos)
 
 ### 1. Tabelas ML (7 no total):
+
 ```sql
 ml_oauth_states     (7 colunas)
 ml_integrations     (20 colunas)
@@ -161,16 +170,19 @@ ml_webhook_logs     (12 colunas)
 ```
 
 ### 2. Contagem de Registros:
+
 ```
 Todas as tabelas: 0 registros (esperado após DROP CASCADE)
 ```
 
 ### 3. RLS Status:
+
 ```
 Todas as 7 tabelas: ✅ Habilitado
 ```
 
 ### 4. Colunas críticas de ml_integrations:
+
 ```sql
 ✅ access_token        (TEXT, NOT NULL)
 ✅ refresh_token       (TEXT, NOT NULL)
@@ -183,6 +195,7 @@ Todas as 7 tabelas: ✅ Habilitado
 ```
 
 ### 5. Indexes Principais:
+
 ```sql
 ✅ idx_ml_integrations_user_id
 ✅ idx_ml_integrations_tenant_id
@@ -197,12 +210,15 @@ Todas as 7 tabelas: ✅ Habilitado
 ## 🐛 PROBLEMAS COMUNS
 
 ### ❌ Problema 1: Tabelas não existem
+
 **Sintoma:**
+
 ```
 Nenhuma tabela encontrada com prefixo 'ml_'
 ```
 
 **Solução:**
+
 ```bash
 # Aplicar migration
 npx supabase db push
@@ -211,13 +227,16 @@ npx supabase db push
 ---
 
 ### ❌ Problema 2: Coluna encrypted_access_token existe
+
 **Sintoma:**
+
 ```sql
 encrypted_access_token | TEXT | NO
 ```
 
 **Solução:**
 Migration está desatualizada. Execute:
+
 ```bash
 # Pull do schema remoto
 npx supabase db pull
@@ -232,12 +251,15 @@ npx supabase db push
 ---
 
 ### ❌ Problema 3: RLS desabilitado
+
 **Sintoma:**
+
 ```
 ml_products | ❌ Desabilitado
 ```
 
 **Solução:**
+
 ```sql
 -- Execute no SQL Editor:
 ALTER TABLE ml_products ENABLE ROW LEVEL SECURITY;
@@ -246,13 +268,16 @@ ALTER TABLE ml_products ENABLE ROW LEVEL SECURITY;
 ---
 
 ### ❌ Problema 4: Número de colunas diferente
+
 **Sintoma:**
+
 ```
 ml_integrations (18 colunas)  -- Esperado: 20
 ```
 
 **Solução:**
 Schema está desatualizado. Re-aplicar migration:
+
 ```bash
 npx supabase db reset  # ⚠️ CUIDADO: Apaga todos os dados
 # OU
@@ -265,36 +290,40 @@ npx supabase db push --linked  # Aplica apenas novas migrations
 
 A migration `20251019160000_rebuild_ml_from_scratch.sql` deve criar:
 
-| Tabela | Colunas | Indexes | RLS | Unique Constraints |
-|--------|---------|---------|-----|-------------------|
-| ml_oauth_states | 7 | 3 | ✅ | state |
-| ml_integrations | 20 | 5 | ✅ | (user_id, ml_user_id) |
-| ml_products | 18 | 4 | ✅ | (integration_id, ml_item_id) |
-| ml_orders | 18 | 4 | ✅ | (integration_id, ml_order_id) |
-| ml_questions | 15 | 4 | ✅ | (integration_id, ml_question_id) |
-| ml_webhook_logs | 12 | 3 | ✅ | - |
-| ml_sync_logs | 14 | 2 | ✅ | - |
+| Tabela          | Colunas | Indexes | RLS | Unique Constraints               |
+| --------------- | ------- | ------- | --- | -------------------------------- |
+| ml_oauth_states | 7       | 3       | ✅  | state                            |
+| ml_integrations | 20      | 5       | ✅  | (user_id, ml_user_id)            |
+| ml_products     | 18      | 4       | ✅  | (integration_id, ml_item_id)     |
+| ml_orders       | 18      | 4       | ✅  | (integration_id, ml_order_id)    |
+| ml_questions    | 15      | 4       | ✅  | (integration_id, ml_question_id) |
+| ml_webhook_logs | 12      | 3       | ✅  | -                                |
+| ml_sync_logs    | 14      | 2       | ✅  | -                                |
 
 ---
 
 ## 🔧 COMANDOS ÚTEIS (CLI)
 
 ### Verificar status local:
+
 ```bash
 npx supabase db status
 ```
 
 ### Verificar diferenças:
+
 ```bash
 npx supabase db diff
 ```
 
 ### Aplicar migrations:
+
 ```bash
 npx supabase db push
 ```
 
 ### Reset completo (⚠️ APAGA DADOS):
+
 ```bash
 npx supabase db reset
 ```

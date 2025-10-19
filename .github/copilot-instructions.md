@@ -225,11 +225,23 @@ export async function GET(request: NextRequest) {
 
 ```bash
 npm install          # Install dependencies
-npm run dev         # Development server (localhost:3000)
-npm run dev:turbo   # Turbo mode for faster development (recommended)
+npm run dev         # Development server (localhost:3000) - RECOMMENDED
+npm run dev:turbo   # Turbo mode (experimental, may conflict with Sentry)
 npm run build       # Production build
 npm run type-check  # TypeScript validation (strict mode)
 npm run lint        # ESLint validation
+```
+
+**Key npm scripts for Supabase**:
+
+```bash
+npm run db:start     # Start local Supabase (Docker required)
+npm run db:stop      # Stop local Supabase
+npm run db:status    # Check Supabase local instance status
+npm run db:reset     # Reset local database (destructive!)
+npm run db:push      # Apply migrations to remote
+npm run db:pull      # Sync remote schema locally
+npm run db:migration # Create new timestamped migration file
 ```
 
 ### Debugging & Testing
@@ -244,20 +256,23 @@ npm run lint        # ESLint validation
 **Available npm scripts**:
 
 ```bash
-npm run dev:turbo    # Faster dev mode (recommended for active development)
+npm run dev          # Development server (RECOMMENDED - stable with Sentry)
+npm run dev:turbo    # Faster dev mode with Turbopack (experimental)
 npm run type-check   # TypeScript validation without build
 npm run db:status    # Check Supabase local instance status
 npm run db:migration # Create new timestamped migration file
+npm run db:push      # Apply local migrations to remote Supabase
+npm run db:pull      # Pull remote schema to local migrations
 ```
 
 **Testing ML Integration**:
 
-```bash
-# Windows (Git Bash or WSL required for .sh scripts)
-bash test_ml_api.sh
-
-# Or test endpoints directly via /api/debug-ml endpoint
+```powershell
+# PowerShell (native Windows)
 curl http://localhost:3000/api/debug-ml
+
+# Or use Git Bash/WSL for .sh scripts
+bash test_ml_api.sh
 ```
 
 ### Database Operations
@@ -369,3 +384,21 @@ npx supabase db push                              # Apply migrations to remote
 - **Shell scripts**: `.sh` files need WSL/Git Bash or conversion to PowerShell (`.ps1`)
 - **Test scripts**: Use `bash test_ml_api.sh` in Git Bash, or convert to PowerShell equivalents
 - **Path handling**: Node.js handles Windows paths correctly, but shell commands may need adjustment
+- **PowerShell commands**: Use native PowerShell for most operations (npm scripts work natively)
+- **Environment variables**: Use `$env:VARIABLE_NAME` syntax in PowerShell vs `$VARIABLE_NAME` in bash
+
+**PowerShell Equivalents**:
+
+```powershell
+# Check Supabase status
+npm run db:status
+
+# Test API endpoints
+Invoke-WebRequest -Uri http://localhost:3000/api/debug-ml | Select-Object -Expand Content
+
+# View environment variables
+Get-ChildItem Env: | Where-Object { $_.Name -like "*SUPABASE*" }
+
+# Run development server
+npm run dev:turbo
+```

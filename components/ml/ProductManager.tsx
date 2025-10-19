@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Search,
   Filter,
@@ -16,7 +15,6 @@ import {
   Plus,
   Package,
   AlertTriangle,
-  Loader2,
   DollarSign,
   TrendingUp,
   ChevronLeft,
@@ -25,6 +23,8 @@ import {
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ProductCardSkeleton, StatCardSkeleton } from "@/components/ui/skeleton-variants";
+import { NoProducts, NoSearchResults, ErrorState } from "@/components/ui/empty-state-variants";
 
 interface MLProduct {
   id: string;
@@ -300,16 +300,21 @@ export function MLProductManager() {
 
   if (loading && products.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center p-8">
-          <div className="flex items-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-muted-foreground">
-              Carregando produtos...
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        {/* Stats Skeleton */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <StatCardSkeleton key={i} />
+          ))}
+        </div>
+
+        {/* Products Grid Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <ProductCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
     );
   }
 
@@ -469,12 +474,23 @@ export function MLProductManager() {
         </CardContent>
       </Card>
 
-      {/* Error Alert */}
+      {/* Error State */}
       {error && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <ErrorState
+          title="Erro ao carregar produtos"
+          description={error}
+          action={{
+            label: "Tentar Novamente",
+            onClick: () => {
+              setError(null);
+              loadProducts();
+            },
+          }}
+          secondaryAction={{
+            label: "Renovar Token",
+            onClick: refreshToken,
+          }}
+        />
       )}
 
       {/* Products List */}
@@ -654,23 +670,33 @@ export function MLProductManager() {
           </Card>
         )}
 
-        {/* No Products */}
+        {/* No Products or No Search Results */}
         {!loading && products.length === 0 && (
-          <Card>
-            <CardContent className="text-center py-8">
-              <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="font-medium mb-2">Nenhum produto encontrado</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {searchQuery || statusFilter !== "all"
-                  ? "Tente ajustar os filtros de busca"
-                  : "Você ainda não possui produtos no Mercado Livre"}
-              </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Criar Primeiro Produto
-              </Button>
-            </CardContent>
-          </Card>
+          <>
+            {searchQuery || statusFilter !== "all" ? (
+              <NoSearchResults
+                action={{
+                  label: "Limpar Filtros",
+                  onClick: () => {
+                    setSearchQuery("");
+                    setStatusFilter("all");
+                    setCurrentPage(1);
+                  },
+                }}
+              />
+            ) : (
+              <NoProducts
+                action={{
+                  label: "Sincronizar Produtos",
+                  onClick: syncProducts,
+                }}
+                secondaryAction={{
+                  label: "Ver Tutorial",
+                  onClick: () => window.open("/ajuda/produtos", "_self"),
+                }}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

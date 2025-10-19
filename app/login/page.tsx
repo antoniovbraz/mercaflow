@@ -1,25 +1,32 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
+import { showSuccessToast, showErrorToast, showInfoToast } from "@/utils/toast-helper";
 
 function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  // Get success/message from URL params
-  const successMessage = searchParams.get("success");
-  const message = searchParams.get("message");
+  // Show success/info messages from URL params via toast
+  useEffect(() => {
+    const successMessage = searchParams.get("success");
+    const message = searchParams.get("message");
+    
+    if (successMessage) {
+      showSuccessToast(successMessage);
+    } else if (message) {
+      showInfoToast(message);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
@@ -27,7 +34,7 @@ function LoginForm() {
 
     // Validação básica
     if (!email || !password) {
-      setError("Email e senha são obrigatórios");
+      showErrorToast(new Error("Email e senha são obrigatórios"));
       setIsLoading(false);
       return;
     }
@@ -40,19 +47,24 @@ function LoginForm() {
         });
 
       if (signInError) {
-        // Removed console.error - errors handled by error boundaries
-        setError(signInError.message);
+        showErrorToast(signInError);
         setIsLoading(false);
         return;
       }
 
       if (data.user) {
-        // Login successful, redirect to dashboard
-        router.push("/dashboard");
+        // Login successful, show toast and redirect
+        showSuccessToast("Login realizado com sucesso!", {
+          description: "Redirecionando para o dashboard...",
+        });
+        
+        // Small delay for user to see success message
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 500);
       }
-    } catch {
-      // Removed console.error - errors handled by error boundaries
-      setError("Erro ao fazer login. Tente novamente.");
+    } catch (error) {
+      showErrorToast(error);
       setIsLoading(false);
     }
   };
@@ -91,52 +103,6 @@ function LoginForm() {
             e-commerce
           </p>
         </div>
-
-        {(successMessage || message) && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 text-blue-800 px-6 py-4 rounded-xl shadow-lg">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                <svg
-                  className="w-5 h-5 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  ></path>
-                </svg>
-              </div>
-              <span className="font-medium">{successMessage || message}</span>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200/50 text-red-800 px-6 py-4 rounded-xl shadow-lg">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-                <svg
-                  className="w-5 h-5 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  ></path>
-                </svg>
-              </div>
-              <span className="font-medium">{error}</span>
-            </div>
-          </div>
-        )}
 
         <form
           className="space-y-6 bg-white/90 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-gray-100/50"

@@ -4,6 +4,7 @@ import { getUserRole, hasRole } from "@/utils/supabase/roles";
 import { signOutAction } from "../login/actions";
 import Link from "next/link";
 import { DashboardStats } from "./components/DashboardStats";
+import { NotificationsWidget } from "@/components/dashboard/NotificationsWidget";
 
 export default async function DashboardPage() {
   // Require authentication
@@ -160,6 +161,11 @@ export default async function DashboardPage() {
 
         {/* Modern Stats Cards */}
         <DashboardStats />
+
+        {/* Notifications Widget */}
+        <div className="mb-8">
+          <NotificationsWidget />
+        </div>
 
         {/* Main Action Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-12">

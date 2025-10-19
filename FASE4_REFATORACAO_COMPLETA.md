@@ -12,15 +12,15 @@ Refatoramos as **3 rotas mais críticas** da integração com Mercado Livre, usa
 
 ### Estatísticas Gerais:
 
-| Métrica | Valor |
-|---------|-------|
-| Rotas refatoradas | 3 de 6-8 totais |
-| Linhas adicionadas | +972 linhas (incluindo documentação) |
-| Linhas removidas | -350 linhas (código antigo) |
-| Novos erros criados | 2 (MLOAuthError, MLOAuthStateError) |
-| Scripts SQL criados | 4 (verificação completa do schema) |
-| Commits realizados | 7 commits |
-| Tempo estimado | 4-5 horas |
+| Métrica             | Valor                                |
+| ------------------- | ------------------------------------ |
+| Rotas refatoradas   | 3 de 6-8 totais                      |
+| Linhas adicionadas  | +972 linhas (incluindo documentação) |
+| Linhas removidas    | -350 linhas (código antigo)          |
+| Novos erros criados | 2 (MLOAuthError, MLOAuthStateError)  |
+| Scripts SQL criados | 4 (verificação completa do schema)   |
+| Commits realizados  | 7 commits                            |
+| Tempo estimado      | 4-5 horas                            |
 
 ---
 
@@ -32,11 +32,13 @@ Refatoramos as **3 rotas mais críticas** da integração com Mercado Livre, usa
 **Arquivo**: `app/api/ml/products/sync-all/route.ts`
 
 **Estatísticas**:
+
 - **Antes**: 250+ linhas
 - **Depois**: 95 linhas
 - **Redução**: 62% (-155 linhas)
 
 **Melhorias Implementadas**:
+
 - ✅ Usa `MLProductService.syncAllProducts()` (multiget pattern correto)
 - ✅ Usa `MLIntegrationRepository.findByTenant()`
 - ✅ Autenticação via `getCurrentUser()` + `getCurrentTenantId()`
@@ -46,20 +48,22 @@ Refatoramos as **3 rotas mais críticas** da integração com Mercado Livre, usa
 - ✅ Response format consistente: `{ success: boolean, data?: any }`
 
 **Código Antes**:
+
 ```typescript
 // Lógica inline, MLTokenManager antigo, console.log
 const tokenManager = new MLTokenManager();
 const accessToken = await tokenManager.getValidToken(integration.id);
-console.log('Syncing products...');
+console.log("Syncing products...");
 // 250+ linhas de lógica inline
 ```
 
 **Código Depois**:
+
 ```typescript
 // Services, repositories, structured logging
 const productService = new MLProductService();
 const result = await productService.syncAllProducts(integration.id);
-logger.info('Products synced', { totalSynced: result.totalSynced });
+logger.info("Products synced", { totalSynced: result.totalSynced });
 // 95 linhas, 62% mais conciso
 ```
 
@@ -71,12 +75,14 @@ logger.info('Products synced', { totalSynced: result.totalSynced });
 **Arquivo**: `app/api/ml/auth/callback/route.ts`
 
 **Estatísticas**:
+
 - **Antes**: 226 linhas
 - **Depois**: 336 linhas
 - **Aumento**: +49% (+110 linhas)
 - **Motivo**: Muito mais estruturado, 10 seções bem documentadas
 
 **Melhorias Implementadas**:
+
 - ✅ Usa `MLTokenService.encryptToken()` para criptografia
 - ✅ Usa `MLIntegrationRepository.create/update()` para DB
 - ✅ 10 seções claramente separadas (OAuth errors, validation, token exchange, etc)
@@ -88,6 +94,7 @@ logger.info('Products synced', { totalSynced: result.totalSynced });
 - ✅ Type-safe `OAuthState` interface
 
 **Seções Implementadas**:
+
 1. ✅ OAuth error handling
 2. ✅ Parameter validation
 3. ✅ OAuth state validation (`.maybeSingle()`)
@@ -100,6 +107,7 @@ logger.info('Products synced', { totalSynced: result.totalSynced });
 10. ✅ Success redirect
 
 **Código Antes**:
+
 ```typescript
 // MLTokenManager antigo
 const tokenManager = new MLTokenManager();
@@ -107,6 +115,7 @@ await tokenManager.saveTokenData(userId, tenantId, tokenData, userData);
 ```
 
 **Código Depois**:
+
 ```typescript
 // Services separados com responsabilidades claras
 const tokenService = new MLTokenService();
@@ -114,7 +123,9 @@ const integrationRepo = new MLIntegrationRepository();
 
 const encryptedAccessToken = tokenService.encryptToken(tokenData.access_token);
 const integration = await integrationRepo.create({
-  user_id, tenant_id, ml_user_id,
+  user_id,
+  tenant_id,
+  ml_user_id,
   access_token: encryptedAccessToken,
   // ... 20 campos tipados
 });
@@ -128,19 +139,21 @@ const integration = await integrationRepo.create({
 **Arquivo**: `app/api/ml/integration/route.ts`
 
 **Estatísticas**:
+
 - **Antes**: 65 linhas (apenas GET básico)
 - **Depois**: 266 linhas (GET + DELETE + POST/PUT handlers)
 - **Aumento**: +308% (+201 linhas)
 - **Motivo**: DELETE implementado, POST/PUT handlers, muito mais robusto
 
 **Melhorias Implementadas**:
+
 - ✅ **GET**: Retrieve integration com validação completa
   - Retorna `{ integration: {...}, connected: true/false }`
   - NUNCA expõe tokens (apenas dados seguros)
   - Valida status `active`
   - `null` se não existir (não é erro)
-  
 - ✅ **DELETE**: Remove integration com CASCADE
+
   - Delete via `repository.delete(id)`
   - CASCADE automático para products, orders, questions, sync_logs (FK constraints)
   - Success response com dados da integração deletada
@@ -151,18 +164,20 @@ const integration = await integrationRepo.create({
   - PUT: informa que updates são automáticos
 
 **Código Antes**:
+
 ```typescript
 // Apenas GET básico, console.log
 const { data: integration } = await supabase
-  .from('ml_integrations')
-  .select('*')
-  .eq('tenant_id', profile.id)
+  .from("ml_integrations")
+  .select("*")
+  .eq("tenant_id", profile.id)
   .single(); // Bug: .single() causa 406 se não existir
 
-console.error('Error:', error);
+console.error("Error:", error);
 ```
 
 **Código Depois**:
+
 ```typescript
 // GET + DELETE completo, structured logging
 const integrationRepo = new MLIntegrationRepository();
@@ -172,11 +187,11 @@ if (!integration) {
   return NextResponse.json({ integration: null, connected: false });
 }
 
-logger.info('ML integration found', { integrationId: integration.id });
+logger.info("ML integration found", { integrationId: integration.id });
 
 // DELETE implementation
 await integrationRepo.delete(integration.id);
-logger.info('ML integration deleted successfully', { integrationId });
+logger.info("ML integration deleted successfully", { integrationId });
 ```
 
 ---
@@ -190,13 +205,9 @@ logger.info('ML integration deleted successfully', { integrationId });
 
 ```typescript
 export class MLOAuthError extends MLError {
-  constructor(
-    message: string,
-    public oauthError?: string,
-    details?: unknown
-  ) {
-    super(message, 'OAUTH_ERROR', details);
-    this.name = 'MLOAuthError';
+  constructor(message: string, public oauthError?: string, details?: unknown) {
+    super(message, "OAUTH_ERROR", details);
+    this.name = "MLOAuthError";
     Object.setPrototypeOf(this, MLOAuthError.prototype);
   }
 }
@@ -208,11 +219,9 @@ export class MLOAuthError extends MLError {
 
 ```typescript
 export class MLOAuthStateError extends MLOAuthError {
-  constructor(
-    message: string = 'Invalid or expired OAuth state'
-  ) {
-    super(message, 'INVALID_STATE');
-    this.name = 'MLOAuthStateError';
+  constructor(message: string = "Invalid or expired OAuth state") {
+    super(message, "INVALID_STATE");
+    this.name = "MLOAuthStateError";
     Object.setPrototypeOf(this, MLOAuthStateError.prototype);
   }
 }
@@ -227,18 +236,21 @@ export class MLOAuthStateError extends MLOAuthError {
 Criamos 4 scripts SQL para verificação completa do schema Supabase:
 
 ### 1. `verify-ml-tables-simple.sql` ⭐ RECOMENDADO
+
 - **Tamanho**: 60 linhas
 - **Verificações**: 5 essenciais
 - **Tempo**: ~10 segundos
 - **Uso**: Verificação rápida após migration
 
 ### 2. `verify-ml-tables.sql`
+
 - **Tamanho**: 400+ linhas
 - **Verificações**: 10 completas
 - **Tempo**: ~30 segundos
 - **Uso**: Análise profunda, troubleshooting
 
 ### 3. `verify-complete-schema.sql`
+
 - **Tamanho**: 540+ linhas
 - **Verificações**: 17 seções
 - **Tempo**: ~60 segundos
@@ -246,6 +258,7 @@ Criamos 4 scripts SQL para verificação completa do schema Supabase:
 - **Problema**: Supabase SQL Editor só mostra último resultado
 
 ### 4. `verify-schema-single-result.sql` ⭐ RECOMENDADO SUPABASE
+
 - **Tamanho**: 400+ linhas
 - **Verificações**: 14 seções consolidadas
 - **Tempo**: ~30 segundos
@@ -253,6 +266,7 @@ Criamos 4 scripts SQL para verificação completa do schema Supabase:
 - **Técnica**: Usa temp table + INSERT + SELECT final
 
 **Resultado da Verificação**:
+
 ```json
 {
   "Total de tabelas": 11,
@@ -328,30 +342,35 @@ Criamos 4 scripts SQL para verificação completa do schema Supabase:
 ## 📈 Métricas de Qualidade
 
 ### Type Safety:
+
 - ✅ 100% TypeScript strict mode
 - ✅ Zod validation para todas as respostas ML API
 - ✅ Interfaces tipadas para DB (ml-db-types.ts)
 - ✅ Interfaces tipadas para API (ml-api-types.ts)
 
 ### Error Handling:
+
 - ✅ 15+ custom error classes
 - ✅ Hierarquia de erros (MLError → MLApiError → específicos)
 - ✅ Error handling específico por tipo
 - ✅ Logging estruturado de todos os erros
 
 ### Security:
+
 - ✅ Tokens SEMPRE criptografados (AES-256-GCM)
 - ✅ Tokens NUNCA expostos em responses
 - ✅ RLS policies 100% habilitadas
 - ✅ Tenant isolation via getCurrentTenantId()
 
 ### Logging:
+
 - ✅ 0 `console.log` em produção
 - ✅ 100% structured logging via `logger`
 - ✅ Sentry integration para erros
 - ✅ Context incluído em todos os logs
 
 ### Testing:
+
 - ✅ 4 scripts SQL de verificação
 - ✅ Schema validado 100%
 - ✅ 0 registros ML (esperado após DROP CASCADE)
@@ -364,16 +383,19 @@ Criamos 4 scripts SQL para verificação completa do schema Supabase:
 Estas rotas ainda usam o código antigo, mas **não são críticas** para o fluxo principal:
 
 1. **`/api/ml/products`** (GET)
+
    - Lista produtos sincronizados
    - Usa queries diretas ao Supabase
    - **Impacto**: Baixo (apenas listagem)
 
 2. **`/api/ml/orders`** (GET)
+
    - Lista pedidos
    - Usa queries diretas
    - **Impacto**: Baixo (apenas listagem)
 
 3. **`/api/ml/questions`** (GET)
+
    - Lista perguntas
    - Usa queries diretas
    - **Impacto**: Baixo (apenas listagem)
@@ -384,6 +406,7 @@ Estas rotas ainda usam o código antigo, mas **não são críticas** para o flux
    - **Impacto**: Baixo (apenas status)
 
 **Por que não são críticas?**
+
 - Não envolvem criação/modificação de dados
 - Não envolvem OAuth ou tokens
 - Não envolvem sincronização com ML API
@@ -397,16 +420,19 @@ Estas rotas ainda usam o código antigo, mas **não são críticas** para o flux
 ## 🚀 Próximos Passos
 
 ### Fase 5: OAuth Integration (Pendente)
+
 - Refatorar `/api/ml/auth/authorize` (inicia OAuth)
 - Implementar webhook handlers
 - Testar fluxo completo OAuth
 
 ### Fase 6: Frontend Components (Pendente)
+
 - Atualizar `ProductManager.tsx`
 - Atualizar tipos/interfaces do frontend
 - Melhorar feedback UI durante sync
 
 ### Fase 7: Deploy e Teste REAL 🎯 (CRÍTICO)
+
 - **Push para GitHub**: ✅ COMPLETO
 - Deploy para Vercel
 - Configurar environment variables:
@@ -446,6 +472,7 @@ A **Fase 4 está 50% completa** - as 3 rotas mais críticas foram refatoradas co
 3. ✅ Integration CRUD (gerenciamento de integrações)
 
 **O que funciona agora**:
+
 - ✅ Usuário pode conectar conta ML (OAuth)
 - ✅ Tokens são criptografados corretamente
 - ✅ Sincronização usa o pattern correto (IDs → multiget)
