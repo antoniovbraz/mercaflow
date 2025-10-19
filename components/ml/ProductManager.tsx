@@ -34,7 +34,7 @@ interface MLProduct {
   sold_quantity: number;
   status: string;
   permalink: string;
-  last_synced_at: string;
+  last_sync_at: string;
   thumbnail?: string;
   condition?: string;
   listing_type_id?: string;
@@ -507,7 +507,7 @@ export function MLProductManager() {
                       <div className="text-muted-foreground">Atualizado</div>
                       <div className="font-medium">
                         {formatDistanceToNow(
-                          new Date(product.last_synced_at),
+                          new Date(product.last_sync_at),
                           { addSuffix: true, locale: ptBR }
                         )}
                       </div>

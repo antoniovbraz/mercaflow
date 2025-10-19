@@ -98,7 +98,7 @@ export async function syncProducts(
         permalink: mlProduct.permalink,
         thumbnail: mlProduct.thumbnail,
         ml_data: mlProduct,
-        last_synced_at: new Date().toISOString()
+        last_sync_at: new Date().toISOString() // Fixed: use last_sync_at
       };
 
       if (existingProduct) {
@@ -146,7 +146,7 @@ export async function getCachedProducts(
     .from('ml_products')
     .select('*', { count: 'exact' })
     .eq('integration_id', integrationId)
-    .order('last_synced_at', { ascending: false });
+    .order('last_sync_at', { ascending: false }); // Fixed: use last_sync_at
 
   if (options.status) {
     query = query.eq('status', options.status);

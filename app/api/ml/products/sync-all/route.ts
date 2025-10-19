@@ -164,7 +164,7 @@ export async function POST() {
           sold_quantity: typeof mlProduct.sold_quantity === 'number' ? mlProduct.sold_quantity : 0,
           permalink: mlProduct.permalink ? String(mlProduct.permalink) : null,
           category_id: mlProduct.category_id ? String(mlProduct.category_id) : null,
-          last_synced_at: new Date().toISOString(),
+          last_sync_at: new Date().toISOString(), // Fixed: use last_sync_at
           // Store full ML data in ml_data JSONB field for reference
           ml_data: mlProduct,
         };

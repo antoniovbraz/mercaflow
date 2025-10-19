@@ -22,6 +22,7 @@
 ### 📍 PASSO 2: Executar Migration (60 segundos)
 
 1. Abra o arquivo:
+
    ```
    supabase/migrations/20251018210135_recreate_ml_schema_complete.sql
    ```
@@ -65,14 +66,15 @@ npm run dev
 No SQL Editor do Supabase, execute:
 
 ```sql
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
   AND table_name LIKE 'ml_%'
 ORDER BY table_name;
 ```
 
 **Deve retornar 8 tabelas**:
+
 ```
 ml_integrations
 ml_messages
@@ -118,6 +120,7 @@ Se seguiu os passos acima, a integração ML agora funciona!
 ### ❌ OAuth ainda não funciona
 
 **Checklist**:
+
 - [ ] Migration executada com sucesso? (viu mensagem de sucesso?)
 - [ ] 8 tabelas criadas? (executou query de verificação?)
 - [ ] Servidor reiniciado? (parou e iniciou `npm run dev`)
@@ -178,12 +181,14 @@ Get-Content .env.local | Select-String "ML_"
 ### Logs Esperados
 
 **✅ CORRETO (após migration)**:
+
 ```
 [info] Server started on http://localhost:3000
 [info] [ml] / status=200
 ```
 
 **❌ INCORRETO (antes da migration)**:
+
 ```
 [error] Failed to store OAuth state: {
   code: 'PGRST205',
@@ -199,11 +204,13 @@ Get-Content .env.local | Select-String "ML_"
 **Esta migration APAGA todos os dados do Mercado Livre!**
 
 Se você tem:
+
 - ✅ **Aplicação nova**: PODE EXECUTAR sem medo
 - ⚠️ **Dados de teste**: Serão perdidos (ok para dev)
 - ❌ **Dados de produção**: FAÇA BACKUP primeiro!
 
 Backup via Dashboard:
+
 1. Database → Backups
 2. Create Backup
 3. Aguarde confirmação

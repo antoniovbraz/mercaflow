@@ -3,6 +3,7 @@
 ## 🎯 PROBLEMA IDENTIFICADO
 
 **Erro Fatal**:
+
 ```
 Could not find the table 'public.ml_oauth_states' in the schema cache
 ```
@@ -24,35 +25,42 @@ Esta migration **apaga tudo** e **recria do zero** com estrutura otimizada:
 #### 📦 8 Tabelas Criadas
 
 1. **ml_oauth_states** ← **Esta estava faltando!**
+
    - Armazena estados OAuth PKCE temporários
    - Auto-expira após 10 minutos
    - Crítica para o fluxo de autenticação
 
 2. **ml_integrations** (Principal)
+
    - Armazena tokens OAuth criptografados
    - Uma integração por tenant
    - Auto-refresh de tokens
 
 3. **ml_products**
+
    - Produtos sincronizados do ML
    - Campos: título, preço, estoque, status
    - JSONB com dados completos da API
 
 4. **ml_orders**
+
    - Pedidos do ML
    - Status, valores, comprador
    - Sincronização via webhooks
 
 5. **ml_questions**
+
    - Perguntas de compradores
    - Suporte a respostas
    - Status: respondida/pendente
 
 6. **ml_messages**
+
    - Mensagens pós-venda
    - Integração com chat ML
 
 7. **ml_webhook_logs**
+
    - Logs de todos os webhooks recebidos
    - Performance tracking
    - Retry logic
@@ -73,6 +81,7 @@ Esta migration **apaga tudo** e **recria do zero** com estrutura otimizada:
 #### ⚙️ Funções Auxiliares
 
 1. `cleanup_expired_ml_oauth_states()`
+
    - Remove estados OAuth expirados
    - Executar periodicamente
 
@@ -91,6 +100,7 @@ Esta migration **apaga tudo** e **recria do zero** com estrutura otimizada:
 1. Acesse: https://supabase.com/dashboard/project/[SEU-PROJECT-ID]/sql/new
 
 2. Abra o arquivo:
+
    ```
    supabase/migrations/20251018210135_recreate_ml_schema_complete.sql
    ```
@@ -111,9 +121,9 @@ Esta migration **apaga tudo** e **recria do zero** com estrutura otimizada:
 Execute no SQL Editor:
 
 ```sql
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
   AND table_name LIKE 'ml_%'
 ORDER BY table_name;
 ```
@@ -127,10 +137,12 @@ ORDER BY table_name;
 Execute na ordem:
 
 1. **[ ] Migration Aplicada**
+
    - Via Supabase Dashboard (SQL Editor)
    - Confirmar 8 tabelas criadas
 
 2. **[ ] Servidor Reiniciado**
+
    ```bash
    # Parar servidor (Ctrl+C)
    Remove-Item -Recurse -Force .next
@@ -138,6 +150,7 @@ Execute na ordem:
    ```
 
 3. **[ ] Testar OAuth**
+
    - Acessar: http://localhost:3000/dashboard/ml
    - Clicar "Conectar Mercado Livre"
    - Fluxo OAuth deve completar sem erro
@@ -152,13 +165,13 @@ Execute na ordem:
 
 ### Performance
 
-| Recurso | Antes | Depois |
-|---------|-------|--------|
-| Índices | Alguns | **Todos os campos de busca** |
-| RLS Policies | Incompletas | **Completas e otimizadas** |
-| Triggers | Manuais | **Automáticos (updated_at)** |
-| Tipos de Dados | Genéricos | **Específicos (BIGINT, DECIMAL, TIMESTAMPTZ)** |
-| JSONB | Não indexado | **Com índices GIN** |
+| Recurso        | Antes        | Depois                                         |
+| -------------- | ------------ | ---------------------------------------------- |
+| Índices        | Alguns       | **Todos os campos de busca**                   |
+| RLS Policies   | Incompletas  | **Completas e otimizadas**                     |
+| Triggers       | Manuais      | **Automáticos (updated_at)**                   |
+| Tipos de Dados | Genéricos    | **Específicos (BIGINT, DECIMAL, TIMESTAMPTZ)** |
+| JSONB          | Não indexado | **Com índices GIN**                            |
 
 ### Segurança
 
@@ -173,7 +186,7 @@ Execute na ordem:
 - ✅ Schema documentado (COMMENT ON TABLE)
 - ✅ Funções auxiliares para operações comuns
 - ✅ Triggers automáticos reduzem código
-- ✅ Nomenclatura consistente (ml_*)
+- ✅ Nomenclatura consistente (ml\_\*)
 
 ---
 
@@ -182,6 +195,7 @@ Execute na ordem:
 ### ⚠️ ESTA MIGRATION APAGA DADOS!
 
 **Afetado**:
+
 - ❌ Todas as integrações ML existentes
 - ❌ Todos os produtos sincronizados
 - ❌ Todos os pedidos
@@ -189,6 +203,7 @@ Execute na ordem:
 - ❌ Logs de webhooks e sync
 
 **Impacto**:
+
 - ✅ **Aplicação nova**: ZERO impacto, pode executar
 - ⚠️ **Desenvolvimento**: Dados de teste serão perdidos
 - ❌ **Produção com dados**: BACKUP OBRIGATÓRIO antes!
@@ -208,6 +223,7 @@ pg_dump "sua-connection-string" > backup_$(date +%Y%m%d_%H%M%S).sql
 A migration é **idempotente** (pode executar várias vezes), mas **cada execução apaga os dados**.
 
 Execute apenas quando:
+
 - ✅ Primeira instalação
 - ✅ Após erro de schema
 - ✅ Reset completo necessário
@@ -217,16 +233,19 @@ Execute apenas quando:
 ## 📚 DOCUMENTAÇÃO CRIADA
 
 1. **MIGRACAO_ML_INSTRUCOES.md** (este arquivo)
+
    - Instruções passo a passo
    - Troubleshooting completo
    - Verificações pós-migration
 
 2. **COMO_APLICAR_MIGRATION_ML.md**
+
    - Guia detalhado de aplicação
    - Múltiplas opções (Dashboard, CLI, psql)
    - Exemplos de comandos
 
 3. **scripts/apply-ml-migration.ps1**
+
    - Script PowerShell auxiliar
    - Validação de credenciais
    - Dry-run mode
@@ -282,6 +301,7 @@ Execute apenas quando:
 ### Erro Comum 2: "relation already exists"
 
 **Solução**: Execute DROP manual antes:
+
 ```sql
 DROP TABLE IF EXISTS public.ml_oauth_states CASCADE;
 ```
@@ -289,6 +309,7 @@ DROP TABLE IF EXISTS public.ml_oauth_states CASCADE;
 ### Erro Comum 3: Migration não refletida
 
 **Solução**:
+
 1. Limpar cache Next.js: `Remove-Item -Recurse .next`
 2. Reiniciar servidor
 3. Reset API Schema Cache no Supabase (Settings > API)
@@ -296,6 +317,7 @@ DROP TABLE IF EXISTS public.ml_oauth_states CASCADE;
 ### OAuth ainda não funciona
 
 **Verificar**:
+
 1. Tabela `ml_oauth_states` existe? (query acima)
 2. RLS policies criadas? (`SELECT * FROM pg_policies WHERE tablename = 'ml_oauth_states'`)
 3. `.env.local` tem ML_CLIENT_ID e ML_CLIENT_SECRET?

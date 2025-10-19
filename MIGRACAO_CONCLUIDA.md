@@ -12,12 +12,14 @@
 ## ✅ O QUE FOI EXECUTADO
 
 ### 1. Login no Supabase CLI
+
 ```bash
 npx supabase login
 # ✅ Token created successfully
 ```
 
 ### 2. Link do Projeto
+
 ```bash
 npx supabase link
 # ✅ Selected project: pnzbnciiokgiadkfgrcn
@@ -25,17 +27,19 @@ npx supabase link
 ```
 
 ### 3. Sincronização de Histórico
+
 ```bash
 npx supabase migration repair --status reverted 20251013152345
 # ✅ Repaired migration history
 ```
 
 ### 4. Aplicação da Migration
+
 ```bash
 npx supabase db push
 # ✅ Applying migration 20251018210135_recreate_ml_schema_complete.sql...
 # ✅ NOTICE: ML Integration schema recreated successfully!
-# ✅ NOTICE: Tables created: ml_oauth_states, ml_integrations, ml_products, 
+# ✅ NOTICE: Tables created: ml_oauth_states, ml_integrations, ml_products,
 #           ml_orders, ml_questions, ml_messages, ml_webhook_logs, ml_sync_logs
 # ✅ NOTICE: All RLS policies configured with security_invoker
 # ✅ NOTICE: Ready for Mercado Livre OAuth integration
@@ -48,16 +52,16 @@ npx supabase db push
 
 ### ✅ 8 Tabelas Criadas
 
-| # | Tabela | Status | Descrição |
-|---|--------|--------|-----------|
-| 1 | `ml_oauth_states` | ✅ **CRIADA** | **OAuth PKCE states** (era esta que faltava!) |
-| 2 | `ml_integrations` | ✅ CRIADA | Conexões ML (tokens, config) |
-| 3 | `ml_products` | ✅ CRIADA | Produtos sincronizados |
-| 4 | `ml_orders` | ✅ CRIADA | Pedidos do ML |
-| 5 | `ml_questions` | ✅ CRIADA | Perguntas de compradores |
-| 6 | `ml_messages` | ✅ CRIADA | Mensagens pós-venda |
-| 7 | `ml_webhook_logs` | ✅ CRIADA | Logs de webhooks |
-| 8 | `ml_sync_logs` | ✅ CRIADA | Logs de sincronização |
+| #   | Tabela            | Status        | Descrição                                     |
+| --- | ----------------- | ------------- | --------------------------------------------- |
+| 1   | `ml_oauth_states` | ✅ **CRIADA** | **OAuth PKCE states** (era esta que faltava!) |
+| 2   | `ml_integrations` | ✅ CRIADA     | Conexões ML (tokens, config)                  |
+| 3   | `ml_products`     | ✅ CRIADA     | Produtos sincronizados                        |
+| 4   | `ml_orders`       | ✅ CRIADA     | Pedidos do ML                                 |
+| 5   | `ml_questions`    | ✅ CRIADA     | Perguntas de compradores                      |
+| 6   | `ml_messages`     | ✅ CRIADA     | Mensagens pós-venda                           |
+| 7   | `ml_webhook_logs` | ✅ CRIADA     | Logs de webhooks                              |
+| 8   | `ml_sync_logs`    | ✅ CRIADA     | Logs de sincronização                         |
 
 ### ✅ 2 Funções Criadas
 
@@ -103,6 +107,7 @@ npm run dev
 ### 3️⃣ Verificar Logs
 
 **❌ ANTES** (erro):
+
 ```
 [error] Failed to store OAuth state: {
   code: 'PGRST205',
@@ -111,6 +116,7 @@ npm run dev
 ```
 
 **✅ DEPOIS** (sucesso esperado):
+
 ```
 [info] [ml] OAuth state stored successfully
 [info] [ml] Redirecting to Mercado Livre authorization
@@ -125,10 +131,11 @@ npm run dev
 Acesse: https://supabase.com/dashboard/project/pnzbnciiokgiadkfgrcn/sql
 
 Execute:
+
 ```sql
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
   AND table_name LIKE 'ml_%'
 ORDER BY table_name;
 ```
@@ -138,8 +145,8 @@ ORDER BY table_name;
 ### Verificar RLS Policies
 
 ```sql
-SELECT schemaname, tablename, policyname 
-FROM pg_policies 
+SELECT schemaname, tablename, policyname
+FROM pg_policies
 WHERE tablename LIKE 'ml_%'
 ORDER BY tablename, policyname;
 ```
@@ -199,17 +206,17 @@ ORDER BY routine_name;
 
 ## 📊 MÉTRICAS DA MIGRATION
 
-| Métrica | Valor |
-|---------|-------|
-| **Tabelas criadas** | 8 |
-| **RLS Policies** | 15+ |
-| **Índices** | 25+ |
-| **Funções** | 2 |
-| **Triggers** | 3 |
-| **Constraints** | 20+ |
-| **Linhas SQL** | 700+ |
-| **Tempo execução** | ~5 segundos |
-| **Status** | ✅ SUCESSO |
+| Métrica             | Valor       |
+| ------------------- | ----------- |
+| **Tabelas criadas** | 8           |
+| **RLS Policies**    | 15+         |
+| **Índices**         | 25+         |
+| **Funções**         | 2           |
+| **Triggers**        | 3           |
+| **Constraints**     | 20+         |
+| **Linhas SQL**      | 700+        |
+| **Tempo execução**  | ~5 segundos |
+| **Status**          | ✅ SUCESSO  |
 
 ---
 
@@ -218,6 +225,7 @@ ORDER BY routine_name;
 ### Se OAuth ainda não funcionar após reiniciar:
 
 **1. Verificar variáveis de ambiente** (`.env.local`):
+
 ```env
 ML_CLIENT_ID=seu-client-id
 ML_CLIENT_SECRET=seu-client-secret
@@ -226,6 +234,7 @@ ENCRYPTION_KEY=sua-chave-32-chars-min
 ```
 
 **2. Verificar se servidor reiniciou corretamente**:
+
 ```bash
 # Parar completamente
 Ctrl+C
@@ -239,10 +248,12 @@ npm run dev
 ```
 
 **3. Verificar logs do servidor**:
+
 - Procure por erros relacionados a `ml_oauth_states`
 - Se ainda aparecer PGRST205, verifique se migration foi aplicada (SQL Editor)
 
 **4. Limpar cache do navegador**:
+
 - Ctrl+Shift+Delete
 - Ou abra em aba anônima
 
@@ -264,6 +275,7 @@ npm run dev
 ### ✅ MIGRAÇÃO 100% COMPLETA VIA CLI!
 
 **O que foi feito**:
+
 - ✅ Schema ML recriado do zero
 - ✅ Tabela `ml_oauth_states` criada (problema resolvido!)
 - ✅ Estrutura otimizada aplicada
@@ -271,6 +283,7 @@ npm run dev
 - ✅ Banco de dados pronto
 
 **Próxima ação**:
+
 1. Reinicie o servidor: `npm run dev`
 2. Teste o OAuth: http://localhost:3000/dashboard/ml
 3. ✅ OAuth deve funcionar perfeitamente!

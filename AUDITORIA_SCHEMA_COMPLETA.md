@@ -9,15 +9,18 @@
 ## 📋 METODOLOGIA DA AUDITORIA
 
 ### Etapa 1: Extrair Schema Real do SQL
+
 - ✅ Ler `supabase/migrations/20251018210135_recreate_ml_schema_complete.sql`
 - ✅ Documentar estrutura EXATA de cada tabela (colunas, tipos, constraints)
 
 ### Etapa 2: Escanear Todo Código TypeScript
+
 - ✅ `grep` recursivo em `app/**/*.ts` procurando queries Supabase
 - ✅ Identificar cada `.from()`, `.select()`, `.insert()`, `.update()`
 - ✅ Validar nomes de tabelas, colunas, e estrutura de payloads
 
 ### Etapa 3: Cross-Reference e Relatório
+
 - ✅ Comparar schema SQL com cada uso no código
 - ✅ Listar discrepâncias com arquivo, linha, e correção sugerida
 
@@ -26,6 +29,7 @@
 ## 📊 SCHEMA REAL DAS TABELAS (Source of Truth)
 
 ### Tabela: `ml_integrations`
+
 ```sql
 CREATE TABLE public.ml_integrations (
   id UUID PRIMARY KEY,
@@ -52,6 +56,7 @@ CREATE TABLE public.ml_integrations (
 ```
 
 ### Tabela: `ml_products`
+
 ```sql
 CREATE TABLE public.ml_products (
   id UUID PRIMARY KEY,
@@ -78,6 +83,7 @@ CREATE TABLE public.ml_products (
 ```
 
 ### Tabela: `ml_webhook_logs`
+
 ```sql
 CREATE TABLE public.ml_webhook_logs (
   id UUID PRIMARY KEY,
@@ -100,6 +106,7 @@ CREATE TABLE public.ml_webhook_logs (
 ```
 
 ### Tabela: `ml_sync_logs`
+
 ```sql
 CREATE TABLE public.ml_sync_logs (
   id UUID PRIMARY KEY,
@@ -120,6 +127,7 @@ CREATE TABLE public.ml_sync_logs (
 ```
 
 ### View/Function: `ml_integration_summary`
+
 ```sql
 -- ⚠️ CRÍTICO: VIEW NÃO EXISTE!
 -- Foi removida na migration 20251018210135
@@ -131,6 +139,7 @@ CREATE TABLE public.ml_sync_logs (
 ## 🐛 BUGS IDENTIFICADOS E CORRIGIDOS
 
 ### ✅ Bug #1: `last_synced_at` vs `last_sync_at`
+
 **Arquivo**: `app/api/ml/products/route.ts`  
 **Linha**: 123  
 **Status**: ✅ CORRIGIDO no commit 6e69eef
@@ -144,6 +153,7 @@ CREATE TABLE public.ml_sync_logs (
 ```
 
 ### ✅ Bug #2: View `ml_integration_summary` não existe
+
 **Arquivo**: `app/api/ml/integration/status/route.ts`  
 **Linha**: 53  
 **Status**: ✅ CORRIGIDO no commit 6e69eef
@@ -158,6 +168,7 @@ CREATE TABLE public.ml_sync_logs (
 ```
 
 ### ✅ Bug #3: Campos incompatíveis em `ml_webhook_logs`
+
 **Arquivo**: `app/api/ml/webhooks/route.ts`  
 **Linha**: 100-112  
 **Status**: ✅ CORRIGIDO no commit 6e69eef
@@ -188,6 +199,7 @@ CREATE TABLE public.ml_sync_logs (
 ## 🔎 AUDITORIA ADICIONAL: Arquivos Restantes
 
 ### Arquivo: `app/api/ml/webhooks/notifications/route.ts`
+
 **Status**: ⚠️ PRECISA VERIFICAÇÃO
 
 Este arquivo também faz queries às tabelas ML. Vou verificar:
@@ -208,10 +220,12 @@ Este arquivo também faz queries às tabelas ML. Vou verificar:
 ### ❌ O que EU fiz errado na auditoria anterior:
 
 1. **Foco em documentação, não em validação**
+
    - Criei 6 arquivos .md explicando a migration
    - MAS não cruzei com código TypeScript real
 
 2. **Assumi que código estava correto**
+
    - Li a migration SQL
    - Li alguns arquivos TypeScript
    - MAS não fiz diff sistemático
@@ -253,6 +267,7 @@ grep -rn "\.from\('ml_" app/
 ## 💡 RECOMENDAÇÃO: Script de Validação
 
 Criar `scripts/validate-schema.ts` que:
+
 - Lê migration SQL
 - Parse estrutura de tabelas
 - Escaneia todos arquivos TypeScript

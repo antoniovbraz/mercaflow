@@ -13,9 +13,11 @@
 ## 📋 O QUE FOI CRIADO
 
 ### 1. Nova Migration Completa
+
 **Arquivo**: `supabase/migrations/20251018210135_recreate_ml_schema_complete.sql`
 
 Esta migration:
+
 - ✅ **Remove TODAS as tabelas antigas** do Mercado Livre (DROP CASCADE)
 - ✅ **Recria 8 tabelas principais** com estrutura otimizada
 - ✅ **Configura RLS policies** corretamente
@@ -25,18 +27,19 @@ Esta migration:
 
 ### 2. Tabelas Criadas
 
-| Tabela | Descrição | Campos Principais |
-|--------|-----------|-------------------|
-| `ml_oauth_states` | OAuth PKCE flow (temporário) | state, code_verifier, expires_at |
-| `ml_integrations` | Conexões ML (principal) | access_token, refresh_token, ml_user_id |
-| `ml_products` | Produtos sincronizados | ml_item_id, title, price, status |
-| `ml_orders` | Pedidos | ml_order_id, status, total_amount |
-| `ml_questions` | Perguntas de compradores | ml_question_id, text, answer, status |
-| `ml_messages` | Mensagens pós-venda | ml_message_id, text, message_type |
-| `ml_webhook_logs` | Logs de webhooks ML | topic, resource, payload, status |
-| `ml_sync_logs` | Logs de sincronização | sync_type, records_processed, status |
+| Tabela            | Descrição                    | Campos Principais                       |
+| ----------------- | ---------------------------- | --------------------------------------- |
+| `ml_oauth_states` | OAuth PKCE flow (temporário) | state, code_verifier, expires_at        |
+| `ml_integrations` | Conexões ML (principal)      | access_token, refresh_token, ml_user_id |
+| `ml_products`     | Produtos sincronizados       | ml_item_id, title, price, status        |
+| `ml_orders`       | Pedidos                      | ml_order_id, status, total_amount       |
+| `ml_questions`    | Perguntas de compradores     | ml_question_id, text, answer, status    |
+| `ml_messages`     | Mensagens pós-venda          | ml_message_id, text, message_type       |
+| `ml_webhook_logs` | Logs de webhooks ML          | topic, resource, payload, status        |
+| `ml_sync_logs`    | Logs de sincronização        | sync_type, records_processed, status    |
 
 ### 3. Documentação de Suporte
+
 - `COMO_APLICAR_MIGRATION_ML.md` - Guia completo de aplicação
 - `scripts/apply-ml-migration.ps1` - Script PowerShell auxiliar
 
@@ -49,11 +52,13 @@ Esta migration:
 **Mais fácil e seguro**
 
 1. Acesse o SQL Editor do seu projeto:
+
    ```
    https://supabase.com/dashboard/project/[SEU-PROJECT-ID]/sql/new
    ```
 
 2. Copie todo o conteúdo do arquivo:
+
    ```
    supabase/migrations/20251018210135_recreate_ml_schema_complete.sql
    ```
@@ -124,14 +129,15 @@ psql "postgresql://postgres:[SUA-SENHA]@db.[PROJECT-REF].supabase.co:5432/postgr
 Execute no SQL Editor:
 
 ```sql
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
   AND table_name LIKE 'ml_%'
 ORDER BY table_name;
 ```
 
 **Resultado esperado** (8 tabelas):
+
 ```
 ml_integrations
 ml_messages
@@ -146,8 +152,8 @@ ml_webhook_logs
 ### 2. Verificar RLS Policies
 
 ```sql
-SELECT schemaname, tablename, policyname 
-FROM pg_policies 
+SELECT schemaname, tablename, policyname
+FROM pg_policies
 WHERE tablename LIKE 'ml_%'
 ORDER BY tablename, policyname;
 ```
@@ -165,6 +171,7 @@ ORDER BY routine_name;
 ```
 
 Deve mostrar:
+
 - `cleanup_expired_ml_oauth_states` (function)
 - `get_ml_integration_summary` (function)
 
@@ -196,7 +203,7 @@ npm run dev
 
 5. Verifique se a integração aparece na tabela `ml_integrations`:
    ```sql
-   SELECT id, ml_user_id, ml_nickname, status, created_at 
+   SELECT id, ml_user_id, ml_nickname, status, created_at
    FROM ml_integrations;
    ```
 
@@ -216,19 +223,23 @@ Fique atento aos logs do servidor para confirmar que não há mais o erro:
 ### Melhorias Implementadas
 
 1. **Índices Otimizados**
+
    - Todos os campos de busca têm índices
    - Queries mais rápidas (10-100x em grandes volumes)
 
 2. **RLS Policies Corretas**
+
    - Segurança multi-tenant garantida
    - Cada usuário vê apenas seus dados
    - Service role pode inserir webhooks
 
 3. **Triggers Automáticos**
+
    - `updated_at` atualizado automaticamente
    - Menos código, menos bugs
 
 4. **Tipos Corretos**
+
    - BIGINT para IDs do ML (suportam valores grandes)
    - DECIMAL para valores monetários (precisão exata)
    - TIMESTAMPTZ para datas (com timezone)
@@ -248,6 +259,7 @@ Fique atento aos logs do servidor para confirmar que não há mais o erro:
 **Esta migration apaga todos os dados do Mercado Livre!**
 
 Se você tem:
+
 - ✅ Aplicação nova/desenvolvimento: **PODE EXECUTAR**
 - ⚠️ Dados de teste: **Backup opcional**
 - ❌ Dados de produção: **FAÇA BACKUP ANTES!**
@@ -265,6 +277,7 @@ pg_dump "postgresql://..." > backup_before_ml_migration.sql
 ### ⚠️ Executar Apenas Uma Vez
 
 Esta migration é **idempotente** (pode executar várias vezes), mas:
+
 - Cada execução **apaga todos os dados**
 - Execute apenas quando necessário
 
@@ -281,6 +294,7 @@ Esta migration é **idempotente** (pode executar várias vezes), mas:
 **Causa**: Tabelas antigas não foram removidas.
 
 **Solução**: Execute o DROP manualmente:
+
 ```sql
 DROP TABLE IF EXISTS public.ml_oauth_states CASCADE;
 -- Repita para as outras tabelas
@@ -291,10 +305,12 @@ DROP TABLE IF EXISTS public.ml_oauth_states CASCADE;
 **Causa**: Ordem incorreta de DROP.
 
 **Solução**: A migration já trata isso com CASCADE, mas se persistir, use:
+
 ```sql
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 ```
+
 ⚠️ **CUIDADO**: Isso apaga TUDO no schema public!
 
 ### Migration não aparece nas queries
@@ -302,6 +318,7 @@ CREATE SCHEMA public;
 **Causa**: Cache não atualizado.
 
 **Solução**:
+
 1. Reinicie o servidor Next.js
 2. No Supabase Dashboard: Settings > API > Reset API Schema Cache
 

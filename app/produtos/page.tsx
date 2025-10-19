@@ -16,7 +16,7 @@ interface Product {
   permalink: string;
   thumbnail: string;
   category_id: string;
-  last_synced_at: string;
+  last_sync_at: string;
 }
 
 interface ProductStats {
@@ -492,7 +492,7 @@ export default function ProdutosPage() {
                       </div>
                       <div className="mt-1 text-xs text-gray-400">
                         Última sincronização:{" "}
-                        {new Date(product.last_synced_at).toLocaleString(
+                        {new Date(product.last_sync_at).toLocaleString(
                           "pt-BR"
                         )}
                       </div>

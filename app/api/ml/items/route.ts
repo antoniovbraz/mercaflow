@@ -152,7 +152,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
         const hasRecentCache = cachedProducts.length > 0 &&
                               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                              cachedProducts.some((p: any) => p.last_synced_at > oneHourAgo);
+                              cachedProducts.some((p: any) => p.last_sync_at > oneHourAgo);
 
         // For large limits (like stats requests), always fetch fresh data
         // For small limits (pagination), use cache if available

@@ -54,7 +54,7 @@ export async function GET(): Promise<NextResponse> {
     // Get stats from local database cache (faster and more reliable)
     const { data: products, error } = await supabase
       .from('ml_products')
-      .select('status, sold_quantity, last_synced_at')
+      .select('status, sold_quantity, last_sync_at') // Fixed: use last_sync_at
       .eq('integration_id', integration.id);
 
     if (error) {
@@ -76,7 +76,7 @@ export async function GET(): Promise<NextResponse> {
     // Get last sync time
     if (products && products.length > 0) {
       const lastSync = products
-        .map(p => new Date(p.last_synced_at))
+        .map(p => new Date(p.last_sync_at)) // Fixed: use last_sync_at
         .sort((a, b) => b.getTime() - a.getTime())[0];
 
       stats.lastSync = lastSync?.toISOString();

@@ -18,7 +18,7 @@ interface MLProduct {
   sold_quantity: number;
   permalink: string;
   category_id: string | null;
-  last_synced_at: string;
+  last_sync_at: string;
   thumbnail?: string;
   condition?: string;
   listing_type_id?: string;
@@ -160,7 +160,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       sold_quantity: product.sold_quantity,
       permalink: product.permalink,
       category_id: product.category_id,
-      last_synced_at: product.last_sync_at, // Fixed: use last_sync_at from database
+      last_sync_at: product.last_sync_at,
       thumbnail: product.thumbnail,
       condition: product.condition,
       listing_type_id: product.listing_type_id,

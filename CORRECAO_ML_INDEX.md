@@ -15,6 +15,7 @@
 ### 🚀 Para Começar Rápido
 
 **👉 [GUIA_RAPIDO_ML.md](./GUIA_RAPIDO_ML.md)**
+
 - ⏱️ Solução em **5 minutos**
 - 3 passos simples
 - Copy/paste pronto
@@ -23,18 +24,21 @@
 ### 📋 Documentação Completa
 
 **📊 [MIGRACAO_ML_RESUMO.md](./MIGRACAO_ML_RESUMO.md)**
+
 - Resumo executivo
 - Contexto técnico completo
 - Checklist pós-migration
 - Troubleshooting avançado
 
 **📚 [MIGRACAO_ML_INSTRUCOES.md](./MIGRACAO_ML_INSTRUCOES.md)**
+
 - Instruções passo a passo detalhadas
 - Múltiplas opções de aplicação
 - Verificações de segurança
 - Backup e recovery
 
 **🔧 [COMO_APLICAR_MIGRATION_ML.md](./COMO_APLICAR_MIGRATION_ML.md)**
+
 - 4 métodos de aplicação
 - Dashboard, CLI, psql, PowerShell
 - Exemplos de comandos
@@ -43,18 +47,22 @@
 ### 🛠️ Arquivos Técnicos
 
 **📄 Migration SQL**
+
 ```
 supabase/migrations/20251018210135_recreate_ml_schema_complete.sql
 ```
+
 - 700+ linhas de SQL
 - DROP e CREATE de 8 tabelas
 - RLS policies completas
 - Funções auxiliares
 
 **💻 Script PowerShell**
+
 ```
 scripts/apply-ml-migration.ps1
 ```
+
 - Validação de credenciais
 - Dry-run mode
 - Helper para aplicação
@@ -97,6 +105,7 @@ scripts/apply-ml-migration.ps1
 **Arquivo**: `20251018210135_recreate_ml_schema_complete.sql`
 
 **O que faz**:
+
 1. ✅ DROP de todas as tabelas ML antigas
 2. ✅ CREATE de 8 novas tabelas otimizadas
 3. ✅ RLS policies para segurança
@@ -106,20 +115,21 @@ scripts/apply-ml-migration.ps1
 
 ### Tabelas Criadas (8)
 
-| # | Tabela | Descrição | Campos Principais |
-|---|--------|-----------|-------------------|
-| 1 | `ml_oauth_states` | OAuth PKCE (temp) | state, code_verifier, expires_at |
-| 2 | `ml_integrations` | Integração ML | access_token, ml_user_id, status |
-| 3 | `ml_products` | Produtos | ml_item_id, title, price, status |
-| 4 | `ml_orders` | Pedidos | ml_order_id, total_amount, buyer |
-| 5 | `ml_questions` | Perguntas | ml_question_id, text, answer |
-| 6 | `ml_messages` | Mensagens | ml_message_id, text, type |
-| 7 | `ml_webhook_logs` | Logs webhooks | topic, resource, payload |
-| 8 | `ml_sync_logs` | Logs sync | sync_type, records, status |
+| #   | Tabela            | Descrição         | Campos Principais                |
+| --- | ----------------- | ----------------- | -------------------------------- |
+| 1   | `ml_oauth_states` | OAuth PKCE (temp) | state, code_verifier, expires_at |
+| 2   | `ml_integrations` | Integração ML     | access_token, ml_user_id, status |
+| 3   | `ml_products`     | Produtos          | ml_item_id, title, price, status |
+| 4   | `ml_orders`       | Pedidos           | ml_order_id, total_amount, buyer |
+| 5   | `ml_questions`    | Perguntas         | ml_question_id, text, answer     |
+| 6   | `ml_messages`     | Mensagens         | ml_message_id, text, type        |
+| 7   | `ml_webhook_logs` | Logs webhooks     | topic, resource, payload         |
+| 8   | `ml_sync_logs`    | Logs sync         | sync_type, records, status       |
 
 ### Funções Criadas (2)
 
 1. **cleanup_expired_ml_oauth_states()**
+
    - Remove estados OAuth expirados (>10 min)
    - Executar periodicamente
 
@@ -148,9 +158,9 @@ scripts/apply-ml-migration.ps1
 
 ```sql
 -- Deve retornar 8 tabelas
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
   AND table_name LIKE 'ml_%'
 ORDER BY table_name;
 ```
@@ -170,6 +180,7 @@ http://localhost:3000/dashboard/ml
 ### ⚠️ ATENÇÃO: APAGA DADOS!
 
 Esta migration **remove TODOS os dados** das tabelas ML:
+
 - Integrações existentes
 - Produtos sincronizados
 - Pedidos
@@ -177,6 +188,7 @@ Esta migration **remove TODOS os dados** das tabelas ML:
 - Logs
 
 **Impacto por ambiente**:
+
 - ✅ **Dev/novo**: ZERO impacto
 - ⚠️ **Staging**: Dados de teste perdidos
 - ❌ **Produção**: BACKUP OBRIGATÓRIO!
@@ -217,28 +229,28 @@ Migration é **idempotente** mas apaga dados a cada execução.
 
 ### Problemas Comuns
 
-| Erro | Solução |
-|------|---------|
-| "permission denied" | Use Supabase Dashboard (SQL Editor) |
-| "table not found" | Limpe cache + reinicie servidor |
-| "relation already exists" | Execute DROP manual antes |
-| OAuth não funciona | Verifique `.env.local` (ML_CLIENT_ID) |
+| Erro                      | Solução                               |
+| ------------------------- | ------------------------------------- |
+| "permission denied"       | Use Supabase Dashboard (SQL Editor)   |
+| "table not found"         | Limpe cache + reinicie servidor       |
+| "relation already exists" | Execute DROP manual antes             |
+| OAuth não funciona        | Verifique `.env.local` (ML_CLIENT_ID) |
 
 ### Verificação Completa
 
 ```sql
 -- 1. Verificar tabelas
-SELECT count(*) FROM information_schema.tables 
+SELECT count(*) FROM information_schema.tables
 WHERE table_name LIKE 'ml_%';
 -- Deve retornar: 8
 
 -- 2. Verificar RLS policies
-SELECT count(*) FROM pg_policies 
+SELECT count(*) FROM pg_policies
 WHERE tablename LIKE 'ml_%';
 -- Deve retornar: 15+
 
 -- 3. Verificar funções
-SELECT count(*) FROM pg_proc 
+SELECT count(*) FROM pg_proc
 WHERE proname LIKE '%ml_%';
 -- Deve retornar: 2+
 ```
@@ -285,19 +297,19 @@ Após aplicar a migration, você deve conseguir:
 
 ## 📅 INFORMAÇÕES DA MIGRATION
 
-| Item | Valor |
-|------|-------|
-| **Versão** | 20251018210135 |
-| **Data** | 2025-10-18 21:01:35 |
-| **Nome** | recreate_ml_schema_complete |
-| **Tipo** | Breaking Change (apaga dados) |
-| **Impacto** | ⚠️ ALTO (reset completo) |
-| **Reversível** | ❌ Não (dados perdidos) |
-| **Tempo Exec** | ~30 segundos |
-| **Tabelas Afetadas** | 8 (ml_*) |
-| **RLS Policies** | 15+ policies |
-| **Funções** | 2 functions |
-| **Índices** | 25+ indexes |
+| Item                 | Valor                         |
+| -------------------- | ----------------------------- |
+| **Versão**           | 20251018210135                |
+| **Data**             | 2025-10-18 21:01:35           |
+| **Nome**             | recreate_ml_schema_complete   |
+| **Tipo**             | Breaking Change (apaga dados) |
+| **Impacto**          | ⚠️ ALTO (reset completo)      |
+| **Reversível**       | ❌ Não (dados perdidos)       |
+| **Tempo Exec**       | ~30 segundos                  |
+| **Tabelas Afetadas** | 8 (ml\_\*)                    |
+| **RLS Policies**     | 15+ policies                  |
+| **Funções**          | 2 functions                   |
+| **Índices**          | 25+ indexes                   |
 
 ---
 
