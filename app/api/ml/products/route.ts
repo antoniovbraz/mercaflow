@@ -19,7 +19,6 @@ import { logger } from '@/utils/logger';
 import { MLProductRepository } from '@/utils/mercadolivre/repositories/MLProductRepository';
 import { MLIntegrationRepository } from '@/utils/mercadolivre/repositories/MLIntegrationRepository';
 import { MLSyncLogRepository } from '@/utils/mercadolivre/repositories/MLSyncLogRepository';
-import type { MLSyncLog, MLProduct } from '@/utils/mercadolivre/types';
 
 /**
  * GET /api/ml/products

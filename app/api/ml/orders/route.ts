@@ -9,7 +9,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, getCurrentUser } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import { MLTokenManager } from '@/utils/mercadolivre/token-manager'
 import { logger } from '@/utils/logger'
 import { 
