@@ -54,18 +54,18 @@ export async function POST() {
     // Initialize token manager for ML API calls
     const tokenManager = new MLTokenManager();
     
-    // Fetch ALL products with pagination - prioritize active listings
-    let allProducts: Array<Record<string, unknown>> = [];
+    // STEP 1: Fetch ALL product IDs with pagination
+    console.log(`📋 STEP 1: Fetching product IDs from ML...`);
+    let allProductIds: string[] = [];
     let offset = 0;
     const limit = 50; // ML API max per page
     let hasMore = true;
-    let totalFetched = 0;
 
     while (hasMore) {
-      console.log(`📦 Fetching products page: offset=${offset}, limit=${limit}`);
+      console.log(`📦 Fetching product IDs page: offset=${offset}, limit=${limit}`);
       
       try {
-        // Make ML API request with pagination
+        // ML /users/{id}/items/search returns only IDs, not full objects
         const response = await tokenManager.makeMLRequest(
           integration.id,
           `/users/${integration.ml_user_id}/items/search?offset=${offset}&limit=${limit}`,
@@ -82,29 +82,18 @@ export async function POST() {
 
         const data = await response.json();
         
-        // Log API response details for debugging
-        console.log(`🔍 ML API response:`, {
-          hasResults: !!data.results,
-          resultsCount: data.results?.length || 0,
-          paging: data.paging,
-          totalInPaging: data.paging?.total || 0
-        });
-        
-        // ML returns { results: [...], paging: {...} }
-        const products = data.results || [];
+        // ML returns { results: ["MLB123", "MLB456", ...], paging: {...} }
+        // NOTE: results are ITEM IDs (strings), not full product objects!
+        const itemIds = data.results || [];
         const paging = data.paging || {};
         
-        console.log(`✅ Fetched ${products.length} products (total so far: ${totalFetched + products.length})`);
+        console.log(`✅ Fetched ${itemIds.length} product IDs (total so far: ${allProductIds.length + itemIds.length} of ${paging.total})`);
         
-        allProducts = [...allProducts, ...products];
-        totalFetched += products.length;
+        allProductIds = [...allProductIds, ...itemIds];
         
-        // Check if there are more pages - fix pagination logic
-        const currentOffset = offset;
+        // Check if there are more pages
         const nextOffset = offset + limit;
         hasMore = nextOffset < paging.total;
-        
-        console.log(`📄 Pagination check: offset=${currentOffset}, limit=${limit}, total=${paging.total}, nextOffset=${nextOffset}, hasMore=${hasMore}`);
         
         offset = nextOffset;
         
@@ -115,13 +104,67 @@ export async function POST() {
         }
         
       } catch (error) {
-        console.error(`❌ Error fetching products at offset ${offset}:`, error);
-        // Continue with what we have
+        console.error(`❌ Error fetching product IDs at offset ${offset}:`, error);
         hasMore = false;
       }
     }
 
-    console.log(`📊 Total products fetched from ML: ${allProducts.length}`);
+    console.log(`📊 Total product IDs fetched: ${allProductIds.length}`);
+    
+    if (allProductIds.length === 0) {
+      console.warn('⚠️ No products found for this seller');
+      return NextResponse.json({
+        success: true,
+        message: 'No products found',
+        total_fetched: 0,
+        synced: 0,
+        errors: 0,
+      });
+    }
+
+    // STEP 2: Fetch full product details using multiget (20 IDs per request)
+    console.log(`📋 STEP 2: Fetching full product details via multiget...`);
+    const allProducts: Array<Record<string, unknown>> = [];
+    const chunkSize = 20; // ML multiget max
+    
+    for (let i = 0; i < allProductIds.length; i += chunkSize) {
+      const chunk = allProductIds.slice(i, i + chunkSize);
+      const idsParam = chunk.join(',');
+      
+      console.log(`� Fetching product details: ${i + 1}-${Math.min(i + chunkSize, allProductIds.length)} of ${allProductIds.length}`);
+      
+      try {
+        // Multiget: /items?ids=MLB123,MLB456,...
+        const response = await tokenManager.makeMLRequest(
+          integration.id,
+          `/items?ids=${idsParam}&attributes=id,title,price,available_quantity,sold_quantity,status,category_id,permalink,thumbnail,condition,listing_type_id`,
+          {
+            method: 'GET',
+          }
+        );
+
+        if (!response.ok) {
+          console.error(`❌ Multiget failed for chunk starting at ${i}`);
+          continue;
+        }
+
+        const multigetData = await response.json();
+        
+        // Multiget returns: [{ code: 200, body: {...} }, { code: 404, body: {...} }, ...]
+        for (const result of multigetData) {
+          if (result.code === 200 && result.body) {
+            allProducts.push(result.body);
+          } else {
+            console.warn(`⚠️ Failed to fetch product ${result.body?.id || 'unknown'}: ${result.code}`);
+          }
+        }
+        
+      } catch (error) {
+        console.error(`❌ Error in multiget for chunk ${i}:`, error);
+      }
+    }
+
+    console.log(`📊 Total products with full details: ${allProducts.length}`);
     
     // Sort products: active first, then paused, then others
     allProducts.sort((a, b) => {
@@ -137,7 +180,7 @@ export async function POST() {
       return String(a.title || '').localeCompare(String(b.title || ''));
     });
     
-    console.log(`📋 Products sorted: active first, then paused, then closed`);
+    console.log(`📋 Products sorted by status and title`);
     console.log(`📋 Status distribution:`, {
       active: allProducts.filter(p => p.status === 'active').length,
       paused: allProducts.filter(p => p.status === 'paused').length,
