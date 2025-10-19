@@ -147,10 +147,10 @@ SELECT
   tc.table_name as "Tabela",
   tc.constraint_name as "Nome",
   tc.constraint_type as "Tipo",
-  STRING_AGG(kcu.column_name, ', ' ORDER BY kcu.ordinal_position) as "Colunas",
+  STRING_AGG(DISTINCT kcu.column_name, ', ' ORDER BY kcu.column_name) as "Colunas",
   CASE 
     WHEN tc.constraint_type = 'FOREIGN KEY' THEN
-      (SELECT ccu.table_name || '(' || STRING_AGG(ccu.column_name, ', ') || ')'
+      (SELECT STRING_AGG(DISTINCT ccu.table_name || '(' || ccu.column_name || ')', ', ')
        FROM information_schema.constraint_column_usage ccu
        WHERE ccu.constraint_name = tc.constraint_name
        AND ccu.table_schema = tc.table_schema)
