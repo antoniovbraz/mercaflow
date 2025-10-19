@@ -152,8 +152,8 @@ export class MLIntegrationRepository {
     const { error } = await supabase
       .from('ml_integrations')
       .update({
-        encrypted_access_token: accessToken,
-        encrypted_refresh_token: refreshToken,
+        access_token: accessToken, // FIXED: Migration uses 'access_token', not 'encrypted_access_token'
+        refresh_token: refreshToken, // FIXED: Migration uses 'refresh_token', not 'encrypted_refresh_token'
         token_expires_at: expiresAt,
         status: 'active',
         updated_at: new Date().toISOString(),
