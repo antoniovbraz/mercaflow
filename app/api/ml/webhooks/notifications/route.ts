@@ -11,7 +11,6 @@ import {
   validateRequestBody,
   ValidationError,
   type MLWebhookTopic,
-  type MLWebhookAction,
 } from '@/utils/validation';
 
 // Enhanced notification data when we fetch from the resource URL
@@ -94,17 +93,24 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // Check if we already processed this notification (idempotency)
-    // ML can send either _id or id depending on the webhook type
-    const notificationId = notification._id || notification.id;
-    const { data: existingNotification } = await supabase
-      .from('ml_webhook_logs')
-      .select('id')
-      .eq('notification_id', notificationId)
-      .maybeSingle(); // Use maybeSingle() to allow 0 or 1 results (fixes 406 error)
+    // Since ml_webhook_logs doesn't have notification_id column,
+    // we check for duplicate by resource + topic + user_id combination
+    const userId = notification.user_id ? Number(notification.user_id) : null;
+    
+    if (userId) {
+      const { data: existingNotification } = await supabase
+        .from('ml_webhook_logs')
+        .select('id')
+        .eq('resource', notification.resource)
+        .eq('topic', notification.topic)
+        .eq('user_id', userId)
+        .gte('received_at', new Date(Date.now() - 60 * 60 * 1000).toISOString()) // Last hour
+        .maybeSingle();
 
-    if (existingNotification) {
-      logger.info('⚠️ Notification already processed:', notificationId);
-      return NextResponse.json({ status: 'already_processed' });
+      if (existingNotification) {
+        logger.info('⚠️ Notification already processed:', { resource: notification.resource, topic: notification.topic });
+        return NextResponse.json({ status: 'already_processed' });
+      }
     }
 
     // Process the notification based on topic
@@ -119,7 +125,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       status: 'success',
       processed_at: new Date().toISOString(),
-      notification_id: notificationId
+      resource: notification.resource,
+      topic: notification.topic
     });
 
   } catch (error) {
@@ -489,27 +496,19 @@ async function logWithServiceRole(notification: ProcessedNotification) {
     // Create service role client for webhook logging
     const serviceSupabase = await createServiceClient();
     
-    const { data, error } = await serviceSupabase
+    const { data, error} = await serviceSupabase
       .from('ml_webhook_logs')
-      .upsert({
-        notification_id: notification._id || notification.id,
+      .insert({
         topic: notification.topic,
         resource: notification.resource,
-        user_id: notification.user_id,
-        application_id: notification.application_id || null,
-        attempts: notification.attempts,
-        sent_at: notification.sent || new Date().toISOString(),
-        received_at: notification.received || new Date().toISOString(),
-        processed_at: notification.processed_at,
-        status: notification.status,
+        user_id: notification.user_id ? Number(notification.user_id) : null,
+        application_id: notification.application_id ? Number(notification.application_id) : null,
+        status: notification.status || 'success',
         error_message: notification.error_message || null,
-        resource_data: notification.resource_data || null,
-        actions: notification.actions || null,
-        priority: determinePriority(notification.topic, notification.actions),
-        subtopic: determineSubtopic(notification.topic, notification.actions),
-      }, {
-        onConflict: 'notification_id', // Use upsert to handle duplicates (fixes 409 error)
-        ignoreDuplicates: false // Update existing records instead of ignoring
+        payload: notification as unknown as Record<string, unknown>, // Full notification as JSONB
+        retry_count: typeof notification.attempts === 'number' ? notification.attempts - 1 : 0,
+        received_at: notification.received || new Date().toISOString(),
+        processed_at: notification.processed_at || new Date().toISOString(),
       })
       .select();
 
@@ -530,57 +529,6 @@ function extractResourceId(resource: string): string {
   // Extract ID from resource URLs like "/orders/123456789" or "/items/MLB123456789"
   const matches = resource.match(/\/([^\/]+)\/([^\/]+)$/);
   return matches ? matches[2] : resource;
-}
-
-function determinePriority(topic: MLWebhookTopic, actions?: MLWebhookAction[]): string {
-  // High priority webhooks that require immediate attention
-  const highPriorityTopics = [
-    'payments', 'orders_v2', 'claims', 'post_purchase', 
-    'shipments', 'invoices'
-  ];
-  
-  const criticalActions = [
-    'claims_actions', 'contact_request', 'reservation', 'visit_request'
-  ];
-  
-  if (highPriorityTopics.includes(topic)) {
-    return 'high';
-  }
-  
-  if (actions && actions.some(action => criticalActions.includes(action))) {
-    return 'critical';
-  }
-  
-  // Medium priority - business relevant but not urgent
-  const mediumPriorityTopics = [
-    'questions', 'messages', 'items', 'price_suggestion', 'public_offers'
-  ];
-  
-  if (mediumPriorityTopics.includes(topic)) {
-    return 'normal';
-  }
-  
-  return 'low'; // Analytics, catalog suggestions, etc.
-}
-
-function determineSubtopic(topic: MLWebhookTopic, actions?: MLWebhookAction[]): string | null {
-  if (!actions || actions.length === 0) {
-    return null;
-  }
-  
-  // For structured webhooks, use the first action as subtopic
-  const action = actions[0];
-  
-  switch (topic) {
-    case 'messages':
-      return `message_${action}`; // message_created, message_read
-    case 'vis_leads':
-      return `lead_${action}`; // lead_whatsapp, lead_call, lead_question, etc.
-    case 'post_purchase':
-      return `purchase_${action}`; // purchase_claims, purchase_claims_actions
-    default:
-      return action;
-  }
 }
 
 // ===== Additional Webhook Processors =====
