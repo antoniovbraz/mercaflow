@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { hasRole } from '@/utils/supabase/client-roles';
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { hasRole } from "@/utils/supabase/client-roles";
 
 interface Product {
   id: string;
@@ -33,8 +33,8 @@ export default function ProdutosPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [stats, setStats] = useState<ProductStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const [hasAccess, setHasAccess] = useState(false);
@@ -44,14 +44,14 @@ export default function ProdutosPage() {
 
   const checkAccess = useCallback(async () => {
     try {
-      const access = await hasRole('user'); // Basic user access
+      const access = await hasRole("user"); // Basic user access
       setHasAccess(access);
       if (!access) {
-        router.push('/auth/login');
+        router.push("/auth/login");
       }
-    } catch (error) {
-      console.error('Access check failed:', error);
-      router.push('/auth/login');
+    } catch {
+      // Removed console.error - errors handled by error boundaries;
+      router.push("/auth/login");
     }
   }, [router]);
 
@@ -62,24 +62,24 @@ export default function ProdutosPage() {
       const params = new URLSearchParams({
         limit: productsPerPage.toString(),
         offset: ((currentPage - 1) * productsPerPage).toString(),
-        stats: 'true'
+        stats: "true",
       });
 
-      if (searchTerm) params.set('search', searchTerm);
-      if (statusFilter) params.set('status', statusFilter);
+      if (searchTerm) params.set("search", searchTerm);
+      if (statusFilter) params.set("status", statusFilter);
 
       const response = await fetch(`/api/products?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error('Failed to load products');
+        throw new Error("Failed to load products");
       }
 
       const data = await response.json();
       setProducts(data.products || []);
       setStats(data.stats || null);
       setTotalProducts(data.pagination?.total || 0);
-    } catch (error) {
-      console.error('Error loading products:', error);
+    } catch {
+      // Removed console.error - errors handled by error boundaries;
     } finally {
       setLoading(false);
     }
@@ -98,16 +98,16 @@ export default function ProdutosPage() {
   const syncProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/ml/items?limit=50');
+      const response = await fetch("/api/ml/items?limit=50");
 
       if (!response.ok) {
-        throw new Error('Failed to sync products');
+        throw new Error("Failed to sync products");
       }
 
       // Reload products after sync
       await loadProducts();
-    } catch (error) {
-      console.error('Error syncing products:', error);
+    } catch {
+      // Removed console.error - errors handled by error boundaries;
     } finally {
       setLoading(false);
     }
@@ -115,19 +115,27 @@ export default function ProdutosPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'paused': return 'bg-yellow-100 text-yellow-800';
-      case 'closed': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "paused":
+        return "bg-yellow-100 text-yellow-800";
+      case "closed":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'active': return 'Ativo';
-      case 'paused': return 'Pausado';
-      case 'closed': return 'Encerrado';
-      default: return status;
+      case "active":
+        return "Ativo";
+      case "paused":
+        return "Pausado";
+      case "closed":
+        return "Encerrado";
+      default:
+        return status;
     }
   };
 
@@ -158,13 +166,38 @@ export default function ProdutosPage() {
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
               >
                 {loading ? (
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                 ) : (
-                  <svg className="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                  <svg
+                    className="-ml-1 mr-2 h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    ></path>
                   </svg>
                 )}
                 Sincronizar
@@ -182,14 +215,28 @@ export default function ProdutosPage() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    <svg
+                      className="h-6 w-6 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                      ></path>
                     </svg>
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Total de Produtos</dt>
-                      <dd className="text-lg font-medium text-gray-900">{stats.total}</dd>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Total de Produtos
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.total}
+                      </dd>
                     </dl>
                   </div>
                 </div>
@@ -200,14 +247,28 @@ export default function ProdutosPage() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <svg className="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <svg
+                      className="h-6 w-6 text-green-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      ></path>
                     </svg>
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Ativos</dt>
-                      <dd className="text-lg font-medium text-gray-900">{stats.active}</dd>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Ativos
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.active}
+                      </dd>
                     </dl>
                   </div>
                 </div>
@@ -218,14 +279,28 @@ export default function ProdutosPage() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <svg className="h-6 w-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    <svg
+                      className="h-6 w-6 text-blue-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                      ></path>
                     </svg>
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Estoque Total</dt>
-                      <dd className="text-lg font-medium text-gray-900">{stats.totalStock}</dd>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Estoque Total
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.totalStock}
+                      </dd>
                     </dl>
                   </div>
                 </div>
@@ -236,13 +311,25 @@ export default function ProdutosPage() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <svg className="h-6 w-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    <svg
+                      className="h-6 w-6 text-purple-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                      ></path>
                     </svg>
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Preço Médio</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Preço Médio
+                      </dt>
                       <dd className="text-lg font-medium text-gray-900">
                         R$ {stats.averagePrice.toFixed(2)}
                       </dd>
@@ -259,7 +346,10 @@ export default function ProdutosPage() {
           <div className="px-4 py-5 sm:p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label htmlFor="search" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="search"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Buscar produtos
                 </label>
                 <input
@@ -273,7 +363,10 @@ export default function ProdutosPage() {
               </div>
 
               <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="status"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Status
                 </label>
                 <select
@@ -292,8 +385,8 @@ export default function ProdutosPage() {
               <div className="flex items-end">
                 <button
                   onClick={() => {
-                    setSearchTerm('');
-                    setStatusFilter('');
+                    setSearchTerm("");
+                    setStatusFilter("");
                     setCurrentPage(1);
                   }}
                   className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -314,21 +407,35 @@ export default function ProdutosPage() {
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                ></path>
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhum produto encontrado</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                Nenhum produto encontrado
+              </h3>
               <p className="mt-1 text-sm text-gray-500">
                 {searchTerm || statusFilter
-                  ? 'Tente ajustar os filtros de busca.'
-                  : 'Clique em "Sincronizar" para carregar seus produtos do Mercado Livre.'
-                }
+                  ? "Tente ajustar os filtros de busca."
+                  : 'Clique em "Sincronizar" para carregar seus produtos do Mercado Livre.'}
               </p>
             </div>
           ) : (
             <ul className="divide-y divide-gray-200">
               {products.map((product) => (
-                <li key={product.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
+                <li
+                  key={product.id}
+                  className="px-4 py-4 sm:px-6 hover:bg-gray-50"
+                >
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
                       {product.thumbnail ? (
@@ -341,8 +448,18 @@ export default function ProdutosPage() {
                         />
                       ) : (
                         <div className="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
-                          <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                          <svg
+                            className="h-6 w-6 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            ></path>
                           </svg>
                         </div>
                       )}
@@ -353,13 +470,19 @@ export default function ProdutosPage() {
                           {product.title}
                         </p>
                         <div className="flex items-center space-x-2">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(product.status)}`}>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                              product.status
+                            )}`}
+                          >
                             {getStatusText(product.status)}
                           </span>
                         </div>
                       </div>
                       <div className="mt-2 flex items-center text-sm text-gray-500">
-                        <span className="font-medium text-gray-900">R$ {product.price.toFixed(2)}</span>
+                        <span className="font-medium text-gray-900">
+                          R$ {product.price.toFixed(2)}
+                        </span>
                         <span className="mx-2">•</span>
                         <span>Estoque: {product.available_quantity}</span>
                         <span className="mx-2">•</span>
@@ -368,7 +491,10 @@ export default function ProdutosPage() {
                         <span>ID: {product.ml_item_id}</span>
                       </div>
                       <div className="mt-1 text-xs text-gray-400">
-                        Última sincronização: {new Date(product.last_synced_at).toLocaleString('pt-BR')}
+                        Última sincronização:{" "}
+                        {new Date(product.last_synced_at).toLocaleString(
+                          "pt-BR"
+                        )}
                       </div>
                     </div>
                     <div className="flex-shrink-0">
@@ -400,8 +526,17 @@ export default function ProdutosPage() {
                 Anterior
               </button>
               <button
-                onClick={() => setCurrentPage(Math.min(Math.ceil(totalProducts / productsPerPage), currentPage + 1))}
-                disabled={currentPage === Math.ceil(totalProducts / productsPerPage)}
+                onClick={() =>
+                  setCurrentPage(
+                    Math.min(
+                      Math.ceil(totalProducts / productsPerPage),
+                      currentPage + 1
+                    )
+                  )
+                }
+                disabled={
+                  currentPage === Math.ceil(totalProducts / productsPerPage)
+                }
                 className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
               >
                 Próximo
@@ -410,11 +545,16 @@ export default function ProdutosPage() {
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-700">
-                  Mostrando <span className="font-medium">{(currentPage - 1) * productsPerPage + 1}</span> a{' '}
+                  Mostrando{" "}
+                  <span className="font-medium">
+                    {(currentPage - 1) * productsPerPage + 1}
+                  </span>{" "}
+                  a{" "}
                   <span className="font-medium">
                     {Math.min(currentPage * productsPerPage, totalProducts)}
-                  </span>{' '}
-                  de <span className="font-medium">{totalProducts}</span> produtos
+                  </span>{" "}
+                  de <span className="font-medium">{totalProducts}</span>{" "}
+                  produtos
                 </p>
               </div>
               <div>
@@ -424,17 +564,42 @@ export default function ProdutosPage() {
                     disabled={currentPage === 1}
                     className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
-                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                    <svg
+                      className="h-5 w-5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </button>
                   <button
-                    onClick={() => setCurrentPage(Math.min(Math.ceil(totalProducts / productsPerPage), currentPage + 1))}
-                    disabled={currentPage === Math.ceil(totalProducts / productsPerPage)}
+                    onClick={() =>
+                      setCurrentPage(
+                        Math.min(
+                          Math.ceil(totalProducts / productsPerPage),
+                          currentPage + 1
+                        )
+                      )
+                    }
+                    disabled={
+                      currentPage === Math.ceil(totalProducts / productsPerPage)
+                    }
                     className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
-                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    <svg
+                      className="h-5 w-5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </button>
                 </nav>

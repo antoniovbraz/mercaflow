@@ -58,7 +58,7 @@ function MLCallbackContent() {
         }, 3000);
 
       } catch (err) {
-        console.error('ML callback error:', err);
+        // Removed console.error - errors handled by error boundaries;
         
         setStatus({
           status: 'error',

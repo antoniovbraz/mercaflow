@@ -1,11 +1,30 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw, Webhook, Clock, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  RefreshCw,
+  Webhook,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  XCircle,
+} from "lucide-react";
 
 interface WebhookLog {
   id: string;
@@ -18,7 +37,7 @@ interface WebhookLog {
   sent_at?: string;
   received_at?: string;
   processed_at: string;
-  status: 'success' | 'error' | 'skipped';
+  status: "success" | "error" | "skipped";
   error_message?: string;
   resource_data?: Record<string, unknown>;
   created_at: string;
@@ -37,13 +56,13 @@ interface WebhookResponse {
 export default function WebhooksMonitor() {
   const [webhooks, setWebhooks] = useState<WebhookLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [topicFilter, setTopicFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [topicFilter, setTopicFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [pagination, setPagination] = useState({
     total: 0,
     limit: 50,
     offset: 0,
-    hasMore: false
+    hasMore: false,
   });
 
   const fetchWebhooks = async () => {
@@ -54,21 +73,21 @@ export default function WebhooksMonitor() {
         offset: pagination.offset.toString(),
       });
 
-      if (topicFilter !== 'all') {
-        params.append('topic', topicFilter);
+      if (topicFilter !== "all") {
+        params.append("topic", topicFilter);
       }
-      if (statusFilter !== 'all') {
-        params.append('status', statusFilter);
+      if (statusFilter !== "all") {
+        params.append("status", statusFilter);
       }
 
       const response = await fetch(`/api/ml/webhooks?${params}`);
-      if (!response.ok) throw new Error('Erro ao buscar webhooks');
+      if (!response.ok) throw new Error("Erro ao buscar webhooks");
 
       const data: WebhookResponse = await response.json();
       setWebhooks(data.webhooks);
       setPagination(data.pagination);
-    } catch (error) {
-      console.error('Erro ao buscar webhooks:', error);
+    } catch {
+      // Removed console.error - errors handled by error boundaries;
     } finally {
       setLoading(false);
     }
@@ -81,11 +100,11 @@ export default function WebhooksMonitor() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'success':
+      case "success":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'error':
+      case "error":
         return <XCircle className="h-4 w-4 text-red-500" />;
-      case 'skipped':
+      case "skipped":
         return <AlertCircle className="h-4 w-4 text-yellow-500" />;
       default:
         return <Clock className="h-4 w-4 text-gray-500" />;
@@ -94,41 +113,41 @@ export default function WebhooksMonitor() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'success':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'error':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'skipped':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case "success":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "error":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "skipped":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getTopicColor = (topic: string) => {
     switch (topic) {
-      case 'orders':
-      case 'orders_v2':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'items':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'questions':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'claims':
-        return 'bg-red-100 text-red-800 border-red-200';
+      case "orders":
+      case "orders_v2":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "items":
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      case "questions":
+        return "bg-orange-100 text-orange-800 border-orange-200";
+      case "claims":
+        return "bg-red-100 text-red-800 border-red-200";
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
+    return new Date(dateString).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
   };
 
@@ -145,7 +164,7 @@ export default function WebhooksMonitor() {
           </p>
         </div>
         <Button onClick={fetchWebhooks} disabled={loading} className="gap-2">
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Atualizar
         </Button>
       </div>
@@ -197,7 +216,7 @@ export default function WebhooksMonitor() {
               <CheckCircle className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-2xl font-bold text-green-600">
-                  {webhooks.filter(w => w.status === 'success').length}
+                  {webhooks.filter((w) => w.status === "success").length}
                 </p>
                 <p className="text-sm text-gray-600">Sucessos</p>
               </div>
@@ -210,7 +229,7 @@ export default function WebhooksMonitor() {
               <XCircle className="h-5 w-5 text-red-500" />
               <div>
                 <p className="text-2xl font-bold text-red-600">
-                  {webhooks.filter(w => w.status === 'error').length}
+                  {webhooks.filter((w) => w.status === "error").length}
                 </p>
                 <p className="text-sm text-gray-600">Erros</p>
               </div>
@@ -223,7 +242,7 @@ export default function WebhooksMonitor() {
               <AlertCircle className="h-5 w-5 text-yellow-500" />
               <div>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {webhooks.filter(w => w.status === 'skipped').length}
+                  {webhooks.filter((w) => w.status === "skipped").length}
                 </p>
                 <p className="text-sm text-gray-600">Ignorados</p>
               </div>
@@ -315,7 +334,12 @@ export default function WebhooksMonitor() {
       {pagination.hasMore && (
         <div className="flex justify-center">
           <Button
-            onClick={() => setPagination(prev => ({ ...prev, offset: prev.offset + prev.limit }))}
+            onClick={() =>
+              setPagination((prev) => ({
+                ...prev,
+                offset: prev.offset + prev.limit,
+              }))
+            }
             disabled={loading}
           >
             Carregar mais

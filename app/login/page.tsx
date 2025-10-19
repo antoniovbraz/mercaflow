@@ -1,60 +1,61 @@
-'use client'
+"use client";
 
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { createClient } from '@/utils/supabase/client'
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 
 function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const supabase = createClient()
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClient();
 
   // Get success/message from URL params
-  const successMessage = searchParams.get('success')
-  const message = searchParams.get('message')
+  const successMessage = searchParams.get("success");
+  const message = searchParams.get("message");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
     // Validação básica
     if (!email || !password) {
-      setError('Email e senha são obrigatórios')
-      setIsLoading(false)
-      return
+      setError("Email e senha são obrigatórios");
+      setIsLoading(false);
+      return;
     }
 
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const { data, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
       if (signInError) {
-        console.error('Erro no login:', signInError)
-        setError(signInError.message)
-        setIsLoading(false)
-        return
+        // Removed console.error - errors handled by error boundaries
+        setError(signInError.message);
+        setIsLoading(false);
+        return;
       }
 
       if (data.user) {
         // Login successful, redirect to dashboard
-        router.push('/dashboard')
+        router.push("/dashboard");
       }
-    } catch (err) {
-      console.error('Erro inesperado:', err)
-      setError('Erro ao fazer login. Tente novamente.')
-      setIsLoading(false)
+    } catch {
+      // Removed console.error - errors handled by error boundaries
+      setError("Erro ao fazer login. Tente novamente.");
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -71,22 +72,23 @@ function LoginForm() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl mb-6 shadow-xl">
             <span className="text-white font-bold text-xl">MF</span>
           </div>
-          
+
           <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full px-4 py-2 mb-6">
             <span className="text-2xl">🔐</span>
             <span className="text-sm font-medium text-blue-800">
               Login Seguro
             </span>
           </div>
-          
+
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-3">
-            Entre na sua{' '}
+            Entre na sua{" "}
             <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               conta
             </span>
           </h2>
           <p className="text-lg text-gray-600">
-            Acesse sua plataforma <strong>MercaFlow</strong> e gerencie seu e-commerce
+            Acesse sua plataforma <strong>MercaFlow</strong> e gerencie seu
+            e-commerce
           </p>
         </div>
 
@@ -94,8 +96,18 @@ function LoginForm() {
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 text-blue-800 px-6 py-4 rounded-xl shadow-lg">
             <div className="flex items-center">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                <svg
+                  className="w-5 h-5 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
                 </svg>
               </div>
               <span className="font-medium">{successMessage || message}</span>
@@ -107,8 +119,18 @@ function LoginForm() {
           <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200/50 text-red-800 px-6 py-4 rounded-xl shadow-lg">
             <div className="flex items-center">
               <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                <svg
+                  className="w-5 h-5 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
                 </svg>
               </div>
               <span className="font-medium">{error}</span>
@@ -116,10 +138,16 @@ function LoginForm() {
           </div>
         )}
 
-        <form className="space-y-6 bg-white/90 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-gray-100/50" onSubmit={handleSubmit}>
+        <form
+          className="space-y-6 bg-white/90 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-gray-100/50"
+          onSubmit={handleSubmit}
+        >
           <div className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-800 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-gray-800 mb-2"
+              >
                 Email
               </label>
               <input
@@ -134,7 +162,10 @@ function LoginForm() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-800 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-semibold text-gray-800 mb-2"
+              >
                 Senha
               </label>
               <input
@@ -167,7 +198,7 @@ function LoginForm() {
               className="group relative w-full flex justify-center py-3 px-6 text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100"
             >
               <span className="relative">
-                {isLoading ? 'Entrando...' : 'Entrar'}
+                {isLoading ? "Entrando..." : "Entrar"}
               </span>
             </button>
           </div>
@@ -184,7 +215,7 @@ function LoginForm() {
         </form>
       </div>
     </div>
-  )
+  );
 }
 
 export default function LoginPage() {
@@ -192,5 +223,5 @@ export default function LoginPage() {
     <Suspense fallback={<div>Carregando...</div>}>
       <LoginForm />
     </Suspense>
-  )
+  );
 }

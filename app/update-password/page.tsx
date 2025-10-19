@@ -1,75 +1,75 @@
-'use client'
+"use client";
 
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { createClient } from '@/utils/supabase/client'
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 
 function UpdatePasswordForm() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const supabase = createClient()
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClient();
 
   // Get message from URL params
-  const message = searchParams.get('message')
+  const message = searchParams.get("message");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
-    setSuccess('')
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    setSuccess("");
 
-    const formData = new FormData(e.currentTarget)
-    const password = formData.get('password') as string
-    const confirmPassword = formData.get('confirmPassword') as string
+    const formData = new FormData(e.currentTarget);
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
 
     // Validação básica
     if (!password || !confirmPassword) {
-      setError('Todos os campos são obrigatórios')
-      setIsLoading(false)
-      return
+      setError("Todos os campos são obrigatórios");
+      setIsLoading(false);
+      return;
     }
 
     if (password !== confirmPassword) {
-      setError('As senhas não coincidem')
-      setIsLoading(false)
-      return
+      setError("As senhas não coincidem");
+      setIsLoading(false);
+      return;
     }
 
     if (password.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres')
-      setIsLoading(false)
-      return
+      setError("A senha deve ter pelo menos 6 caracteres");
+      setIsLoading(false);
+      return;
     }
 
     try {
       const { error: updateError } = await supabase.auth.updateUser({
-        password: password
-      })
+        password: password,
+      });
 
       if (updateError) {
-        console.error('Erro ao atualizar senha:', updateError)
-        setError(updateError.message)
-        setIsLoading(false)
-        return
+        // Removed console.error - errors handled by error boundaries
+        setError(updateError.message);
+        setIsLoading(false);
+        return;
       }
 
-      setSuccess('Senha atualizada com sucesso! Redirecionando...')
-      setIsLoading(false)
+      setSuccess("Senha atualizada com sucesso! Redirecionando...");
+      setIsLoading(false);
 
       // Redirect to dashboard after a short delay
       setTimeout(() => {
-        router.push('/dashboard')
-      }, 2000)
-    } catch (err) {
-      console.error('Erro inesperado:', err)
-      setError('Erro ao atualizar senha. Tente novamente.')
-      setIsLoading(false)
+        router.push("/dashboard");
+      }, 2000);
+    } catch {
+      // Removed console.error - errors handled by error boundaries
+      setError("Erro ao atualizar senha. Tente novamente.");
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -101,10 +101,16 @@ function UpdatePasswordForm() {
           </div>
         )}
 
-        <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow" onSubmit={handleSubmit}>
+        <form
+          className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow"
+          onSubmit={handleSubmit}
+        >
           <div className="space-y-4">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Nova senha
               </label>
               <input
@@ -119,7 +125,10 @@ function UpdatePasswordForm() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Confirmar nova senha
               </label>
               <input
@@ -140,7 +149,7 @@ function UpdatePasswordForm() {
               disabled={isLoading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Atualizando...' : 'Atualizar senha'}
+              {isLoading ? "Atualizando..." : "Atualizar senha"}
             </button>
           </div>
 
@@ -156,7 +165,7 @@ function UpdatePasswordForm() {
         </form>
       </div>
     </div>
-  )
+  );
 }
 
 export default function UpdatePasswordPage() {
@@ -164,5 +173,5 @@ export default function UpdatePasswordPage() {
     <Suspense fallback={<div>Carregando...</div>}>
       <UpdatePasswordForm />
     </Suspense>
-  )
+  );
 }

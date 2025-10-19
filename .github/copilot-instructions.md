@@ -238,6 +238,27 @@ npm run lint        # ESLint validation
 - **Test Scripts**: `test_ml_api.sh`, `test_vercel_api.sh` for API validation
 - **Development Scripts**: Use `scripts/` directory for maintenance tasks
 - **Sentry Testing**: Visit `/sentry-example-page` to test error tracking
+- **Environment Variables**: Validated on startup - missing vars cause immediate error
+- **Role Testing**: Use `/debug-roles` and `/debug-user` pages for auth debugging
+
+**Available npm scripts**:
+
+```bash
+npm run dev:turbo    # Faster dev mode (recommended for active development)
+npm run type-check   # TypeScript validation without build
+npm run db:status    # Check Supabase local instance status
+npm run db:migration # Create new timestamped migration file
+```
+
+**Testing ML Integration**:
+
+```bash
+# Windows (Git Bash or WSL required for .sh scripts)
+bash test_ml_api.sh
+
+# Or test endpoints directly via /api/debug-ml endpoint
+curl http://localhost:3000/api/debug-ml
+```
 
 ### Database Operations
 
@@ -289,13 +310,14 @@ npx supabase db push                              # Apply migrations to remote
 
 ## Security Considerations
 
-- **Never use service role key** in frontend code
+- **Never use service role key** in frontend code or user-facing operations
 - **Always validate permissions** on server-side before data access
-- **RLS policies** handle multi-tenant data isolation automatically
-- **Custom JWT claims** provide role information for fine-grained access control
-- **Tenant validation** required for all cross-tenant operations
-- **AES-256-GCM encryption** for sensitive ML tokens
-- **Zod validation** for all external API inputs
+- **RLS policies** handle multi-tenant data isolation automatically (all policies use `security_invoker = true`)
+- **Profile-based roles** stored in `profiles.role` field - NO JWT claims used for authorization
+- **Tenant validation** required for all cross-tenant operations via `getCurrentTenantId()`
+- **AES-256-GCM encryption** for sensitive ML tokens (requires `ENCRYPTION_KEY` env var)
+- **Zod validation** for all external API inputs (centralized in `utils/validation/`)
+- **Environment validation** runs on startup via `utils/env-validation.ts`
 
 ## Brazilian Market Specifics
 
@@ -307,12 +329,14 @@ npx supabase db push                              # Apply migrations to remote
 
 ## Code Style & Patterns
 
-- TypeScript strict mode enabled
-- Tailwind for styling (no custom CSS modules)
-- Server Components by default, Client Components only when needed
+- TypeScript strict mode enabled (`tsconfig.json`)
+- Tailwind for styling (no custom CSS modules) with shadcn/ui components
+- Server Components by default, Client Components marked with `"use client"`
+- Async/await for all database operations (never forget to `await createClient()`)
 - Error handling with try/catch and proper user feedback
 - Component library: shadcn/ui with Radix UI primitives
 - Consistent API response format: `{ success: boolean, data?: any, error?: string }`
+- Structured logging via `logger` utility (never use `console.log` in production code)
 
 ## Common Gotchas & Best Practices
 

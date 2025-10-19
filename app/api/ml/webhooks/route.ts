@@ -13,6 +13,17 @@ import { createClient } from '@/utils/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { logger } from '@/utils/logger';
 
+// Webhook payload type
+interface WebhookPayload {
+  topic: string;
+  resource: string;
+  user_id: string;
+  application_id: string;
+  sent?: string | number | Date;
+  received?: string | number | Date;
+  [key: string]: unknown;
+}
+
 /**
  * POST /api/ml/webhooks - Receive webhook notifications from ML
  * 
@@ -71,7 +82,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 /**
  * Process webhook asynchronously (non-blocking)
  */
-async function processWebhookAsync(webhook: any): Promise<void> {
+async function processWebhookAsync(webhook: WebhookPayload): Promise<void> {
   try {
     // Use service role client for webhook logging (no auth context)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -123,7 +134,7 @@ async function processWebhookAsync(webhook: any): Promise<void> {
  * Invalidate cache based on webhook topic
  * TODO: Implement Redis cache invalidation
  */
-async function invalidateCache(webhook: any): Promise<void> {
+async function invalidateCache(webhook: WebhookPayload): Promise<void> {
   // Implementation will use Redis commands:
   // - items: del ml:items:{item_id}
   // - orders: del ml:orders:*
