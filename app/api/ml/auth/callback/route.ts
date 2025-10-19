@@ -1,22 +1,48 @@
 /**
- * ML OAuth Callback Endpoint
+ * ML OAuth Callback Endpoint - REFACTORED
  * 
- * Handles the OAuth 2.0 callback, exchanges code for tokens,
- * and stores the integration data securely
+ * Handles the OAuth 2.0 callback flow:
+ * 1. Validates OAuth state and parameters
+ * 2. Exchanges authorization code for tokens
+ * 3. Fetches ML user data
+ * 4. Saves integration using MLTokenService + MLIntegrationRepository
+ * 5. Triggers initial product sync
  * 
+ * @refactor Uses MLTokenService for encryption, MLIntegrationRepository for DB operations
  * @security Implements Zod validation for all ML API responses
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import { logger } from '@/utils/logger';
+import { MLTokenService } from '@/utils/mercadolivre/services/MLTokenService';
+import { MLIntegrationRepository } from '@/utils/mercadolivre/repositories/MLIntegrationRepository';
 import { 
   MLTokenResponseSchema, 
   MLUserDataSchema,
   validateOutput,
-  MLApiError,
 } from '@/utils/validation';
-import { logger } from '@/utils/logger';
+import {
+  MLApiError,
+  MLOAuthError,
+} from '@/utils/mercadolivre/types/ml-errors';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface OAuthState {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  state: string;
+  code_verifier: string;
+  expires_at: string;
+}
+
+// ============================================================================
+// MAIN HANDLER
+// ============================================================================
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const url = new URL(request.url);
@@ -25,16 +51,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const error = url.searchParams.get('error');
   const errorDescription = url.searchParams.get('error_description');
 
-  // Handle OAuth errors
+  // ============================================================================
+  // STEP 1: Handle OAuth Errors
+  // ============================================================================
+
   if (error) {
-    logger.error('ML OAuth Error', new Error(error), { error, errorDescription });
+    logger.error('ML OAuth error received', { error, errorDescription });
     return NextResponse.redirect(
       new URL(`/dashboard?ml_error=${encodeURIComponent(error)}`, request.url)
     );
   }
 
+  // ============================================================================
+  // STEP 2: Validate Parameters
+  // ============================================================================
+
   if (!code || !state) {
-    logger.error('Missing required OAuth parameters', undefined, { hasCode: !!code, hasState: !!state });
+    logger.error('Missing OAuth parameters', { hasCode: !!code, hasState: !!state });
     return NextResponse.redirect(
       new URL('/dashboard?ml_error=missing_parameters', request.url)
     );
@@ -42,38 +75,51 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     logger.info('ML OAuth callback started', { 
-      codePreview: code ? `${code.substring(0, 10)}...` : 'N/A',
-      statePreview: state ? `${state.substring(0, 10)}...` : 'N/A'
+      codePreview: `${code.substring(0, 10)}...`,
+      statePreview: `${state.substring(0, 10)}...`
     });
-    
+
+    // ============================================================================
+    // STEP 3: Validate OAuth State
+    // ============================================================================
+
     const supabase = await createClient();
 
-    // Validate and retrieve OAuth state
     const { data: stateRecord, error: stateError } = await supabase
       .from('ml_oauth_states')
       .select('*')
       .eq('state', state)
       .gt('expires_at', new Date().toISOString())
-      .single();
+      .maybeSingle();
 
     if (stateError || !stateRecord) {
-      logger.error('Invalid or expired OAuth state', stateError, { state: state?.substring(0, 10) });
+      logger.error('Invalid or expired OAuth state', { error: stateError, state: state.substring(0, 10) });
       return NextResponse.redirect(
         new URL('/dashboard?ml_error=invalid_state', request.url)
       );
     }
 
-    // Validate environment variables
+    const oauthState = stateRecord as OAuthState;
+    logger.info('OAuth state validated', { userId: oauthState.user_id, tenantId: oauthState.tenant_id });
+
+    // ============================================================================
+    // STEP 4: Validate Environment Variables
+    // ============================================================================
+
     const clientId = process.env.ML_CLIENT_ID;
     const clientSecret = process.env.ML_CLIENT_SECRET;
     const redirectUri = process.env.ML_REDIRECT_URI;
 
     if (!clientId || !clientSecret || !redirectUri) {
-      throw new Error('Missing ML OAuth configuration');
+      throw new MLOAuthError('Missing ML OAuth configuration (ML_CLIENT_ID, ML_CLIENT_SECRET, or ML_REDIRECT_URI)');
     }
 
-    // Exchange authorization code for access token
+    // ============================================================================
+    // STEP 5: Exchange Authorization Code for Tokens
+    // ============================================================================
+
     logger.info('Exchanging authorization code for access token');
+    
     const tokenResponse = await fetch('https://api.mercadolibre.com/oauth/token', {
       method: 'POST',
       headers: {
@@ -86,21 +132,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         client_secret: clientSecret,
         code,
         redirect_uri: redirectUri,
-        code_verifier: stateRecord.code_verifier,
+        code_verifier: oauthState.code_verifier,
       }),
     });
 
-    logger.debug('Token exchange response received', { 
-      status: tokenResponse.status, 
-      ok: tokenResponse.ok 
-    });
-    
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      logger.error('ML token exchange failed', undefined, { 
-        status: tokenResponse.status, 
-        errorText 
-      });
+      logger.error('Token exchange failed', { status: tokenResponse.status, errorText });
       throw new MLApiError(
         `Token exchange failed: ${errorText}`,
         tokenResponse.status
@@ -108,15 +146,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const rawTokenData = await tokenResponse.json();
-    
-    // Validate token response using Zod
-    logger.info('ML token exchange successful', { userId: rawTokenData.user_id });
     const tokenData = validateOutput(MLTokenResponseSchema, rawTokenData);
     
-    logger.debug('Token validated successfully', { userId: tokenData.user_id });
+    logger.info('Token exchange successful', { 
+      mlUserId: tokenData.user_id,
+      expiresIn: tokenData.expires_in,
+      scopes: tokenData.scope
+    });
 
-    // Fetch ML user data
+    // ============================================================================
+    // STEP 6: Fetch ML User Data
+    // ============================================================================
+
     logger.info('Fetching ML user data');
+    
     const userResponse = await fetch('https://api.mercadolibre.com/users/me', {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
@@ -126,10 +169,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (!userResponse.ok) {
       const errorText = await userResponse.text();
-      logger.error('Failed to fetch ML user data', undefined, { 
-        status: userResponse.status, 
-        errorText 
-      });
+      logger.error('Failed to fetch ML user data', { status: userResponse.status, errorText });
       throw new MLApiError(
         `Failed to fetch ML user data: ${errorText}`,
         userResponse.status
@@ -137,31 +177,73 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const rawUserData = await userResponse.json();
-    
-    // Validate user data using Zod
-    logger.debug('ML user data received', { nickname: rawUserData.nickname, id: rawUserData.id });
     const userData = validateOutput(MLUserDataSchema, rawUserData);
     
-    logger.info('ML user data validated', { nickname: userData.nickname, userId: userData.id });
+    logger.info('ML user data validated', { 
+      nickname: userData.nickname,
+      mlUserId: userData.id,
+      siteId: userData.site_id,
+      email: userData.email
+    });
 
-    // Save integration using token manager
-    const tokenManager = new MLTokenManager();
-    
-    await tokenManager.saveTokenData(
-      stateRecord.user_id,
-      stateRecord.tenant_id,
-      tokenData,
-      userData // Pass the complete validated user data object
+    // ============================================================================
+    // STEP 7: Save Integration (Using Services)
+    // ============================================================================
+
+    const tokenService = new MLTokenService();
+    const integrationRepo = new MLIntegrationRepository();
+
+    // Calculate token expiration
+    const tokenExpiresAt = new Date(Date.now() + tokenData.expires_in * 1000);
+
+    // Encrypt tokens
+    const encryptedAccessToken = tokenService.encryptToken(tokenData.access_token);
+    const encryptedRefreshToken = tokenService.encryptToken(tokenData.refresh_token);
+
+    // Prepare integration data
+    const integrationData = {
+      user_id: oauthState.user_id,
+      tenant_id: oauthState.tenant_id,
+      ml_user_id: tokenData.user_id,
+      ml_nickname: userData.nickname,
+      ml_email: userData.email,
+      ml_site_id: userData.site_id,
+      access_token: encryptedAccessToken,
+      refresh_token: encryptedRefreshToken,
+      token_expires_at: tokenExpiresAt.toISOString(),
+      scopes: tokenData.scope.split(' '),
+      status: 'active' as const,
+      auto_sync_enabled: true,
+      sync_frequency_minutes: 60,
+    };
+
+    // Check if integration already exists
+    const existingIntegration = await integrationRepo.findByUser(
+      oauthState.user_id,
+      oauthState.tenant_id
     );
 
+    let integration;
+    if (existingIntegration) {
+      logger.info('Updating existing integration', { integrationId: existingIntegration.id });
+      integration = await integrationRepo.update(existingIntegration.id, integrationData);
+    } else {
+      logger.info('Creating new integration');
+      integration = await integrationRepo.create(integrationData);
+    }
+
     logger.info('ML integration saved successfully', { 
-      tenantId: stateRecord.tenant_id,
-      mlUserId: userData.id,
+      integrationId: integration.id,
+      tenantId: oauthState.tenant_id,
+      mlUserId: tokenData.user_id,
       nickname: userData.nickname
     });
 
-    // Trigger initial product sync in background (non-blocking)
-    // Don't await - let it run asynchronously
+    // ============================================================================
+    // STEP 8: Trigger Initial Product Sync (Non-blocking)
+    // ============================================================================
+
+    // Trigger background sync - don't await
     fetch(new URL('/api/ml/products/sync-all', request.url).toString(), {
       method: 'POST',
       headers: {
@@ -169,46 +251,64 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
     }).catch(error => {
       logger.warn('Failed to trigger initial product sync', { error: error.message });
-      // Don't fail the OAuth flow if sync fails
+      // Don't fail OAuth flow if sync fails
     });
 
     logger.info('Initial product sync triggered in background');
 
-    // Clean up used OAuth state
+    // ============================================================================
+    // STEP 9: Clean Up OAuth State
+    // ============================================================================
+
     await supabase
       .from('ml_oauth_states')
       .delete()
       .eq('state', state);
 
     logger.info('ML OAuth flow completed successfully', { 
-      tenantId: stateRecord.tenant_id,
-      mlUserId: userData.id
+      integrationId: integration.id,
+      tenantId: oauthState.tenant_id,
+      mlUserId: tokenData.user_id
     });
 
-    // Redirect to ML dashboard with success message
+    // ============================================================================
+    // STEP 10: Redirect to Success Page
+    // ============================================================================
+
     return NextResponse.redirect(
       new URL('/dashboard/ml?connected=success', request.url)
     );
 
   } catch (error) {
+    // ============================================================================
+    // ERROR HANDLING
+    // ============================================================================
+
     logger.error('ML OAuth callback failed', error instanceof Error ? error : new Error(String(error)), {
       errorType: error?.constructor?.name,
       state: state?.substring(0, 10)
     });
     
-    // Handle specific error types with appropriate responses
+    // Handle ML API errors
     if (error instanceof MLApiError) {
-      // ML API errors - log details and redirect with specific error
-      logger.error('ML API Error in OAuth flow', error, {
+      logger.error('ML API error during OAuth', { 
         statusCode: error.statusCode,
-        mlError: error.mlError,
+        message: error.message
       });
       return NextResponse.redirect(
         new URL(`/dashboard?ml_error=${encodeURIComponent(error.message)}`, request.url)
       );
     }
     
-    // Validation errors or general errors
+    // Handle OAuth-specific errors
+    if (error instanceof MLOAuthError) {
+      logger.error('ML OAuth error', { message: error.message });
+      return NextResponse.redirect(
+        new URL(`/dashboard?ml_error=${encodeURIComponent(error.message)}`, request.url)
+      );
+    }
+    
+    // Generic error handling
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     
     return NextResponse.redirect(
@@ -217,7 +317,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-// Only GET allowed for OAuth callback
+// ============================================================================
+// METHOD NOT ALLOWED
+// ============================================================================
+
 export async function POST(): Promise<NextResponse> {
   return NextResponse.json(
     { error: 'Method not allowed. OAuth callback must use GET.' },

@@ -89,6 +89,32 @@ export class MLBadRequestError extends MLApiError {
 }
 
 // ============================================================================
+// ML OAUTH ERRORS
+// ============================================================================
+
+export class MLOAuthError extends MLError {
+  constructor(
+    message: string,
+    public oauthError?: string,
+    details?: unknown
+  ) {
+    super(message, 'OAUTH_ERROR', details);
+    this.name = 'MLOAuthError';
+    Object.setPrototypeOf(this, MLOAuthError.prototype);
+  }
+}
+
+export class MLOAuthStateError extends MLOAuthError {
+  constructor(
+    message: string = 'Invalid or expired OAuth state'
+  ) {
+    super(message, 'INVALID_STATE');
+    this.name = 'MLOAuthStateError';
+    Object.setPrototypeOf(this, MLOAuthStateError.prototype);
+  }
+}
+
+// ============================================================================
 // ML TOKEN ERRORS
 // ============================================================================
 
