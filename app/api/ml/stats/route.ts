@@ -2,14 +2,16 @@
  * ML Stats API
  *
  * Returns statistics about ML products without pagination limits
+ * 
+ * @refactored Uses MLIntegrationRepository instead of MLTokenManager
  */
 
 import { NextResponse } from 'next/server';
-import { getCurrentUser, createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import { getCurrentUser } from '@/utils/supabase/server';
+import { getCurrentTenantId } from '@/utils/supabase/tenancy';
+import { MLIntegrationRepository } from '@/utils/mercadolivre/repositories/MLIntegrationRepository';
+import { MLProductRepository } from '@/utils/mercadolivre/repositories/MLProductRepository';
 import { logger } from '@/utils/logger';
-
-const tokenManager = new MLTokenManager();
 
 interface MLStats {
   total: number;
@@ -31,18 +33,19 @@ export async function GET(): Promise<NextResponse> {
       );
     }
 
-    // Get user profile to find correct tenant_id
-    const supabase = await createClient();
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('tenant_id')
-      .eq('id', user.id)
-      .single();
-
-    const tenantId = profile?.tenant_id || user.id;
+    // Get tenant context
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: 'Tenant not found' },
+        { status: 400 }
+      );
+    }
 
     // Get ML integration for this tenant
-    const integration = await tokenManager.getIntegrationByTenant(tenantId);
+    const integrationRepo = new MLIntegrationRepository();
+    const integrations = await integrationRepo.findByTenant(tenantId);
+    const integration = integrations.find(i => i.status === 'active') || null;
 
     if (!integration) {
       return NextResponse.json(
@@ -51,38 +54,28 @@ export async function GET(): Promise<NextResponse> {
       );
     }
 
-    // Get stats from local database cache (faster and more reliable)
-    const { data: products, error } = await supabase
-      .from('ml_products')
-      .select('status, sold_quantity, last_sync_at') // Fixed: use last_sync_at
-      .eq('integration_id', integration.id);
-
-    if (error) {
-      logger.error('Error fetching products from cache:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch product statistics' },
-        { status: 500 }
-      );
-    }
+    // Get stats from local database using repository
+    const productRepo = new MLProductRepository();
+    const products = await productRepo.findByIntegration(integration.id);
 
     // Calculate stats
     const stats: MLStats = {
-      total: products?.length || 0,
-      active: products?.filter(p => p.status === 'active').length || 0,
-      paused: products?.filter(p => p.status === 'paused').length || 0,
-      sold: products?.reduce((sum, p) => sum + (p.sold_quantity || 0), 0) || 0,
+      total: products.length,
+      active: products.filter((p) => p.status === 'active').length,
+      paused: products.filter((p) => p.status === 'paused').length,
+      sold: products.reduce((sum, p) => sum + (p.sold_quantity || 0), 0),
     };
 
     // Get last sync time
-    if (products && products.length > 0) {
+    if (products.length > 0) {
       const lastSync = products
-        .map(p => new Date(p.last_sync_at)) // Fixed: use last_sync_at
+        .map((p) => new Date(p.last_sync_at))
         .sort((a, b) => b.getTime() - a.getTime())[0];
 
       stats.lastSync = lastSync?.toISOString();
     }
 
-    logger.info('ML Stats calculated:', stats);
+    logger.info('ML Stats calculated', { stats, integrationId: integration.id });
 
     return NextResponse.json(stats);
 
