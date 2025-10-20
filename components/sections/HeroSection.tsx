@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, Play, Brain, TrendingUp, DollarSign, Target } from "lucide-react";
+import {
+  ArrowRight,
+  Play,
+  Brain,
+  TrendingUp,
+  DollarSign,
+  Target,
+} from "lucide-react";
 
 export default function HeroSection() {
   return (
@@ -33,9 +40,9 @@ export default function HeroSection() {
             {/* Subheadline */}
             <p className="text-xl text-gray-600 mb-8 max-w-2xl">
               <strong>Não mostramos apenas dados</strong> - dizemos exatamente{" "}
-              <strong>o QUE fazer</strong> usando economia aplicada, análise preditiva 
-              e IA. + Site profissional sincronizado com marketplaces em{" "}
-              <strong>&lt; 15 minutos</strong>.
+              <strong>o QUE fazer</strong> usando economia aplicada, análise
+              preditiva e IA. + Site profissional sincronizado com marketplaces
+              em <strong>&lt; 15 minutos</strong>.
             </p>
 
             {/* Key Benefits */}
@@ -81,15 +88,20 @@ export default function HeroSection() {
             {/* Social Proof */}
             <div className="mt-12 pt-8 border-t border-gray-200">
               <p className="text-sm text-gray-500 mb-4">
-                Mais de 2.500 vendedores aumentaram suas vendas com insights acionáveis
+                Mais de 2.500 vendedores aumentaram suas vendas com insights
+                acionáveis
               </p>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-2xl font-bold text-blue-600">87%</div>
-                  <div className="text-xs text-gray-500">Precisão preditiva</div>
+                  <div className="text-xs text-gray-500">
+                    Precisão preditiva
+                  </div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-green-600">+R$ 15k</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    +R$ 15k
+                  </div>
                   <div className="text-xs text-gray-500">Receita média/mês</div>
                 </div>
                 <div>
@@ -131,7 +143,9 @@ export default function HeroSection() {
                         <span className="text-xs font-semibold text-green-600">
                           +R$ 1.2k/mês
                         </span>
-                        <span className="text-xs text-gray-500">87% confiança</span>
+                        <span className="text-xs text-gray-500">
+                          87% confiança
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -154,7 +168,9 @@ export default function HeroSection() {
                         <span className="text-xs font-semibold text-blue-600">
                           +23% conversão
                         </span>
-                        <span className="text-xs text-gray-500">92% confiança</span>
+                        <span className="text-xs text-gray-500">
+                          92% confiança
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -177,7 +193,9 @@ export default function HeroSection() {
                         <span className="text-xs font-semibold text-purple-600">
                           Estoque mín: 189 un
                         </span>
-                        <span className="text-xs text-gray-500">81% confiança</span>
+                        <span className="text-xs text-gray-500">
+                          81% confiança
+                        </span>
                       </div>
                     </div>
                   </div>
