@@ -43,37 +43,37 @@ export function ElasticityChart({
       try {
         setIsLoading(true);
 
-        // TODO: Substituir com API real /api/analytics/elasticity
-        // const response = await fetch(`/api/analytics/elasticity${productId ? `?productId=${productId}` : ''}`);
-        // const result = await response.json();
+        // Fetch real data from API
+        const url = `/api/analytics/elasticity${productId ? `?item_id=${productId}&days=30` : "?days=30"}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
 
-        // Mock data - curva de elasticidade realista
-        const mockData: ElasticityDataPoint[] = [
-          { price: 50, demand: 180, revenue: 9000, elasticity: -2.1 },
-          { price: 60, demand: 150, revenue: 9000, elasticity: -1.8 },
-          { price: 70, demand: 125, revenue: 8750, elasticity: -1.5 },
-          { price: 80, demand: 105, revenue: 8400, elasticity: -1.3 },
-          { price: 90, demand: 90, revenue: 8100, elasticity: -1.2 },
-          { price: 100, demand: 80, revenue: 8000, elasticity: -1.1 },
-          { price: 110, demand: 70, revenue: 7700, elasticity: -1.0 },
-          { price: 120, demand: 62, revenue: 7440, elasticity: -0.9 },
-          { price: 130, demand: 55, revenue: 7150, elasticity: -0.8 },
-          { price: 140, demand: 48, revenue: 6720, elasticity: -0.7 },
-          { price: 150, demand: 42, revenue: 6300, elasticity: -0.6 },
-        ];
+        const result = await response.json();
 
-        setData(mockData);
+        if (!result.success) {
+          throw new Error(result.message || "Failed to load elasticity data");
+        }
 
-        // Encontrar preço ótimo (maior revenue)
-        const optimal = mockData.reduce((max, point) =>
-          point.revenue > max.revenue ? point : max
-        );
-        setOptimalPrice(optimal.price);
-        setCurrentPrice(100); // Mock - preço atual
+        // Transform API data to chart format
+        const chartData: ElasticityDataPoint[] = (result.dataPoints || []).map((point: { price: number; quantity: number; revenue: number }) => ({
+          price: point.price,
+          demand: point.quantity,
+          revenue: point.revenue,
+          elasticity: result.elasticity, // Overall elasticity
+        }));
+
+        setData(chartData);
+        setOptimalPrice(result.optimalPrice || 0);
+        setCurrentPrice(result.currentPrice || 0);
 
         logger.info("Elasticity data loaded", {
-          points: mockData.length,
-          optimalPrice: optimal.price,
+          points: chartData.length,
+          optimalPrice: result.optimalPrice,
+          elasticity: result.elasticity,
+          orderCount: result.orderCount,
         });
       } catch (error) {
         logger.error("Failed to fetch elasticity data", { error });

@@ -50,82 +50,62 @@ export function ForecastChart({
       try {
         setIsLoading(true);
 
-        // TODO: Substituir com API real /api/analytics/forecast
-        // const response = await fetch(`/api/analytics/forecast?period=${selectedPeriod}${productId ? `&productId=${productId}` : ''}`);
-        // const result = await response.json();
+        // Fetch real data from API
+        const url = `/api/analytics/forecast?historical_days=${selectedPeriod}&forecast_days=7`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
 
-        // Mock data - histórico + previsão realista
-        const mockData: ForecastDataPoint[] = [];
-        const baseValue = 1000;
-        const growthRate = 0.05; // 5% crescimento mensal
+        const result = await response.json();
 
-        // Histórico (últimos 30 dias)
-        for (let i = -30; i <= 0; i++) {
-          const date = new Date();
-          date.setDate(date.getDate() + i);
-          const randomVariation = (Math.random() - 0.5) * 200;
-          const value = baseValue + randomVariation;
+        if (!result.success) {
+          throw new Error(result.message || "Failed to load forecast data");
+        }
 
-          mockData.push({
-            date: date.toISOString(),
-            dateLabel: date.toLocaleDateString("pt-BR", {
+        // Transform API data to chart format
+        const chartData: ForecastDataPoint[] = [
+          // Historical data
+          ...(result.historical || []).map((point: { date: string; actual: number }) => ({
+            date: point.date,
+            dateLabel: new Date(point.date).toLocaleDateString("pt-BR", {
               day: "2-digit",
               month: "short",
             }),
-            actual: value,
-            forecast: value,
-            lowerBound: value - 100,
-            upperBound: value + 100,
+            actual: point.actual,
+            forecast: point.actual,
+            lowerBound: point.actual,
+            upperBound: point.actual,
             confidence: 100,
-          });
-        }
-
-        // Previsão (próximos dias)
-        for (let i = 1; i <= selectedPeriod; i++) {
-          const date = new Date();
-          date.setDate(date.getDate() + i);
-
-          // Cálculo de previsão com crescimento
-          const daysFromNow = i;
-          const growthFactor = 1 + (growthRate * daysFromNow) / 30;
-          const forecast = baseValue * growthFactor;
-
-          // Intervalo de confiança aumenta com o tempo
-          const confidenceDecay = Math.max(50, 100 - daysFromNow * 0.5);
-          const intervalWidth = (100 - confidenceDecay) * 10;
-
-          mockData.push({
-            date: date.toISOString(),
-            dateLabel: date.toLocaleDateString("pt-BR", {
+          })),
+          // Forecast data
+          ...(result.forecast || []).map((point: { date: string; predicted: number; lower: number; upper: number }) => ({
+            date: point.date,
+            dateLabel: new Date(point.date).toLocaleDateString("pt-BR", {
               day: "2-digit",
               month: "short",
             }),
-            forecast: forecast,
-            lowerBound: forecast - intervalWidth,
-            upperBound: forecast + intervalWidth,
-            confidence: confidenceDecay,
-          });
-        }
+            forecast: point.predicted,
+            lowerBound: point.lower,
+            upperBound: point.upper,
+            confidence: 80, // Assume 80% confidence for forecasts
+          })),
+        ];
 
-        setData(mockData);
+        setData(chartData);
 
-        // Calcular accuracy (mock)
-        setAccuracy(87);
+        // Set trend from API
+        setTrend(result.trend || "stable");
 
-        // Detectar trend
-        const lastActual = mockData.find((d) => d.actual)?.actual || 0;
-        const lastForecast =
-          mockData[mockData.length - 1]?.forecast || lastActual;
-        const change = ((lastForecast - lastActual) / lastActual) * 100;
-
-        if (change > 5) setTrend("up");
-        else if (change < -5) setTrend("down");
-        else setTrend("stable");
+        // Calculate accuracy (mock - could be returned from API in future)
+        setAccuracy(85);
 
         logger.info("Forecast data loaded", {
-          points: mockData.length,
+          points: chartData.length,
           period: selectedPeriod,
-          accuracy,
+          trend: result.trend,
+          orderCount: result.orderCount,
         });
       } catch (error) {
         logger.error("Failed to fetch forecast data", { error });
