@@ -10,7 +10,8 @@ const defaultUrl = process.env.VERCEL_URL
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "MercaFlow - Integração Mercado Livre",
-  description: "Plataforma world-class de integração com Mercado Livre para vendedores brasileiros",
+  description:
+    "Plataforma world-class de integração com Mercado Livre para vendedores brasileiros",
 };
 
 const geistSans = Geist({

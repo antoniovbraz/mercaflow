@@ -4,7 +4,11 @@ import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
-import { showSuccessToast, showErrorToast, showInfoToast } from "@/utils/toast-helper";
+import {
+  showSuccessToast,
+  showErrorToast,
+  showInfoToast,
+} from "@/utils/toast-helper";
 
 function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +20,7 @@ function LoginForm() {
   useEffect(() => {
     const successMessage = searchParams.get("success");
     const message = searchParams.get("message");
-    
+
     if (successMessage) {
       showSuccessToast(successMessage);
     } else if (message) {
@@ -57,7 +61,7 @@ function LoginForm() {
         showSuccessToast("Login realizado com sucesso!", {
           description: "Redirecionando para o dashboard...",
         });
-        
+
         // Small delay for user to see success message
         setTimeout(() => {
           router.push("/dashboard");

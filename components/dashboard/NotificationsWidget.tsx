@@ -113,7 +113,7 @@ export function NotificationsWidget() {
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.data) {
         setNotifications(data.data);
       } else {

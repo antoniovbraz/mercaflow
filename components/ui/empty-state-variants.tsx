@@ -1,9 +1,9 @@
 /**
  * Empty State Variants
- * 
+ *
  * Casos específicos de empty states para diferentes contextos da aplicação.
  * Cada variante é pré-configurada com ícone, textos e ações apropriadas.
- * 
+ *
  * Casos cobertos:
  * - NoProducts: Lista de produtos vazia
  * - NoOrders: Lista de pedidos vazia
@@ -15,7 +15,7 @@
  * - ErrorState: Estado de erro com retry
  * - MaintenanceState: Manutenção ou indisponibilidade
  * - UnauthorizedState: Sem permissão de acesso
- * 
+ *
  * @module components/ui/empty-state-variants
  */
 
@@ -44,28 +44,28 @@ interface EmptyStateVariantProps {
     onClick: () => void;
     variant?: "default" | "outline" | "secondary" | "ghost";
   };
-  
+
   /** Ação secundária customizada */
   secondaryAction?: {
     label: string;
     onClick: () => void;
   };
-  
+
   /** Tamanho do empty state */
   size?: "sm" | "md" | "lg";
-  
+
   /** Modo bare (sem Card wrapper) */
   bare?: boolean;
-  
+
   /** Classes CSS adicionais */
   className?: string;
 }
 
 /**
  * Empty State: Nenhum Produto
- * 
+ *
  * Usado em: ProductManager, lista de produtos, dashboard
- * 
+ *
  * @example
  * <NoProducts
  *   action={{
@@ -86,10 +86,13 @@ export function NoProducts({
       icon={<Package className="w-8 h-8" />}
       title="Nenhum produto encontrado"
       description="Conecte sua conta do Mercado Livre para sincronizar seus produtos e começar a monitorar preços e estoque."
-      action={action || {
-        label: "Conectar Mercado Livre",
-        onClick: () => console.warn("NoProducts: action.onClick não definido"),
-      }}
+      action={
+        action || {
+          label: "Conectar Mercado Livre",
+          onClick: () =>
+            console.warn("NoProducts: action.onClick não definido"),
+        }
+      }
       secondaryAction={secondaryAction}
       size={size}
       bare={bare}
@@ -100,9 +103,9 @@ export function NoProducts({
 
 /**
  * Empty State: Nenhum Pedido
- * 
+ *
  * Usado em: OrderManager, lista de pedidos
- * 
+ *
  * @example
  * <NoOrders
  *   action={{
@@ -134,9 +137,9 @@ export function NoOrders({
 
 /**
  * Empty State: Nenhuma Pergunta
- * 
+ *
  * Usado em: QuestionManager, lista de perguntas
- * 
+ *
  * @example
  * <NoQuestions
  *   action={{
@@ -169,9 +172,9 @@ export function NoQuestions({
 
 /**
  * Empty State: Sem Resultados de Busca
- * 
+ *
  * Usado em: Filtros, busca, pesquisa
- * 
+ *
  * @example
  * <NoSearchResults
  *   action={{
@@ -192,11 +195,14 @@ export function NoSearchResults({
       icon={<Search className="w-8 h-8" />}
       title="Nenhum resultado encontrado"
       description="Tente ajustar seus filtros ou termo de busca para encontrar o que você procura."
-      action={action || {
-        label: "Limpar Filtros",
-        onClick: () => console.warn("NoSearchResults: action.onClick não definido"),
-        variant: "outline",
-      }}
+      action={
+        action || {
+          label: "Limpar Filtros",
+          onClick: () =>
+            console.warn("NoSearchResults: action.onClick não definido"),
+          variant: "outline",
+        }
+      }
       secondaryAction={secondaryAction}
       size={size}
       bare={bare}
@@ -207,9 +213,9 @@ export function NoSearchResults({
 
 /**
  * Empty State: Sem Notificações
- * 
+ *
  * Usado em: NotificationsWidget, central de notificações
- * 
+ *
  * @example
  * <NoNotifications size="sm" bare />
  */
@@ -236,9 +242,9 @@ export function NoNotifications({
 
 /**
  * Empty State: Mercado Livre Não Conectado
- * 
+ *
  * Usado em: Dashboard, páginas que requerem integração ML
- * 
+ *
  * @example
  * <NoMLIntegration
  *   action={{
@@ -259,14 +265,22 @@ export function NoMLIntegration({
       icon={<Link2 className="w-8 h-8" />}
       title="Mercado Livre não conectado"
       description="Conecte sua conta do Mercado Livre para acessar insights de preços, gerenciar produtos e responder perguntas."
-      action={action || {
-        label: "Conectar Mercado Livre",
-        onClick: () => console.warn("NoMLIntegration: action.onClick não definido"),
-      }}
-      secondaryAction={secondaryAction || {
-        label: "Saiba Mais",
-        onClick: () => console.warn("NoMLIntegration: secondaryAction.onClick não definido"),
-      }}
+      action={
+        action || {
+          label: "Conectar Mercado Livre",
+          onClick: () =>
+            console.warn("NoMLIntegration: action.onClick não definido"),
+        }
+      }
+      secondaryAction={
+        secondaryAction || {
+          label: "Saiba Mais",
+          onClick: () =>
+            console.warn(
+              "NoMLIntegration: secondaryAction.onClick não definido"
+            ),
+        }
+      }
       size={size}
       bare={bare}
       className={className}
@@ -276,9 +290,9 @@ export function NoMLIntegration({
 
 /**
  * Empty State: Sem Dados Genéricos
- * 
+ *
  * Usado em: Listas genéricas, tabelas
- * 
+ *
  * @example
  * <NoData
  *   title="Nenhum item cadastrado"
@@ -317,9 +331,9 @@ export function NoData({
 
 /**
  * Empty State: Estado de Erro
- * 
+ *
  * Usado em: Erros de carregamento, falhas de API
- * 
+ *
  * @example
  * <ErrorState
  *   title="Falha ao carregar produtos"
@@ -347,11 +361,13 @@ export function ErrorState({
       icon={<AlertTriangle className="w-8 h-8 text-red-500" />}
       title={title}
       description={description}
-      action={action || {
-        label: "Tentar Novamente",
-        onClick: () => window.location.reload(),
-        variant: "outline",
-      }}
+      action={
+        action || {
+          label: "Tentar Novamente",
+          onClick: () => window.location.reload(),
+          variant: "outline",
+        }
+      }
       secondaryAction={secondaryAction}
       size={size}
       bare={bare}
@@ -362,9 +378,9 @@ export function ErrorState({
 
 /**
  * Empty State: Manutenção
- * 
+ *
  * Usado em: Páginas em manutenção, funcionalidades temporariamente indisponíveis
- * 
+ *
  * @example
  * <MaintenanceState />
  */
@@ -391,9 +407,9 @@ export function MaintenanceState({
 
 /**
  * Empty State: Não Autorizado
- * 
+ *
  * Usado em: Páginas sem permissão de acesso
- * 
+ *
  * @example
  * <UnauthorizedState
  *   action={{
@@ -414,11 +430,14 @@ export function UnauthorizedState({
       icon={<Lock className="w-8 h-8 text-gray-500" />}
       title="Acesso não autorizado"
       description="Você não tem permissão para acessar esta área. Entre em contato com o administrador se precisar de acesso."
-      action={action || {
-        label: "Voltar ao Dashboard",
-        onClick: () => console.warn("UnauthorizedState: action.onClick não definido"),
-        variant: "outline",
-      }}
+      action={
+        action || {
+          label: "Voltar ao Dashboard",
+          onClick: () =>
+            console.warn("UnauthorizedState: action.onClick não definido"),
+          variant: "outline",
+        }
+      }
       secondaryAction={secondaryAction}
       size={size}
       bare={bare}
@@ -429,9 +448,9 @@ export function UnauthorizedState({
 
 /**
  * Empty State: Sem Filtros Aplicados
- * 
+ *
  * Usado em: Listas com filtros que resultaram em 0 resultados
- * 
+ *
  * @example
  * <NoFiltersApplied
  *   action={{
@@ -452,11 +471,14 @@ export function NoFiltersApplied({
       icon={<Filter className="w-8 h-8" />}
       title="Nenhum resultado com esses filtros"
       description="Tente ajustar os filtros aplicados ou remova alguns para ver mais resultados."
-      action={action || {
-        label: "Resetar Filtros",
-        onClick: () => console.warn("NoFiltersApplied: action.onClick não definido"),
-        variant: "outline",
-      }}
+      action={
+        action || {
+          label: "Resetar Filtros",
+          onClick: () =>
+            console.warn("NoFiltersApplied: action.onClick não definido"),
+          variant: "outline",
+        }
+      }
       secondaryAction={secondaryAction}
       size={size}
       bare={bare}
@@ -467,9 +489,9 @@ export function NoFiltersApplied({
 
 /**
  * Empty State: Sem Dados no Período
- * 
+ *
  * Usado em: Gráficos, relatórios com filtro de data
- * 
+ *
  * @example
  * <NoDataInPeriod
  *   action={{
@@ -490,11 +512,14 @@ export function NoDataInPeriod({
       icon={<Calendar className="w-8 h-8" />}
       title="Sem dados neste período"
       description="Não há dados disponíveis para o período selecionado. Tente selecionar um período diferente."
-      action={action || {
-        label: "Alterar Período",
-        onClick: () => console.warn("NoDataInPeriod: action.onClick não definido"),
-        variant: "outline",
-      }}
+      action={
+        action || {
+          label: "Alterar Período",
+          onClick: () =>
+            console.warn("NoDataInPeriod: action.onClick não definido"),
+          variant: "outline",
+        }
+      }
       secondaryAction={secondaryAction}
       size={size}
       bare={bare}
@@ -505,9 +530,9 @@ export function NoDataInPeriod({
 
 /**
  * Empty State: Sem Anomalias Detectadas
- * 
+ *
  * Usado em: Dashboard de anomalias, alertas
- * 
+ *
  * @example
  * <NoAnomalies size="sm" bare />
  */
@@ -534,9 +559,9 @@ export function NoAnomalies({
 
 /**
  * Empty State: FAQ ou Ajuda Vazia
- * 
+ *
  * Usado em: Páginas de ajuda, FAQ
- * 
+ *
  * @example
  * <NoHelpArticles
  *   action={{
@@ -557,11 +582,14 @@ export function NoHelpArticles({
       icon={<FileQuestion className="w-8 h-8" />}
       title="Nenhum artigo encontrado"
       description="Não encontramos artigos de ajuda correspondentes à sua busca. Tente outros termos ou entre em contato conosco."
-      action={action || {
-        label: "Contato",
-        onClick: () => console.warn("NoHelpArticles: action.onClick não definido"),
-        variant: "outline",
-      }}
+      action={
+        action || {
+          label: "Contato",
+          onClick: () =>
+            console.warn("NoHelpArticles: action.onClick não definido"),
+          variant: "outline",
+        }
+      }
       secondaryAction={secondaryAction}
       size={size}
       bare={bare}

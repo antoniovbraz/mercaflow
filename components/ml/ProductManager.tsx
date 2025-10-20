@@ -23,8 +23,15 @@ import {
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ProductCardSkeleton, StatCardSkeleton } from "@/components/ui/skeleton-variants";
-import { NoProducts, NoSearchResults, ErrorState } from "@/components/ui/empty-state-variants";
+import {
+  ProductCardSkeleton,
+  StatCardSkeleton,
+} from "@/components/ui/skeleton-variants";
+import {
+  NoProducts,
+  NoSearchResults,
+  ErrorState,
+} from "@/components/ui/empty-state-variants";
 
 interface MLProduct {
   id: string;

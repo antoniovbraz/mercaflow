@@ -101,17 +101,23 @@ async function processWebhookAsync(webhook: WebhookPayload): Promise<void> {
       .insert({
         topic: webhook.topic,
         resource: webhook.resource,
-        user_id: parseInt(webhook.user_id) || null,
-        application_id: parseInt(webhook.application_id) || null,
-        status: 'success',
+        user_id: parseInt(webhook.user_id) || 0,
+        application_id: parseInt(webhook.application_id) || 0,
         payload: webhook, // Store full webhook as JSONB
         received_at: new Date().toISOString(),
-        processed_at: new Date().toISOString(),
+        attempts: (typeof webhook.attempts === 'number' ? webhook.attempts : 1),
+        processed: false, // Will be updated after processing
         retry_count: (typeof webhook.attempts === 'number' ? webhook.attempts - 1 : 0),
       });
 
     if (insertError) {
-      logger.error('Failed to save webhook to database', insertError, { webhook });
+      logger.error('Failed to save webhook to database', {
+        error: insertError.message,
+        details: insertError.details,
+        hint: insertError.hint,
+        code: insertError.code,
+        webhook,
+      });
     } else {
       logger.info('✅ Webhook saved to database', {
         topic: webhook.topic,

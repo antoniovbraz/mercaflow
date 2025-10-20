@@ -1,5 +1,5 @@
-import Link from 'next/link'
-import { ArrowRight, Play, Star, TrendingUp, Zap } from 'lucide-react'
+import Link from "next/link";
+import { ArrowRight, Play, Star, TrendingUp, Zap } from "lucide-react";
 
 export default function HeroSection() {
   return (
@@ -24,32 +24,39 @@ export default function HeroSection() {
 
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-              O{' '}
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Linktree Premium
-              </span>{' '}
-              para E-commerce Brasileiro
+                Insights Inteligentes
+              </span>{" "}
+              + Site Automático para seu E-commerce
             </h1>
 
             {/* Subheadline */}
             <p className="text-xl text-gray-600 mb-8 max-w-2xl">
-              Transforme seu negócio no <strong>Mercado Livre</strong> com nossa plataforma world-class. 
-              Vitrine profissional + IA + Integração nativa = <strong>até 40% mais vendas</strong> em 6 meses.
+              Análises preditivas, precificação inteligente e elasticidade de
+              demanda +<strong> Site profissional sincronizado</strong> com seus
+              marketplaces. IA + Economia + Automação ={" "}
+              <strong>até 40% mais vendas</strong> em 6 meses.
             </p>
 
             {/* Key Benefits */}
             <div className="flex flex-wrap gap-4 mb-8 justify-center lg:justify-start">
               <div className="flex items-center space-x-2 bg-white rounded-full px-4 py-2 shadow-sm">
                 <Zap className="w-4 h-4 text-green-500" />
-                <span className="text-sm font-medium text-gray-700">Setup em 15 min</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Setup em 15 min
+                </span>
               </div>
               <div className="flex items-center space-x-2 bg-white rounded-full px-4 py-2 shadow-sm">
                 <TrendingUp className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-gray-700">+40% vendas</span>
+                <span className="text-sm font-medium text-gray-700">
+                  +40% vendas
+                </span>
               </div>
               <div className="flex items-center space-x-2 bg-white rounded-full px-4 py-2 shadow-sm">
                 <Star className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm font-medium text-gray-700">ROI garantido</span>
+                <span className="text-sm font-medium text-gray-700">
+                  ROI garantido
+                </span>
               </div>
             </div>
 
@@ -62,7 +69,7 @@ export default function HeroSection() {
                 <span>Começar Grátis por 14 Dias</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              
+
               <button className="group flex items-center justify-center space-x-2 text-gray-700 hover:text-blue-600 font-medium transition-colors">
                 <div className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center group-hover:shadow-xl transition-all">
                   <Play className="w-5 h-5 text-blue-600 ml-1" />
@@ -73,10 +80,16 @@ export default function HeroSection() {
 
             {/* Social Proof */}
             <div className="mt-12 pt-8 border-t border-gray-200">
-              <p className="text-sm text-gray-500 mb-4">Mais de 2.500 vendedores confiam no MercaFlow</p>
+              <p className="text-sm text-gray-500 mb-4">
+                Mais de 2.500 vendedores confiam no MercaFlow
+              </p>
               <div className="flex items-center justify-center lg:justify-start space-x-8 opacity-60">
-                <div className="text-2xl font-bold text-gray-400">Mercado Livre</div>
-                <div className="text-2xl font-bold text-gray-400">Magazine Luiza</div>
+                <div className="text-2xl font-bold text-gray-400">
+                  Mercado Livre
+                </div>
+                <div className="text-2xl font-bold text-gray-400">
+                  Magazine Luiza
+                </div>
                 <div className="text-2xl font-bold text-gray-400">Shopee</div>
               </div>
             </div>
@@ -93,24 +106,30 @@ export default function HeroSection() {
                   <div className="w-3 h-3 bg-white/20 rounded-full" />
                 </div>
               </div>
-              
+
               {/* Mock Dashboard Content */}
               <div className="p-8">
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600 mb-1">+127%</div>
+                    <div className="text-2xl font-bold text-green-600 mb-1">
+                      +127%
+                    </div>
                     <div className="text-xs text-gray-500">Vendas</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600 mb-1">R$ 45k</div>
+                    <div className="text-2xl font-bold text-blue-600 mb-1">
+                      R$ 45k
+                    </div>
                     <div className="text-xs text-gray-500">Receita</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600 mb-1">2.3k</div>
+                    <div className="text-2xl font-bold text-purple-600 mb-1">
+                      2.3k
+                    </div>
                     <div className="text-xs text-gray-500">Visitantes</div>
                   </div>
                 </div>
-                
+
                 {/* Mock Chart */}
                 <div className="h-32 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg mb-4 flex items-end justify-center space-x-1 p-4">
                   {[40, 70, 45, 80, 60, 95, 75].map((height, i) => (
@@ -121,17 +140,22 @@ export default function HeroSection() {
                     />
                   ))}
                 </div>
-                
+
                 {/* Mock Product List */}
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center space-x-3 bg-gray-50 rounded-lg p-3">
+                    <div
+                      key={i}
+                      className="flex items-center space-x-3 bg-gray-50 rounded-lg p-3"
+                    >
                       <div className="w-8 h-8 bg-gradient-to-r from-blue-200 to-indigo-200 rounded" />
                       <div className="flex-1">
                         <div className="h-2 bg-gray-200 rounded w-24 mb-1" />
                         <div className="h-2 bg-gray-100 rounded w-16" />
                       </div>
-                      <div className="text-green-600 font-semibold text-sm">+{i * 15}%</div>
+                      <div className="text-green-600 font-semibold text-sm">
+                        +{i * 15}%
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -149,5 +173,5 @@ export default function HeroSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

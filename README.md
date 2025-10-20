@@ -1,9 +1,9 @@
 # 🚀 MercaFlow
 
 <div align="center">
-  <h3>Plataforma Completa de Gestão para Mercado Livre</h3>
+  <h3>Insights Inteligentes + Site Automático para E-commerce</h3>
   <p>
-    <strong>Centralize, Automatize e Escale</strong> suas vendas no maior marketplace da América Latina
+    <strong>Análise Preditiva, Precificação Inteligente e Site Profissional</strong> sincronizado com marketplaces
   </p>
   
   [![Next.js](https://img.shields.io/badge/next.js-15.5-black)](https://nextjs.org/)
@@ -14,39 +14,49 @@
 
 ---
 
-## � O Problema que Resolvemos
+## 🎯 O Problema que Resolvemos
 
-Vendedores no Mercado Livre enfrentam diariamente:
+Vendedores em marketplaces enfrentam 3 grandes desafios:
 
-- ❌ **Gestão manual** de produtos em múltiplas categorias
-- ❌ **Resposta lenta** a perguntas de clientes
-- ❌ **Dificuldade** em analisar concorrência e precificar corretamente
-- ❌ **Falta de visão consolidada** de vendas e métricas
-- ❌ **Processos repetitivos** e demorados
+- ❌ **Dashboards passivos** - mostram dados mas não dizem o QUE fazer
+- ❌ **Precificação no escuro** - "feeling" ou copiar concorrente, sem ciência
+- ❌ **Site profissional caro** - R$ 5-15k + manutenção, ou 100% dependente do marketplace
+
+**Resultado**: Decisões baseadas em achismo, preços não otimizados, sem presença digital própria.
 
 ## ✨ Nossa Solução
 
-**MercaFlow** é uma plataforma SaaS enterprise-grade que oferece **gestão completa e inteligente** para vendedores do Mercado Livre.
+**MercaFlow** é uma plataforma de **inteligência analítica + site automático** que usa IA, economia aplicada e análise preditiva para transformar dados em insights acionáveis.
+
+### 🧠 Inteligência Analítica Ativa
+
+- ✅ **Insights acionáveis** - não só dados, mas sugestões concretas
+- ✅ **Precificação científica** - elasticidade-preço, ponto de equilíbrio, curva de demanda
+- ✅ **Análise preditiva** - previsão de vendas, detecção de tendências, alertas de anomalias
+- ✅ **Análise competitiva** - benchmarking automático, monitoramento de mercado
+
+### 🌐 Site Automático Sincronizado
+
+- ✅ **Criação rápida** - site profissional em < 15 minutos, sem código
+- ✅ **Sync em tempo real** - produtos, preços, estoque, fotos atualizados automaticamente
+- ✅ **SEO otimizado** - URLs amigáveis, meta tags, schema.org
+- ✅ **Multi-marketplace** - hoje ML, futuro: Shopee, Amazon, Magalu
 
 ### 🔗 Integração Nativa com Mercado Livre
+
 - ✅ OAuth 2.0 seguro com PKCE
 - ✅ Sincronização automática de produtos e pedidos
 - ✅ Webhooks em tempo real para notificações instantâneas
-- ✅ Gestão de perguntas e mensagens de clientes
+- ✅ Token encryption (AES-256-GCM)
 
-### 📊 Dashboard Inteligente
-- ✅ Métricas de vendas e performance em tempo real
-- ✅ Análise de produtos e categorias
-- ✅ Histórico completo de pedidos
-- ✅ Relatórios customizáveis
+### � Fundamentos Científicos
 
-### 🤖 Automação Inteligente
-- ✅ Sincronização automática de dados
-- ✅ Notificações em tempo real via webhooks
-- ✅ Processamento de eventos do Mercado Livre
-- ✅ Gestão centralizada de múltiplas contas (multi-tenant)
+- ✅ **Economia aplicada** - elasticidade, teoria dos jogos, sazonalidade
+- ✅ **Machine Learning** - modelos preditivos, clustering, NLP
+- ✅ **Ciência de dados** - séries temporais, estatística inferencial, correlação
 
 ### � Segurança Enterprise
+
 - ✅ Multi-tenancy com isolamento completo de dados
 - ✅ RBAC hierárquico com 64 permissões granulares
 - ✅ Token encryption (AES-256-GCM)
@@ -54,31 +64,37 @@ Vendedores no Mercado Livre enfrentam diariamente:
 - ✅ Auditoria completa de ações
 
 ### 🌐 Feito para o Brasil
+
 - 🇧🇷 Interface 100% em português
-- 🇧🇷 Otimizado para Mercado Livre Brasil
-- 🇧� Suporte a todas as categorias MLBr
+- 🇧🇷 Otimizado para mercado brasileiro (sazonalidade, feriados)
+- 🇧🇷 Integração nativa com Mercado Livre Brasil
+- 🇧🇷 Roadmap: Shopee, Amazon BR, Magalu
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
 ### Frontend
+
 - **Next.js 15.5.4** - React framework com App Router e Server Components
 - **TypeScript** - Type safety completo com strict mode
 - **Tailwind CSS** - Styling moderno e responsivo
 - **shadcn/ui** - Componentes UI reutilizáveis baseados em Radix UI
 
 ### Backend
+
 - **Supabase** - PostgreSQL + Auth + RLS + Edge Functions
 - **Row Level Security** - Isolamento automático multi-tenant
 - **Supabase SSR** - Server-Side Rendering com autenticação
 
 ### Integrações
+
 - **Mercado Livre API** - OAuth 2.0 com PKCE + Webhooks + REST API
-- **OpenAI** *(opcional)* - IA para otimizações
-- **Upstash Redis** *(opcional)* - Cache e performance
+- **OpenAI** _(opcional)_ - IA para otimizações
+- **Upstash Redis** _(opcional)_ - Cache e performance
 
 ### Deploy
+
 - **Vercel** - Hosting otimizado para Next.js
 - **Edge Middleware** - Autenticação e proteção de rotas
 - **CI/CD** - Deploy automático via GitHub
@@ -154,11 +170,42 @@ Acesse [http://localhost:3000](http://localhost:3000) no navegador.
 
 ## 📖 Documentação Completa
 
-- [📘 Especificação Técnica](ESPECIFICACAO_TECNICA.md) - Arquitetura e design do sistema
-- [🗺️ Roadmap de Implementação](ROADMAP_IMPLEMENTACAO.md) - Plano de desenvolvimento
-- [🔗 Integração Mercado Livre](INTEGRACAO_ML_COMPLETA.md) - Guia completo de integração ML
-- [🔍 Auditoria do Projeto](AUDITORIA_MERCAFLOW.md) - Análise técnica e recomendações
-- [📚 Documentação Detalhada](docs/pt/) - Guias e referências
+### 🎯 Comece Aqui
+
+- **[� Índice de Documentação](docs/DOCUMENTATION_INDEX.md)** ⭐ **PRINCIPAL** - Índice completo de toda documentação
+- **[🚀 Guia Iniciante](docs/04-guias/GUIA_INICIANTE.md)** - Setup e primeiros passos
+- **[⚡ Ações Rápidas](docs/04-guias/ACOES_RAPIDAS.md)** - Comandos comuns e workflows
+
+### 📋 Planejamento & Estratégia
+
+- [�📘 Especificação Técnica](docs/01-planejamento/ESPECIFICACAO_TECNICA.md) - Arquitetura e design do sistema
+- [🎯 Visão do Produto](docs/01-planejamento/VISAO_PRODUTO_CORRETA.md) - Objetivos, proposta de valor, personas
+- [🗺️ Roadmap 90 Dias](docs/01-planejamento/ROADMAP_EXECUTIVO_90DIAS.md) - Planejamento trimestral executivo
+
+### 🔍 Auditorias & Análises
+
+- [🔥 Auditoria API ML Oficial](docs/02-auditorias/AUDITORIA_ML_API_OFICIAL.md) - **CRÍTICO** - Gaps e correções necessárias
+- [🎨 Auditoria UI/UX Completa](docs/02-auditorias/AUDITORIA_UI_UX_COMPLETA.md) - 50+ melhorias catalogadas
+- [🗄️ Auditoria Schema](docs/02-auditorias/AUDITORIA_SCHEMA_COMPLETA.md) - Validação database
+
+### 🎯 Fases de Implementação
+
+- [✅ Fase 1 - ML Integration (100%)](docs/03-fases/fase-1/FASE1_100_COMPLETA.md) - OAuth, sync, webhooks
+- [✅ Fase 3 - Features (100%)](docs/03-fases/fase-3/FASE3_COMPLETA.md) - Dashboard, notifications
+- [✅ Fase 4 - Refatoração (100%)](docs/03-fases/fase-4/FASE4_100_COMPLETA.md) - Service layer, clean code
+
+### 🔧 Integrações
+
+- [🔗 Integração ML Completa](docs/05-integracoes/ml/INTEGRACAO_ML_COMPLETA.md) - Guia completo de integração ML
+- [� Guia Rápido ML](docs/04-guias/GUIA_RAPIDO_ML.md) - Troubleshooting rápido
+- [⚠️ Issues Conhecidos ML](docs/05-integracoes/ml/ISSUES_CONHECIDOS_ML.md) - Problemas e workarounds
+
+### 🚀 Deploy & Produção
+
+- [✅ Checklist Deploy](docs/06-deploy/CHECKLIST_DEPLOY.md) - Pré-deploy, deploy, pós-deploy
+- [📦 Deploy Fase 1](docs/06-deploy/DEPLOY_FASE1_PRODUCAO.md) - Deploy específico Fase 1
+
+> **💡 Dica**: A documentação foi reorganizada em 19/10/2025. Documentos históricos estão em `docs/archives/`
 
 ---
 
@@ -167,6 +214,7 @@ Acesse [http://localhost:3000](http://localhost:3000) no navegador.
 ### ✅ Implementado
 
 #### Autenticação e Segurança
+
 - [x] Sistema de autenticação completo com Supabase
 - [x] Multi-tenancy com isolamento total de dados
 - [x] RBAC hierárquico (3 roles principais: user, admin, super_admin)
@@ -175,6 +223,7 @@ Acesse [http://localhost:3000](http://localhost:3000) no navegador.
 - [x] Token encryption com AES-256-GCM
 
 #### Integração Mercado Livre
+
 - [x] OAuth 2.0 com PKCE para máxima segurança
 - [x] Refresh automático de tokens
 - [x] Sincronização de produtos (items)
@@ -184,6 +233,7 @@ Acesse [http://localhost:3000](http://localhost:3000) no navegador.
 - [x] Webhooks para notificações em tempo real
 
 #### Dashboard e Interface
+
 - [x] Dashboard responsivo com métricas
 - [x] Listagem e busca de produtos
 - [x] Gestão de pedidos
@@ -259,22 +309,26 @@ mercaflow/
 O MercaFlow implementa múltiplas camadas de segurança:
 
 ### Autenticação
+
 - ✅ Supabase Auth com JWT tokens
 - ✅ Session management automático via middleware
 - ✅ Proteção de rotas no edge
 
 ### Autorização
+
 - ✅ RBAC hierárquico com 3 níveis de acesso
 - ✅ 64 permissões granulares por recurso
 - ✅ Validação server-side em todas as APIs
 
 ### Dados
+
 - ✅ Row Level Security (RLS) no PostgreSQL
 - ✅ Isolamento multi-tenant automático
 - ✅ Encryption de tokens sensíveis (AES-256-GCM)
 - ✅ HTTPS obrigatório em produção
 
 ### APIs Externas
+
 - ✅ OAuth 2.0 com PKCE (RFC 7636)
 - ✅ Token refresh automático
 - ✅ Rate limiting (confia no ML API)
@@ -306,6 +360,7 @@ npm run build
 1. **Conecte seu repositório GitHub à Vercel**
 
 2. **Configure as variáveis de ambiente** no painel da Vercel:
+
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
@@ -315,6 +370,7 @@ npm run build
    - `NEXT_PUBLIC_SITE_URL`
 
 3. **Deploy**:
+
    ```bash
    npm run deploy
    # ou push para branch main (auto-deploy)
@@ -328,6 +384,7 @@ npm run build
 ### Outras Plataformas
 
 O MercaFlow pode ser deployado em qualquer plataforma que suporte Next.js:
+
 - Railway
 - Netlify
 - AWS Amplify
@@ -356,15 +413,15 @@ Contribuições são bem-vindas! Para contribuir:
 
 ## 📊 Status do Projeto
 
-| Área | Status | Cobertura |
-|------|--------|-----------|
-| **Autenticação** | ✅ Completo | 100% |
-| **Multi-tenancy** | ✅ Completo | 100% |
-| **RBAC** | ⚠️ Parcial | 70% |
-| **Integração ML** | ✅ Completo | 90% |
-| **Dashboard** | ✅ Completo | 80% |
-| **Testes** | ❌ Pendente | 0% |
-| **Documentação** | ✅ Boa | 85% |
+| Área              | Status      | Cobertura |
+| ----------------- | ----------- | --------- |
+| **Autenticação**  | ✅ Completo | 100%      |
+| **Multi-tenancy** | ✅ Completo | 100%      |
+| **RBAC**          | ⚠️ Parcial  | 70%       |
+| **Integração ML** | ✅ Completo | 90%       |
+| **Dashboard**     | ✅ Completo | 80%       |
+| **Testes**        | ❌ Pendente | 0%        |
+| **Documentação**  | ✅ Boa      | 85%       |
 
 ---
 

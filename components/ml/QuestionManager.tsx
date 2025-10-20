@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
   MessageCircle,
   Send,
   RefreshCw,
@@ -20,18 +20,22 @@ import {
   User,
   Plus,
   Settings,
-  Loader2
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { QuestionCardSkeleton } from '@/components/ui/skeleton-variants';
-import { NoQuestions, NoData, ErrorState } from '@/components/ui/empty-state-variants';
+  Loader2,
+} from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { QuestionCardSkeleton } from "@/components/ui/skeleton-variants";
+import {
+  NoQuestions,
+  NoData,
+  ErrorState,
+} from "@/components/ui/empty-state-variants";
 
 interface MLQuestion {
   id: number;
   item_id: string;
   text: string;
-  status: 'UNANSWERED' | 'ANSWERED' | 'DELETED' | 'BANNED';
+  status: "UNANSWERED" | "ANSWERED" | "DELETED" | "BANNED";
   date_created: string;
   from: {
     id: number;
@@ -39,7 +43,7 @@ interface MLQuestion {
   };
   answer?: {
     text: string;
-    status: 'ACTIVE';
+    status: "ACTIVE";
     date_created: string;
   };
 }
@@ -69,19 +73,21 @@ export function MLQuestionManager() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string>('UNANSWERED');
-  
+  const [selectedStatus, setSelectedStatus] = useState<string>("UNANSWERED");
+
   // Answer form state
-  const [answeringQuestion, setAnsweringQuestion] = useState<number | null>(null);
-  const [answerText, setAnswerText] = useState('');
+  const [answeringQuestion, setAnsweringQuestion] = useState<number | null>(
+    null
+  );
+  const [answerText, setAnswerText] = useState("");
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
-  
+
   // Template form state
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [newTemplate, setNewTemplate] = useState({
-    name: '',
-    template_text: '',
-    keywords: '',
+    name: "",
+    template_text: "",
+    keywords: "",
   });
 
   // Fetch questions from API
@@ -89,27 +95,28 @@ export function MLQuestionManager() {
     try {
       setError(null);
       const params = new URLSearchParams({
-        limit: '50',
+        limit: "50",
       });
-      
+
       // Only add status if it's not 'ALL'
-      if (selectedStatus !== 'ALL') {
-        params.set('status', selectedStatus);
+      if (selectedStatus !== "ALL") {
+        params.set("status", selectedStatus);
       }
 
       const response = await fetch(`/api/ml/questions?${params}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch questions');
+        throw new Error(errorData.error || "Failed to fetch questions");
       }
 
       const data: QuestionsResponse = await response.json();
       setQuestions(data.questions || []);
-      
     } catch (error) {
-      console.error('Error fetching questions:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch questions');
+      console.error("Error fetching questions:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch questions"
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -119,13 +126,13 @@ export function MLQuestionManager() {
   // Fetch question templates
   const fetchTemplates = useCallback(async () => {
     try {
-      const response = await fetch('/api/ml/questions/templates');
+      const response = await fetch("/api/ml/questions/templates");
       if (response.ok) {
         const data = await response.json();
         setTemplates(data.templates || []);
       }
     } catch (error) {
-      console.error('Error fetching templates:', error);
+      console.error("Error fetching templates:", error);
     }
   }, []);
 
@@ -144,13 +151,13 @@ export function MLQuestionManager() {
   // Answer a question
   const handleAnswerQuestion = async (questionId: number) => {
     if (!answerText.trim()) return;
-    
+
     setSubmittingAnswer(true);
     try {
-      const response = await fetch('/api/ml/questions', {
-        method: 'POST',
+      const response = await fetch("/api/ml/questions", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           question_id: questionId,
@@ -160,31 +167,34 @@ export function MLQuestionManager() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to answer question');
+        throw new Error(errorData.error || "Failed to answer question");
       }
 
       // Update local state
-      setQuestions(prev => prev.map(q => 
-        q.id === questionId 
-          ? { 
-              ...q, 
-              status: 'ANSWERED' as const,
-              answer: {
-                text: answerText.trim(),
-                status: 'ACTIVE' as const,
-                date_created: new Date().toISOString(),
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.id === questionId
+            ? {
+                ...q,
+                status: "ANSWERED" as const,
+                answer: {
+                  text: answerText.trim(),
+                  status: "ACTIVE" as const,
+                  date_created: new Date().toISOString(),
+                },
               }
-            }
-          : q
-      ));
-      
+            : q
+        )
+      );
+
       // Reset form
       setAnsweringQuestion(null);
-      setAnswerText('');
-      
+      setAnswerText("");
     } catch (error) {
-      console.error('Error answering question:', error);
-      setError(error instanceof Error ? error.message : 'Failed to answer question');
+      console.error("Error answering question:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to answer question"
+      );
     } finally {
       setSubmittingAnswer(false);
     }
@@ -193,33 +203,37 @@ export function MLQuestionManager() {
   // Create question template
   const handleCreateTemplate = async () => {
     if (!newTemplate.name.trim() || !newTemplate.template_text.trim()) return;
-    
+
     try {
-      const response = await fetch('/api/ml/questions/templates', {
-        method: 'POST',
+      const response = await fetch("/api/ml/questions/templates", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: newTemplate.name.trim(),
           template_text: newTemplate.template_text.trim(),
-          keywords: newTemplate.keywords.split(',').map(k => k.trim()).filter(Boolean),
+          keywords: newTemplate.keywords
+            .split(",")
+            .map((k) => k.trim())
+            .filter(Boolean),
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create template');
+        throw new Error(errorData.error || "Failed to create template");
       }
 
       // Reset form and refresh templates
-      setNewTemplate({ name: '', template_text: '', keywords: '' });
+      setNewTemplate({ name: "", template_text: "", keywords: "" });
       setShowTemplateForm(false);
       fetchTemplates();
-      
     } catch (error) {
-      console.error('Error creating template:', error);
-      setError(error instanceof Error ? error.message : 'Failed to create template');
+      console.error("Error creating template:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to create template"
+      );
     }
   };
 
@@ -231,21 +245,31 @@ export function MLQuestionManager() {
   // Get status color
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'UNANSWERED': return 'bg-orange-100 text-orange-800';
-      case 'ANSWERED': return 'bg-green-100 text-green-800';
-      case 'DELETED': return 'bg-red-100 text-red-800';
-      case 'BANNED': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "UNANSWERED":
+        return "bg-orange-100 text-orange-800";
+      case "ANSWERED":
+        return "bg-green-100 text-green-800";
+      case "DELETED":
+        return "bg-red-100 text-red-800";
+      case "BANNED":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   // Get status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'UNANSWERED': return <Clock className="w-4 h-4" />;
-      case 'ANSWERED': return <CheckCircle className="w-4 h-4" />;
-      case 'DELETED': case 'BANNED': return <AlertCircle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
+      case "UNANSWERED":
+        return <Clock className="w-4 h-4" />;
+      case "ANSWERED":
+        return <CheckCircle className="w-4 h-4" />;
+      case "DELETED":
+      case "BANNED":
+        return <AlertCircle className="w-4 h-4" />;
+      default:
+        return <Clock className="w-4 h-4" />;
     }
   };
 
@@ -282,7 +306,7 @@ export function MLQuestionManager() {
               <MessageCircle className="w-5 h-5" />
               Perguntas Mercado Livre
             </CardTitle>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -290,26 +314,31 @@ export function MLQuestionManager() {
                 onClick={refreshQuestions}
                 disabled={refreshing}
               >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+                />
               </Button>
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           {/* Filter by status */}
           <div className="flex items-center gap-2 mb-4">
             <Filter className="w-4 h-4 text-muted-foreground" />
             <div className="flex gap-2">
-              {['ALL', 'UNANSWERED', 'ANSWERED'].map((status) => (
+              {["ALL", "UNANSWERED", "ANSWERED"].map((status) => (
                 <Button
                   key={status}
                   variant={selectedStatus === status ? "default" : "outline"}
                   size="sm"
                   onClick={() => setSelectedStatus(status)}
                 >
-                  {status === 'ALL' ? 'Todas' : 
-                   status === 'UNANSWERED' ? 'Não Respondidas' : 'Respondidas'}
+                  {status === "ALL"
+                    ? "Todas"
+                    : status === "UNANSWERED"
+                    ? "Não Respondidas"
+                    : "Respondidas"}
                 </Button>
               ))}
             </div>
@@ -319,13 +348,13 @@ export function MLQuestionManager() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">
-                {questions.filter(q => q.status === 'UNANSWERED').length}
+                {questions.filter((q) => q.status === "UNANSWERED").length}
               </div>
               <div className="text-xs text-muted-foreground">Pendentes</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {questions.filter(q => q.status === 'ANSWERED').length}
+                {questions.filter((q) => q.status === "ANSWERED").length}
               </div>
               <div className="text-xs text-muted-foreground">Respondidas</div>
             </div>
@@ -334,7 +363,9 @@ export function MLQuestionManager() {
               <div className="text-xs text-muted-foreground">Total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{templates.length}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {templates.length}
+              </div>
               <div className="text-xs text-muted-foreground">Templates</div>
             </div>
           </div>
@@ -362,25 +393,25 @@ export function MLQuestionManager() {
           <TabsTrigger value="questions">Perguntas</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="questions" className="space-y-4">
           {/* Questions List */}
           {questions.length === 0 ? (
             <NoQuestions
               action={{
-                label: selectedStatus === 'ALL' ? "Atualizar" : "Ver Todas",
+                label: selectedStatus === "ALL" ? "Atualizar" : "Ver Todas",
                 onClick: () => {
-                  if (selectedStatus === 'ALL') {
+                  if (selectedStatus === "ALL") {
                     fetchQuestions();
                   } else {
-                    setSelectedStatus('ALL');
+                    setSelectedStatus("ALL");
                   }
                 },
-                variant: "outline"
+                variant: "outline",
               }}
               secondaryAction={{
                 label: "Ver Tutorial",
-                onClick: () => window.open('/ajuda/perguntas', '_self'),
+                onClick: () => window.open("/ajuda/perguntas", "_self"),
               }}
             />
           ) : (
@@ -395,23 +426,35 @@ export function MLQuestionManager() {
                           <div className="flex items-center gap-2">
                             <Badge className={getStatusColor(question.status)}>
                               {getStatusIcon(question.status)}
-                              {question.status === 'UNANSWERED' ? 'Pendente' : 
-                               question.status === 'ANSWERED' ? 'Respondida' : question.status}
+                              {question.status === "UNANSWERED"
+                                ? "Pendente"
+                                : question.status === "ANSWERED"
+                                ? "Respondida"
+                                : question.status}
                             </Badge>
                             <span className="text-sm text-muted-foreground">
                               por {question.from.nickname}
                             </span>
                             <span className="text-sm text-muted-foreground">
-                              {format(new Date(question.date_created), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                              {format(
+                                new Date(question.date_created),
+                                "dd/MM/yyyy HH:mm",
+                                { locale: ptBR }
+                              )}
                             </span>
                           </div>
                           <p className="font-medium">{question.text}</p>
                         </div>
-                        
+
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => window.open(`https://www.mercadolibre.com.br/p/${question.item_id}`, '_blank')}
+                          onClick={() =>
+                            window.open(
+                              `https://www.mercadolibre.com.br/p/${question.item_id}`,
+                              "_blank"
+                            )
+                          }
                         >
                           <ExternalLink className="w-4 h-4" />
                         </Button>
@@ -422,88 +465,108 @@ export function MLQuestionManager() {
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <User className="w-4 h-4 text-green-600" />
-                            <span className="text-sm font-medium text-green-800">Sua resposta</span>
+                            <span className="text-sm font-medium text-green-800">
+                              Sua resposta
+                            </span>
                             <span className="text-sm text-green-600">
-                              {format(new Date(question.answer.date_created), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                              {format(
+                                new Date(question.answer.date_created),
+                                "dd/MM/yyyy HH:mm",
+                                { locale: ptBR }
+                              )}
                             </span>
                           </div>
-                          <p className="text-sm text-green-800">{question.answer.text}</p>
+                          <p className="text-sm text-green-800">
+                            {question.answer.text}
+                          </p>
                         </div>
                       )}
 
                       {/* Answer Form */}
-                      {question.status === 'UNANSWERED' && answeringQuestion === question.id && (
-                        <div className="space-y-3 border-t pt-4">
-                          <div className="flex items-center gap-2">
-                            <Send className="w-4 h-4" />
-                            <span className="font-medium">Responder pergunta</span>
-                          </div>
-                          
-                          {/* Template suggestions */}
-                          {templates.length > 0 && (
-                            <div className="space-y-2">
-                              <span className="text-sm text-muted-foreground">Templates sugeridos:</span>
-                              <div className="flex gap-2 flex-wrap">
-                                {templates.slice(0, 3).map((template) => (
-                                  <Button
-                                    key={template.id}
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => applyTemplate(template)}
-                                  >
-                                    <Bot className="w-3 h-3 mr-1" />
-                                    {template.name}
-                                  </Button>
-                                ))}
-                              </div>
+                      {question.status === "UNANSWERED" &&
+                        answeringQuestion === question.id && (
+                          <div className="space-y-3 border-t pt-4">
+                            <div className="flex items-center gap-2">
+                              <Send className="w-4 h-4" />
+                              <span className="font-medium">
+                                Responder pergunta
+                              </span>
                             </div>
-                          )}
-                          
-                          <Textarea
-                            placeholder="Digite sua resposta..."
-                            value={answerText}
-                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAnswerText(e.target.value)}
-                            rows={3}
-                          />
-                          
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={() => handleAnswerQuestion(question.id)}
-                              disabled={!answerText.trim() || submittingAnswer}
-                              size="sm"
-                            >
-                              {submittingAnswer ? (
-                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                              ) : (
-                                <Send className="w-4 h-4 mr-2" />
-                              )}
-                              Enviar Resposta
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setAnsweringQuestion(null);
-                                setAnswerText('');
-                              }}
-                            >
-                              Cancelar
-                            </Button>
+
+                            {/* Template suggestions */}
+                            {templates.length > 0 && (
+                              <div className="space-y-2">
+                                <span className="text-sm text-muted-foreground">
+                                  Templates sugeridos:
+                                </span>
+                                <div className="flex gap-2 flex-wrap">
+                                  {templates.slice(0, 3).map((template) => (
+                                    <Button
+                                      key={template.id}
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => applyTemplate(template)}
+                                    >
+                                      <Bot className="w-3 h-3 mr-1" />
+                                      {template.name}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <Textarea
+                              placeholder="Digite sua resposta..."
+                              value={answerText}
+                              onChange={(
+                                e: React.ChangeEvent<HTMLTextAreaElement>
+                              ) => setAnswerText(e.target.value)}
+                              rows={3}
+                            />
+
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() =>
+                                  handleAnswerQuestion(question.id)
+                                }
+                                disabled={
+                                  !answerText.trim() || submittingAnswer
+                                }
+                                size="sm"
+                              >
+                                {submittingAnswer ? (
+                                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                ) : (
+                                  <Send className="w-4 h-4 mr-2" />
+                                )}
+                                Enviar Resposta
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setAnsweringQuestion(null);
+                                  setAnswerText("");
+                                }}
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
                       {/* Answer Button */}
-                      {question.status === 'UNANSWERED' && answeringQuestion !== question.id && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setAnsweringQuestion(question.id)}
-                        >
-                          <Send className="w-4 h-4 mr-2" />
-                          Responder
-                        </Button>
-                      )}
+                      {question.status === "UNANSWERED" &&
+                        answeringQuestion !== question.id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setAnsweringQuestion(question.id)}
+                          >
+                            <Send className="w-4 h-4 mr-2" />
+                            Responder
+                          </Button>
+                        )}
                     </div>
                   </CardContent>
                 </Card>
@@ -511,7 +574,7 @@ export function MLQuestionManager() {
             </div>
           )}
         </TabsContent>
-        
+
         <TabsContent value="templates" className="space-y-4">
           {/* Templates Management */}
           <Card>
@@ -521,7 +584,7 @@ export function MLQuestionManager() {
                   <Bot className="w-5 h-5" />
                   Templates de Resposta
                 </CardTitle>
-                
+
                 <Button
                   onClick={() => setShowTemplateForm(!showTemplateForm)}
                   size="sm"
@@ -531,41 +594,62 @@ export function MLQuestionManager() {
                 </Button>
               </div>
             </CardHeader>
-            
+
             <CardContent className="space-y-4">
               {/* New Template Form */}
               {showTemplateForm && (
                 <div className="border rounded-lg p-4 space-y-3">
                   <h3 className="font-medium">Criar Novo Template</h3>
-                  
+
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Nome do Template</label>
+                    <label className="text-sm font-medium">
+                      Nome do Template
+                    </label>
                     <Input
                       placeholder="Ex: Informações de Entrega"
                       value={newTemplate.name}
-                      onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) =>
+                        setNewTemplate((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Texto da Resposta</label>
+                    <label className="text-sm font-medium">
+                      Texto da Resposta
+                    </label>
                     <Textarea
                       placeholder="Digite o texto padrão da resposta..."
                       value={newTemplate.template_text}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewTemplate(prev => ({ ...prev, template_text: e.target.value }))}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        setNewTemplate((prev) => ({
+                          ...prev,
+                          template_text: e.target.value,
+                        }))
+                      }
                       rows={3}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Palavras-chave (separadas por vírgula)</label>
+                    <label className="text-sm font-medium">
+                      Palavras-chave (separadas por vírgula)
+                    </label>
                     <Input
                       placeholder="entrega, prazo, envio, correios"
                       value={newTemplate.keywords}
-                      onChange={(e) => setNewTemplate(prev => ({ ...prev, keywords: e.target.value }))}
+                      onChange={(e) =>
+                        setNewTemplate((prev) => ({
+                          ...prev,
+                          keywords: e.target.value,
+                        }))
+                      }
                     />
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button onClick={handleCreateTemplate} size="sm">
                       Criar Template
@@ -575,7 +659,11 @@ export function MLQuestionManager() {
                       size="sm"
                       onClick={() => {
                         setShowTemplateForm(false);
-                        setNewTemplate({ name: '', template_text: '', keywords: '' });
+                        setNewTemplate({
+                          name: "",
+                          template_text: "",
+                          keywords: "",
+                        });
                       }}
                     >
                       Cancelar
@@ -610,18 +698,24 @@ export function MLQuestionManager() {
                               Usado {template.times_used}x
                             </span>
                           </div>
-                          <p className="text-sm text-muted-foreground">{template.template_text}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {template.template_text}
+                          </p>
                           {template.keywords.length > 0 && (
                             <div className="flex gap-1 flex-wrap">
                               {template.keywords.map((keyword, idx) => (
-                                <Badge key={idx} variant="secondary" className="text-xs">
+                                <Badge
+                                  key={idx}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
                                   {keyword}
                                 </Badge>
                               ))}
                             </div>
                           )}
                         </div>
-                        
+
                         <Button variant="ghost" size="sm">
                           <Settings className="w-4 h-4" />
                         </Button>
