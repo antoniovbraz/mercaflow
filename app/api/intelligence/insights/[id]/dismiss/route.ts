@@ -20,12 +20,13 @@ import { logger } from '@/utils/logger';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const context = {
     endpoint: '/api/intelligence/insights/[id]/dismiss',
     method: 'POST',
-    insightId: params.id,
+    insightId: id,
   };
 
   try {
@@ -51,7 +52,7 @@ export async function POST(
 
     // 3. Validate insight ID format (UUID)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(params.id)) {
+    if (!uuidRegex.test(id)) {
       logger.warn('Invalid insight ID format', context);
       return NextResponse.json(
         { error: 'Invalid insight ID format' },
@@ -70,7 +71,7 @@ export async function POST(
     const { data: insight, error: fetchError } = await supabase
       .from('insights')
       .select('id, status, tenant_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('tenant_id', tenantId)
       .single();
 
@@ -113,7 +114,7 @@ export async function POST(
         status: 'DISMISSED',
         dismissed_at: new Date().toISOString(),
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('tenant_id', tenantId)
       .select()
       .single();
