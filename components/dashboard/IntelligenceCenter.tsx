@@ -13,20 +13,17 @@ import {
   Zap,
   AlertTriangle,
   RefreshCw,
-  Filter,
   ChevronRight,
 } from "lucide-react";
 import { logger } from "@/utils/logger";
 
 interface IntelligenceCenterProps {
   limit?: number;
-  showFilters?: boolean;
   compactMode?: boolean;
 }
 
 export function IntelligenceCenter({
   limit = 5,
-  showFilters = false,
   compactMode = false,
 }: IntelligenceCenterProps) {
   const [insights, setInsights] = useState<Insight[]>([]);
