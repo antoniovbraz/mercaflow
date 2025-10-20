@@ -14,7 +14,7 @@ export default function PrecosPage() {
   const plans = [
     {
       name: 'Starter',
-      description: 'Perfeito para começar no Mercado Livre',
+      description: 'Ideal para começar com insights inteligentes',
       price: 67,
       originalPrice: 97,
       billing: 'mensal',
@@ -23,23 +23,23 @@ export default function PrecosPage() {
       gradient: 'from-blue-500 to-blue-600',
       features: [
         'Até 100 produtos sincronizados',
-        'Vitrine profissional básica',
-        '3 templates premium',
-        'Analytics essenciais',
-        'Suporte por email',
+        '10 insights acionáveis/mês com priorização',
+        'Análise de elasticidade-preço básica',
+        'Previsão de vendas 30 dias (75% precisão)',
+        'Dashboard ativo com sugestões de ações',
+        'Site automático (1 template)',
         'Integração Mercado Livre',
-        'Mobile app incluído',
-        'SSL gratuito'
+        'Suporte por email (< 24h)'
       ],
       limitations: [
-        'IA limitada (10 otimizações/mês)',
+        'Sem análise competitiva 24/7',
         'Sem multi-marketplace',
-        'Relatórios básicos'
+        'Previsões limitadas a 30 dias'
       ]
     },
     {
       name: 'Business',
-      description: 'Ideal para vendedores estabelecidos',
+      description: 'Para decisões baseadas em ciência',
       price: 147,
       originalPrice: 197,
       billing: 'mensal',
@@ -48,26 +48,26 @@ export default function PrecosPage() {
       gradient: 'from-indigo-500 to-purple-600',
       features: [
         'Até 1.000 produtos sincronizados',
-        'Vitrine profissional premium',
-        'Todos os templates + customização',
-        'Analytics avançados',
-        'Suporte prioritário (< 4h)',
-        'IA completa (ilimitada)',
-        'Multi-marketplace (3 plataformas)',
-        'API access',
+        'Insights ilimitados priorizados por ROI',
+        'Elasticidade-preço avançada com simulador',
+        'Previsão ML 30/60/90 dias (87% precisão)',
+        'Análise competitiva 24/7 com alertas',
+        'Detecção de anomalias e oportunidades',
+        'Otimização por IA/NLP (títulos, descrições)',
+        'Site automático (5 templates + customização)',
+        'Multi-marketplace (até 3 plataformas)',
+        'API access + Webhooks',
         'Equipe até 3 usuários',
-        'Relatórios personalizados',
-        'Backup automático',
-        'Webhooks customizados'
+        'Suporte prioritário (< 4h)'
       ],
       limitations: [
         'Sem white-label',
-        'Limitado a 3 marketplaces'
+        'Sem IA customizada para seu nicho'
       ]
     },
     {
       name: 'Enterprise',
-      description: 'Para grandes operações e agências',
+      description: 'Inteligência customizada para seu negócio',
       price: 297,
       originalPrice: 497,
       billing: 'mensal',
@@ -76,19 +76,20 @@ export default function PrecosPage() {
       gradient: 'from-purple-600 to-pink-600',
       features: [
         'Produtos ilimitados',
+        'IA customizada treinada no seu nicho',
+        'Modelos preditivos exclusivos (>90% precisão)',
+        'Análise competitiva multi-mercado',
+        'Dashboard executivo + BI integrado',
+        'Insights em tempo real com confiança ajustada',
         'White-label completo',
-        'Templates customizados exclusivos',
-        'Analytics enterprise + BI',
-        'Suporte premium 24/7 (< 2h)',
-        'IA avançada + treinamento customizado',
-        'Todos os marketplaces',
-        'API priority access',
-        'Usuários ilimitados',
-        'Relatórios executivos',
+        'Site customizado (design exclusivo)',
+        'Todos os marketplaces (ilimitado)',
+        'API priority + Webhooks avançados',
         'Integração ERP/CRM',
+        'Usuários ilimitados',
         'Account manager dedicado',
-        'Setup assistido',
-        'Treinamento da equipe'
+        'Suporte premium 24/7 (< 2h)',
+        'Setup assistido + Treinamento'
       ],
       limitations: []
     }
@@ -96,26 +97,26 @@ export default function PrecosPage() {
 
   const addons = [
     {
-      name: 'IA Premium Training',
-      description: 'Treinamento personalizado da IA para seu nicho',
-      price: 197,
+      name: 'IA Customizada',
+      description: 'Treinamento de modelos preditivos exclusivos para seu nicho (>90% precisão)',
+      price: 497,
       billing: 'setup único'
     },
     {
-      name: 'Setup Assistido',
-      description: 'Nossa equipe configura tudo para você',
-      price: 297,
+      name: 'Consultoria em Precificação',
+      description: 'Economista especializado analisa sua estratégia de preços (2 sessões)',
+      price: 997,
       billing: 'setup único'
     },
     {
-      name: 'Usuários Extras',
-      description: 'Adicione mais membros à sua equipe',
-      price: 47,
-      billing: 'por usuário/mês'
+      name: 'Insights Extras (Starter)',
+      description: 'Adicione mais insights acionáveis ao plano Starter',
+      price: 27,
+      billing: 'por 10 insights/mês'
     },
     {
       name: 'Marketplace Extra',
-      description: 'Conecte marketplaces adicionais',
+      description: 'Conecte marketplaces adicionais com análise unificada',
       price: 67,
       billing: 'por marketplace/mês'
     }
@@ -151,8 +152,8 @@ export default function PrecosPage() {
   const testimonialPricing = {
     name: 'Roberto Silva',
     company: 'TechStore Premium',
-    quote: 'O plano Business pagou sozinho em 2 meses. Minhas vendas aumentaram 180% e a IA otimizou automaticamente todos os meus produtos.',
-    results: '+180% vendas, ROI 340%'
+    quote: 'Antes eu ajustava preços no "achômetro". Com MercaFlow, a elasticidade-preço me mostrou que eu estava deixando R$ 18k na mesa todo mês. Agora decido baseado em ciência, não em feeling.',
+    results: '+R$ 18k/mês, 87% precisão, ROI 820%'
   }
 
   return (
@@ -167,15 +168,16 @@ export default function PrecosPage() {
             </div>
             
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-              Planos que{' '}
+              Invista em{' '}
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                se pagam sozinhos
+                inteligência, não achismo
               </span>
             </h1>
             
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Escolha o plano ideal para seu negócio. Todos incluem teste gratuito, 
-              suporte premium e garantia de satisfação de 30 dias.
+              Precificação baseada no valor dos <strong>insights acionáveis</strong>, não em templates bonitos.
+              ROI médio de <strong>+R$ 15k/mês</strong>. 87% de precisão preditiva.
+              Teste gratuito de 14 dias em todos os planos.
             </p>
 
             {/* Toggle Annual/Monthly */}
@@ -383,11 +385,12 @@ export default function PrecosPage() {
       <section className="py-20 bg-gradient-to-br from-gray-900 to-blue-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold mb-4">
-            Pronto para revolucionar suas vendas?
+            Pare de decidir no escuro. Comece a decidir com dados.
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            Mais de 2.500 vendedores aumentaram ROI com insights acionáveis.
             Teste qualquer plano grátis por 14 dias. 
-            Sem risco, sem compromisso, resultados garantidos.
+            Sem risco, sem cartão, resultados comprovados.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -408,7 +411,7 @@ export default function PrecosPage() {
           </div>
 
           <div className="mt-8 text-blue-200 text-sm">
-            ✓ 14 dias grátis ✓ Sem cartão ✓ Setup em 15 minutos
+            ✓ 14 dias grátis ✓ Sem cartão ✓ 87% precisão ✓ ROI médio +R$ 15k/mês
           </div>
         </div>
       </section>

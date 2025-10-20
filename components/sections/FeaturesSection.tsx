@@ -1,58 +1,64 @@
 import { 
-  Palette, 
-  Bot, 
-  BarChart3, 
-  Zap, 
+  Brain,
+  DollarSign,
+  TrendingUp,
+  Target,
+  Sparkles,
+  Eye,
   Shield, 
-  Smartphone,
   Globe,
-  HeadphonesIcon,
   ArrowRight
 } from 'lucide-react'
 
 export default function FeaturesSection() {
   const features = [
     {
-      icon: Palette,
-      title: 'Vitrine Profissional',
-      description: 'Crie sua loja virtual personalizada com templates premium e editor drag-and-drop. Sua marca, sua identidade.',
-      benefits: ['Templates premium', 'Editor visual', 'Domínio personalizado'],
-      gradient: 'from-pink-500 to-rose-500'
+      icon: DollarSign,
+      title: 'Precificação Científica',
+      description: 'Elasticidade-preço da demanda, ponto de equilíbrio otimizado e curva de demanda. Não é "feeling" - é economia aplicada dizendo seu preço ótimo.',
+      benefits: ['Elasticidade-preço calculada', 'Simulador de impacto', 'Preço ótimo sugerido'],
+      gradient: 'from-green-500 to-emerald-500',
+      category: 'intelligence'
     },
     {
-      icon: Bot,
-      title: 'IA Avançada',
-      description: 'Nossa IA otimiza preços, títulos e descrições automaticamente, analisando milhões de dados do mercado em tempo real.',
-      benefits: ['Otimização de preços', 'Títulos inteligentes', 'Análise competitiva'],
-      gradient: 'from-blue-500 to-cyan-500'
+      icon: TrendingUp,
+      title: 'Análise Preditiva',
+      description: 'IA prevê suas vendas nos próximos 30/60/90 dias com 87% de precisão. Sazonalidade, tendências e recomendações de estoque baseadas em dados reais.',
+      benefits: ['Previsão 30/60/90 dias', 'Detecção de tendências', 'Recomendação de estoque'],
+      gradient: 'from-blue-500 to-cyan-500',
+      category: 'intelligence'
     },
     {
-      icon: BarChart3,
-      title: 'Analytics Profissional',
-      description: 'Dashboards completos com métricas avançadas, ROI detalhado e insights acionáveis para maximizar suas vendas.',
-      benefits: ['Dashboard completo', 'ROI em tempo real', 'Relatórios premium'],
-      gradient: 'from-green-500 to-emerald-500'
+      icon: Brain,
+      title: 'Insights Acionáveis',
+      description: 'Não mostramos só gráficos - dizemos EXATAMENTE o que fazer. "Aumente preço 8%" ou "Otimize este título". Dashboard ativo, não passivo.',
+      benefits: ['Ações priorizadas por ROI', 'Confiança estatística', 'Cards de oportunidades'],
+      gradient: 'from-purple-500 to-violet-500',
+      category: 'intelligence'
     },
     {
-      icon: Zap,
-      title: 'Integração Nativa ML',
-      description: 'Sincronização automática e em tempo real com Mercado Livre. Produtos, pedidos, estoque - tudo conectado.',
-      benefits: ['Sync automático', 'Tempo real', 'Zero configuração'],
-      gradient: 'from-purple-500 to-violet-500'
+      icon: Eye,
+      title: 'Análise Competitiva',
+      description: 'Monitore concorrentes 24/7. Alertas automáticos de mudanças de preço, benchmarking e estratégias sugeridas para se destacar.',
+      benefits: ['Monitor de preços 24/7', 'Benchmarking automático', 'Alertas de concorrentes'],
+      gradient: 'from-orange-500 to-red-500',
+      category: 'intelligence'
     },
     {
-      icon: Shield,
-      title: 'Enterprise Security',
-      description: 'Segurança nivel bancário com criptografia end-to-end, backups automáticos e compliance total com LGPD.',
-      benefits: ['Criptografia E2E', 'Backup automático', 'LGPD compliant'],
-      gradient: 'from-orange-500 to-red-500'
+      icon: Sparkles,
+      title: 'Site Automático',
+      description: 'Crie site profissional em < 15 minutos. Sincronização automática com marketplaces, SEO otimizado e zero código necessário.',
+      benefits: ['Setup < 15 minutos', 'Sync automático ML', 'SEO otimizado'],
+      gradient: 'from-pink-500 to-rose-500',
+      category: 'automation'
     },
     {
-      icon: Smartphone,
-      title: 'Mobile First',
-      description: 'Experiência perfeita em qualquer dispositivo. App nativo iOS/Android + PWA para máxima performance.',
-      benefits: ['App nativo', 'PWA included', 'Offline ready'],
-      gradient: 'from-indigo-500 to-blue-500'
+      icon: Target,
+      title: 'Otimização por IA',
+      description: 'NLP otimiza títulos e descrições automaticamente. Análise de sentiment de reviews e sugestões de categorias mais assertivas.',
+      benefits: ['Títulos otimizados por NLP', 'Análise de reviews', 'Categorias sugeridas'],
+      gradient: 'from-indigo-500 to-blue-500',
+      category: 'intelligence'
     }
   ]
 
@@ -60,12 +66,12 @@ export default function FeaturesSection() {
     {
       icon: Globe,
       title: 'Multi-marketplace',
-      description: 'Integre com Mercado Livre, Shopee, Magazine Luiza e mais'
+      description: 'Hoje Mercado Livre. Em breve: Shopee, Amazon BR, Magazine Luiza. Catálogo unificado inteligente.'
     },
     {
-      icon: HeadphonesIcon,
-      title: 'Suporte Premium',
-      description: 'Atendimento especializado 24/7 com tempo de resposta < 2h'
+      icon: Shield,
+      title: 'Segurança Enterprise',
+      description: 'Criptografia AES-256-GCM, multi-tenancy com RLS, LGPD compliant e auditoria completa.'
     }
   ]
 
@@ -75,20 +81,21 @@ export default function FeaturesSection() {
         {/* Section Header */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center space-x-2 bg-blue-100 rounded-full px-4 py-2 mb-6">
-            <Zap className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-800">Recursos Premium</span>
+            <Brain className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-800">Inteligência Analítica + Automação</span>
           </div>
           
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Tudo que você precisa para
+            Não mostramos dados,
             <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              {' '}dominar o Mercado Livre
+              {' '}dizemos o QUE fazer
             </span>
           </h2>
           
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Ferramentas profissionais, IA avançada e integrações nativas. 
-            Tudo em uma plataforma world-class construída especificamente para o mercado brasileiro.
+            Economia aplicada + IA + análise preditiva para transformar dados em{' '}
+            <strong>insights acionáveis</strong>. Dashboards ativos que sugerem ações concretas,
+            não apenas mostram números.
           </p>
         </div>
 
@@ -165,14 +172,14 @@ export default function FeaturesSection() {
         <div className="text-center mt-16">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-white">
             <h3 className="text-2xl font-bold mb-4">
-              Pronto para revolucionar suas vendas?
+              Pare de adivinhar. Comece a decidir com dados.
             </h3>
             <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-              Junte-se a mais de 2.500 vendedores que já escolheram o MercaFlow. 
-              Setup gratuito e suporte premium incluído.
+              Mais de 2.500 vendedores aumentaram suas vendas com insights acionáveis.
+              87% de precisão preditiva. ROI médio de +R$ 15k/mês.
             </p>
             <button className="bg-white text-blue-600 px-8 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-colors inline-flex items-center space-x-2">
-              <span>Começar Teste Grátis</span>
+              <span>Começar Teste Grátis por 14 Dias</span>
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>

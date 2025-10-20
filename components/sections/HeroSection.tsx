@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Play, Star, TrendingUp, Zap } from "lucide-react";
+import { ArrowRight, Play, Brain, TrendingUp, DollarSign, Target } from "lucide-react";
 
 export default function HeroSection() {
   return (
@@ -16,9 +16,9 @@ export default function HeroSection() {
           <div className="text-center lg:text-left">
             {/* Badge */}
             <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full px-4 py-2 mb-6">
-              <Star className="w-4 h-4 text-yellow-500 fill-current" />
+              <Brain className="w-4 h-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-800">
-                #1 Plataforma para Mercado Livre
+                Inteligência Analítica + IA para E-commerce
               </span>
             </div>
 
@@ -32,30 +32,30 @@ export default function HeroSection() {
 
             {/* Subheadline */}
             <p className="text-xl text-gray-600 mb-8 max-w-2xl">
-              Análises preditivas, precificação inteligente e elasticidade de
-              demanda +<strong> Site profissional sincronizado</strong> com seus
-              marketplaces. IA + Economia + Automação ={" "}
-              <strong>até 40% mais vendas</strong> em 6 meses.
+              <strong>Não mostramos apenas dados</strong> - dizemos exatamente{" "}
+              <strong>o QUE fazer</strong> usando economia aplicada, análise preditiva 
+              e IA. + Site profissional sincronizado com marketplaces em{" "}
+              <strong>&lt; 15 minutos</strong>.
             </p>
 
             {/* Key Benefits */}
             <div className="flex flex-wrap gap-4 mb-8 justify-center lg:justify-start">
               <div className="flex items-center space-x-2 bg-white rounded-full px-4 py-2 shadow-sm">
-                <Zap className="w-4 h-4 text-green-500" />
+                <DollarSign className="w-4 h-4 text-green-500" />
                 <span className="text-sm font-medium text-gray-700">
-                  Setup em 15 min
+                  Precificação científica
                 </span>
               </div>
               <div className="flex items-center space-x-2 bg-white rounded-full px-4 py-2 shadow-sm">
                 <TrendingUp className="w-4 h-4 text-blue-500" />
                 <span className="text-sm font-medium text-gray-700">
-                  +40% vendas
+                  Previsão 87% precisa
                 </span>
               </div>
               <div className="flex items-center space-x-2 bg-white rounded-full px-4 py-2 shadow-sm">
-                <Star className="w-4 h-4 text-yellow-500" />
+                <Target className="w-4 h-4 text-purple-500" />
                 <span className="text-sm font-medium text-gray-700">
-                  ROI garantido
+                  Insights acionáveis
                 </span>
               </div>
             </div>
@@ -81,16 +81,21 @@ export default function HeroSection() {
             {/* Social Proof */}
             <div className="mt-12 pt-8 border-t border-gray-200">
               <p className="text-sm text-gray-500 mb-4">
-                Mais de 2.500 vendedores confiam no MercaFlow
+                Mais de 2.500 vendedores aumentaram suas vendas com insights acionáveis
               </p>
-              <div className="flex items-center justify-center lg:justify-start space-x-8 opacity-60">
-                <div className="text-2xl font-bold text-gray-400">
-                  Mercado Livre
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-blue-600">87%</div>
+                  <div className="text-xs text-gray-500">Precisão preditiva</div>
                 </div>
-                <div className="text-2xl font-bold text-gray-400">
-                  Magazine Luiza
+                <div>
+                  <div className="text-2xl font-bold text-green-600">+R$ 15k</div>
+                  <div className="text-xs text-gray-500">Receita média/mês</div>
                 </div>
-                <div className="text-2xl font-bold text-gray-400">Shopee</div>
+                <div>
+                  <div className="text-2xl font-bold text-purple-600">40%</div>
+                  <div className="text-xs text-gray-500">Aumento em vendas</div>
+                </div>
               </div>
             </div>
           </div>
@@ -107,67 +112,87 @@ export default function HeroSection() {
                 </div>
               </div>
 
-              {/* Mock Dashboard Content */}
-              <div className="p-8">
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600 mb-1">
-                      +127%
+              {/* Mock Dashboard Content - INSIGHTS ACIONÁVEIS */}
+              <div className="p-6">
+                {/* Insight Card 1 - URGENTE */}
+                <div className="bg-gradient-to-r from-orange-50 to-red-50 border-l-4 border-orange-500 rounded-lg p-4 mb-3">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">🔥</span>
                     </div>
-                    <div className="text-xs text-gray-500">Vendas</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600 mb-1">
-                      R$ 45k
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold text-gray-900 mb-1">
+                        Aumente preço 8% AGORA
+                      </h4>
+                      <p className="text-xs text-gray-600 mb-2">
+                        Elasticidade favorável detectada
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-green-600">
+                          +R$ 1.2k/mês
+                        </span>
+                        <span className="text-xs text-gray-500">87% confiança</span>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">Receita</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600 mb-1">
-                      2.3k
-                    </div>
-                    <div className="text-xs text-gray-500">Visitantes</div>
                   </div>
                 </div>
 
-                {/* Mock Chart */}
-                <div className="h-32 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg mb-4 flex items-end justify-center space-x-1 p-4">
-                  {[40, 70, 45, 80, 60, 95, 75].map((height, i) => (
-                    <div
-                      key={i}
-                      className="bg-gradient-to-t from-blue-600 to-indigo-600 rounded-sm w-6"
-                      style={{ height: `${height}%` }}
-                    />
-                  ))}
-                </div>
-
-                {/* Mock Product List */}
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="flex items-center space-x-3 bg-gray-50 rounded-lg p-3"
-                    >
-                      <div className="w-8 h-8 bg-gradient-to-r from-blue-200 to-indigo-200 rounded" />
-                      <div className="flex-1">
-                        <div className="h-2 bg-gray-200 rounded w-24 mb-1" />
-                        <div className="h-2 bg-gray-100 rounded w-16" />
-                      </div>
-                      <div className="text-green-600 font-semibold text-sm">
-                        +{i * 15}%
+                {/* Insight Card 2 - OPORTUNIDADE */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg p-4 mb-3">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">💡</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold text-gray-900 mb-1">
+                        Título fraco em 3 produtos
+                      </h4>
+                      <p className="text-xs text-gray-600 mb-2">
+                        IA sugere otimizações
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-blue-600">
+                          +23% conversão
+                        </span>
+                        <span className="text-xs text-gray-500">92% confiança</span>
                       </div>
                     </div>
-                  ))}
+                  </div>
+                </div>
+
+                {/* Insight Card 3 - PREVISÃO */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">📈</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold text-gray-900 mb-1">
+                        Previsão: 234 vendas
+                      </h4>
+                      <p className="text-xs text-gray-600 mb-2">
+                        Próximos 30 dias (±15%)
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-purple-600">
+                          Estoque mín: 189 un
+                        </span>
+                        <span className="text-xs text-gray-500">81% confiança</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Floating elements */}
-            <div className="absolute -top-4 -right-4 bg-green-500 text-white rounded-full w-16 h-16 flex items-center justify-center font-bold shadow-lg animate-bounce">
-              +40%
+            <div className="absolute -top-4 -right-4 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl px-4 py-2 flex flex-col items-center justify-center font-bold shadow-lg">
+              <div className="text-xs opacity-80">IA Ativa</div>
+              <div className="text-lg">87%</div>
             </div>
-            <div className="absolute -bottom-4 -left-4 bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg">
-              <Star className="w-6 h-6 fill-current" />
+            <div className="absolute -bottom-4 -left-4 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl px-3 py-2 flex items-center space-x-2 shadow-lg">
+              <Brain className="w-5 h-5" />
+              <span className="text-sm font-semibold">Insights</span>
             </div>
           </div>
         </div>

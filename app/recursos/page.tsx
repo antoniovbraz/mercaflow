@@ -1,15 +1,14 @@
 import PublicLayout from '@/components/layout/PublicLayout'
 import { 
-  Palette, 
-  Bot, 
-  BarChart3, 
+  Brain,
+  DollarSign,
+  TrendingUp,
+  Target,
+  Eye,
+  Sparkles,
   Zap, 
   Shield, 
-  Smartphone,
   Globe,
-  HeadphonesIcon,
-  Users,
-  TrendingUp,
   CheckCircle,
   ArrowRight,
   Star
@@ -19,99 +18,115 @@ import Link from 'next/link'
 export default function RecursosPage() {
   const mainFeatures = [
     {
-      icon: Palette,
-      title: 'Vitrine Profissional Personalizada',
-      description: 'Crie sua loja virtual com identidade única usando nossos templates premium e editor visual intuitivo.',
+      icon: DollarSign,
+      title: 'Precificação Científica com Elasticidade-Preço',
+      description: 'Não é "feeling" ou copiar concorrente. Usamos economia aplicada para calcular seu preço ótimo baseado em elasticidade da demanda, ponto de equilíbrio e curva de oferta/demanda.',
       features: [
-        'Templates premium otimizados para conversão',
-        'Editor drag-and-drop sem código',
-        'Domínio personalizado incluído',
-        'Responsive design automático',
-        'SEO otimizado para Google'
+        'Cálculo de elasticidade-preço em tempo real',
+        'Simulador de impacto: "Reduzir 5% = +18% vendas"',
+        'Ponto de equilíbrio otimizado por produto',
+        'Curva de demanda personalizada com histórico',
+        'Sugestões concretas: "Seu preço ótimo é R$ 147"'
       ],
-      image: '/features/vitrine.jpg',
-      gradient: 'from-pink-500 to-rose-500'
+      image: '/features/elasticidade.jpg',
+      gradient: 'from-green-500 to-emerald-500',
+      example: 'Exemplo: "Reduzir preço 5% = +18% vendas (+R$ 1.2k/mês)"'
     },
     {
-      icon: Bot,
-      title: 'IA Avançada para Otimização',
-      description: 'Inteligência artificial que analisa milhões de dados para otimizar preços, títulos e descrições automaticamente.',
+      icon: TrendingUp,
+      title: 'Análise Preditiva com 87% de Precisão',
+      description: 'IA prevê suas vendas nos próximos 30/60/90 dias usando modelos de séries temporais, sazonalidade e tendências. Recomendações automáticas de estoque baseadas em previsões.',
       features: [
-        'Otimização de preços em tempo real',
-        'Geração automática de títulos atrativos',
-        'Análise competitiva 24/7',
-        'Sugestões de produtos populares',
-        'Previsão de demanda por IA'
+        'Previsão de vendas 30/60/90 dias (87% precisão)',
+        'Detecção automática de sazonalidade',
+        'Identificação de tendências de alta/baixa',
+        'Alertas de anomalias: "Conversão caiu 40%"',
+        'Recomendação de estoque: "Mínimo 189 unidades"'
       ],
-      image: '/features/ia.jpg',
-      gradient: 'from-blue-500 to-cyan-500'
+      image: '/features/previsao.jpg',
+      gradient: 'from-blue-500 to-cyan-500',
+      example: 'Exemplo: "Próximos 30 dias: 234 vendas (±15%) | Confiança: 87%"'
     },
     {
-      icon: BarChart3,
-      title: 'Analytics & Relatórios Premium',
-      description: 'Dashboards completos com métricas avançadas e insights acionáveis para maximizar seu ROI.',
+      icon: Brain,
+      title: 'Insights Acionáveis - Dashboard Ativo',
+      description: 'Não mostramos só gráficos. Dizemos EXATAMENTE o que fazer, quando fazer e qual o impacto esperado. Dashboard ativo com cards de oportunidades priorizados por ROI.',
       features: [
-        'Dashboard em tempo real',
-        'Relatórios de ROI detalhados',
-        'Análise de funil de vendas',
-        'Métricas de performance por produto',
-        'Exportação de dados CSV/PDF'
+        'Cards de ação: "🔥 Aumente preço 8% AGORA"',
+        'Priorização automática por ROI esperado',
+        'Confiança estatística de cada insight (0-100%)',
+        'Impacto quantificado: "+R$ 1.2k/mês"',
+        'Histórico de insights aplicados e resultados'
       ],
-      image: '/features/analytics.jpg',
-      gradient: 'from-green-500 to-emerald-500'
+      image: '/features/insights.jpg',
+      gradient: 'from-purple-500 to-violet-500',
+      example: 'Exemplo: "💡 Otimize título → +23% conversão (92% confiança)"'
     },
     {
-      icon: Zap,
-      title: 'Integração Nativa Mercado Livre',
-      description: 'Sincronização automática e bidireccional com ML. Produtos, pedidos e estoque sempre atualizados.',
+      icon: Eye,
+      title: 'Análise Competitiva 24/7',
+      description: 'Monitore concorrentes automaticamente. Alertas em tempo real de mudanças de preço, benchmarking por categoria e estratégias sugeridas para se destacar.',
       features: [
-        'Sincronização automática em tempo real',
-        'Gestão centralizada de produtos',
-        'Controle de estoque integrado',
-        'Processamento automático de pedidos',
-        'Webhooks para atualizações instantâneas'
+        'Monitor de preços concorrentes 24/7',
+        'Alertas instantâneos: "Concorrente baixou 18%"',
+        'Benchmarking: "Você está 12% acima da média"',
+        'Posicionamento relativo no mercado',
+        'Estratégias: "Igualar ou destacar diferencial"'
       ],
-      image: '/features/integracao.jpg',
-      gradient: 'from-purple-500 to-violet-500'
+      image: '/features/competitivo.jpg',
+      gradient: 'from-orange-500 to-red-500',
+      example: 'Exemplo: "⚠️ Concorrente: R$ 129 | Você: R$ 159 | Ação sugerida"'
+    },
+    {
+      icon: Sparkles,
+      title: 'Site Automático Sincronizado',
+      description: 'Crie site profissional em < 15 minutos. Zero código necessário. Sincronização automática com Mercado Livre via webhooks. SEO otimizado e domínio personalizado.',
+      features: [
+        'Setup completo em < 15 minutos',
+        'Sincronização bidirecional automática com ML',
+        '5 templates otimizados para conversão',
+        'SEO: URLs amigáveis, meta tags, schema.org',
+        'Domínio personalizado: sualoja.com.br'
+      ],
+      image: '/features/site.jpg',
+      gradient: 'from-pink-500 to-rose-500',
+      example: 'Exemplo: OAuth → Selecionar template → Site no ar em 15min'
+    },
+    {
+      icon: Target,
+      title: 'Otimização por IA e NLP',
+      description: 'Processamento de linguagem natural (NLP) para otimizar títulos, descrições e categorias. Análise de sentiment de reviews para identificar pontos fortes/fracos.',
+      features: [
+        'Títulos otimizados por NLP: +23% cliques',
+        'Análise de sentiment de reviews',
+        'Sugestões de categorias mais assertivas',
+        'Detecção de palavras-chave populares',
+        'A/B testing automático de descrições'
+      ],
+      image: '/features/nlp.jpg',
+      gradient: 'from-indigo-500 to-blue-500',
+      example: 'Exemplo: "Título fraco detectado → IA sugere: \'Tênis Nike...\'"'
     }
   ]
 
   const additionalFeatures = [
     {
-      icon: Shield,
-      title: 'Segurança Enterprise',
-      description: 'Proteção nivel bancário com criptografia end-to-end e compliance LGPD.',
-      gradient: 'from-orange-500 to-red-500'
-    },
-    {
-      icon: Smartphone,
-      title: 'Mobile First',
-      description: 'App nativo iOS/Android + PWA para gestão completa no celular.',
-      gradient: 'from-indigo-500 to-blue-500'
-    },
-    {
       icon: Globe,
-      title: 'Multi-marketplace',
-      description: 'Conecte com Shopee, Magazine Luiza e outros marketplaces.',
+      title: 'Multi-marketplace Inteligente',
+      description: 'Hoje Mercado Livre. Em breve: Shopee, Amazon BR, Magazine Luiza. Catálogo unificado com análise cross-platform.',
       gradient: 'from-teal-500 to-green-500'
     },
     {
-      icon: HeadphonesIcon,
-      title: 'Suporte Premium 24/7',
-      description: 'Atendimento especializado com tempo de resposta < 2 horas.',
-      gradient: 'from-yellow-500 to-orange-500'
+      icon: Shield,
+      title: 'Segurança Enterprise',
+      description: 'Criptografia AES-256-GCM, multi-tenancy com RLS, LGPD compliant e auditoria completa de ações.',
+      gradient: 'from-orange-500 to-red-500'
     },
     {
-      icon: Users,
-      title: 'Gestão de Equipe',
-      description: 'Controle de acesso granular e colaboração em tempo real.',
-      gradient: 'from-pink-500 to-purple-500'
-    },
-    {
-      icon: TrendingUp,
-      title: 'Growth Hacking',
-      description: 'Ferramentas avançadas para acelerar o crescimento das vendas.',
-      gradient: 'from-emerald-500 to-teal-500'
+      icon: Zap,
+      title: 'Webhooks & API Priority',
+      description: 'Atualizações em tempo real via webhooks. API RESTful completa para integrações customizadas.',
+      gradient: 'from-purple-500 to-violet-500'
     }
   ]
 
@@ -131,22 +146,37 @@ export default function RecursosPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="inline-flex items-center space-x-2 bg-blue-100 rounded-full px-4 py-2 mb-6">
-              <Zap className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">Recursos Premium</span>
+              <Brain className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">Inteligência Analítica + Automação</span>
             </div>
             
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-              Ferramentas{' '}
+              De dados passivos para{' '}
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                world-class
-              </span>{' '}
-              para dominar o Mercado Livre
+                insights acionáveis
+              </span>
             </h1>
             
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Descubra por que mais de 2.500 vendedores escolheram o MercaFlow. 
-              Recursos profissionais, IA avançada e integrações nativas em uma plataforma única.
+              Economia aplicada + IA + análise preditiva. Não mostramos apenas gráficos - 
+              dizemos exatamente <strong>o que fazer, quando fazer e qual o impacto esperado</strong>.
+              Dashboard ativo que sugere ações concretas, priorizadas por ROI.
             </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
+              <div className="bg-white rounded-xl p-4 border border-gray-200">
+                <div className="text-3xl font-bold text-green-600 mb-1">87%</div>
+                <div className="text-sm text-gray-600">Precisão Preditiva</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-gray-200">
+                <div className="text-3xl font-bold text-blue-600 mb-1">+R$ 15k</div>
+                <div className="text-sm text-gray-600">ROI Médio/Mês</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-gray-200">
+                <div className="text-3xl font-bold text-purple-600 mb-1">40%</div>
+                <div className="text-sm text-gray-600">Aumento Vendas</div>
+              </div>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -173,10 +203,10 @@ export default function RecursosPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Recursos Principais
+              6 Pilares de Inteligência Analítica
             </h2>
             <p className="text-xl text-gray-600">
-              Tudo que você precisa para transformar seu negócio
+              Decisões baseadas em economia, ciência de dados e IA - não em achismo
             </p>
           </div>
 
@@ -197,7 +227,7 @@ export default function RecursosPage() {
                     {feature.description}
                   </p>
 
-                  <ul className="space-y-3">
+                  <ul className="space-y-3 mb-6">
                     {feature.features.map((item, i) => (
                       <li key={i} className="flex items-center space-x-3">
                         <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
@@ -205,6 +235,14 @@ export default function RecursosPage() {
                       </li>
                     ))}
                   </ul>
+
+                  {/* Example Badge */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-2">
+                      <span className="text-blue-600 font-semibold text-sm">💡 Exemplo Real:</span>
+                    </div>
+                    <p className="text-sm text-gray-700 mt-1">{feature.example}</p>
+                  </div>
                 </div>
 
                 {/* Mock Visual */}
@@ -229,10 +267,10 @@ export default function RecursosPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Recursos Adicionais
+              Infraestrutura Enterprise
             </h2>
             <p className="text-xl text-gray-600">
-              Muito mais funcionalidades para seu sucesso
+              Segurança, performance e integrações para escalar seu negócio
             </p>
           </div>
 
@@ -298,10 +336,12 @@ export default function RecursosPage() {
       <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
-            Pronto para experimentar todos esses recursos?
+            Pare de adivinhar. Comece a decidir com ciência.
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Teste grátis por 14 dias. Sem cartão de crédito, sem compromisso.
+          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+            Mais de 2.500 vendedores transformaram dashboards passivos em insights acionáveis.
+            87% de precisão preditiva. ROI médio de <strong>+R$ 15k/mês</strong>.
+            Teste grátis por 14 dias - sem cartão, sem compromisso.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
