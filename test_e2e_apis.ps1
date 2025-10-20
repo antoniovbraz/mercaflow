@@ -2,7 +2,7 @@
 # Tests full flow with real data
 # Run: .\test_e2e_apis.ps1
 
-$BaseUrl = "http://localhost:3000"
+$BaseUrl = "https://mercaflow.vercel.app"
 
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "MercaFlow E2E API Testing" -ForegroundColor Cyan
