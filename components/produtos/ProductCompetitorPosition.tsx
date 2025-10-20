@@ -44,8 +44,8 @@ export default function ProductCompetitorPosition({
           analysis.overallStatus === "leading"
             ? "default"
             : analysis.overallStatus === "competitive"
-              ? "default"
-              : "destructive"
+            ? "default"
+            : "destructive"
         }
         className={`${getStatusBgColor(analysis.overallStatus)} text-xs`}
       >
@@ -56,12 +56,16 @@ export default function ProductCompetitorPosition({
 
   return (
     <Card
-      className={`p-3 ${getCardBackground(analysis.overallStatus)} border-l-4 ${getCardBorder(analysis.overallStatus)}`}
+      className={`p-3 ${getCardBackground(
+        analysis.overallStatus
+      )} border-l-4 ${getCardBorder(analysis.overallStatus)}`}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <div
-            className={`p-1.5 rounded-lg ${getIconBackground(analysis.overallStatus)}`}
+            className={`p-1.5 rounded-lg ${getIconBackground(
+              analysis.overallStatus
+            )}`}
           >
             <Trophy
               className={`h-4 w-4 ${getIconColor(analysis.overallStatus)}`}
@@ -72,14 +76,16 @@ export default function ProductCompetitorPosition({
           </h4>
         </div>
         <Badge
-          variant={analysis.overallStatus === "behind" ? "destructive" : "default"}
+          variant={
+            analysis.overallStatus === "behind" ? "destructive" : "default"
+          }
           className="text-xs"
         >
           {analysis.overallStatus === "leading"
             ? "Liderando"
             : analysis.overallStatus === "competitive"
-              ? "Competitivo"
-              : "Atrás"}
+            ? "Competitivo"
+            : "Atrás"}
         </Badge>
       </div>
 
@@ -87,9 +93,7 @@ export default function ProductCompetitorPosition({
       <div className="bg-white/50 rounded-lg p-3 mb-3 text-center">
         <div className="flex items-center justify-center gap-2 mb-1">
           {getRankIcon(analysis.rank)}
-          <p className="text-2xl font-bold text-gray-900">
-            #{analysis.rank}
-          </p>
+          <p className="text-2xl font-bold text-gray-900">#{analysis.rank}</p>
         </div>
         <p className="text-xs text-gray-600">
           de {analysis.totalCompetitors} vendedores
@@ -115,8 +119,8 @@ export default function ProductCompetitorPosition({
               analysis.pricePosition === "advantage"
                 ? "text-green-700"
                 : analysis.pricePosition === "disadvantage"
-                  ? "text-red-700"
-                  : "text-blue-700"
+                ? "text-red-700"
+                : "text-blue-700"
             }`}
           >
             R$ {product.price.toFixed(2)}
@@ -143,8 +147,8 @@ export default function ProductCompetitorPosition({
               analysis.ratingPosition === "advantage"
                 ? "text-green-700"
                 : analysis.ratingPosition === "disadvantage"
-                  ? "text-red-700"
-                  : "text-blue-700"
+                ? "text-red-700"
+                : "text-blue-700"
             }`}
           >
             ⭐ {analysis.userRating.toFixed(1)}
@@ -186,11 +190,17 @@ function analyzeCompetitorPosition(product: Product): CompetitorAnalysis {
     MLB345678: { rank: 5, total: 10, avgPrice: 350, avgRating: 4.0 },
   };
 
-  const defaultData = { rank: 5, total: 10, avgPrice: product.price * 1.1, avgRating: 4.0 };
+  const defaultData = {
+    rank: 5,
+    total: 10,
+    avgPrice: product.price * 1.1,
+    avgRating: 4.0,
+  };
   const data = competitorData[product.ml_item_id] || defaultData;
 
   // Mock user rating (based on sold_quantity)
-  const userRating = product.sold_quantity > 50 ? 4.7 : product.sold_quantity > 20 ? 4.3 : 4.0;
+  const userRating =
+    product.sold_quantity > 50 ? 4.7 : product.sold_quantity > 20 ? 4.3 : 4.0;
 
   // Analyze price position
   const priceDifference = product.price - data.avgPrice;
@@ -237,12 +247,18 @@ function analyzeCompetitorPosition(product: Product): CompetitorAnalysis {
       recommendations.push("Reduza preço em 5-8% para ganhar posições");
     }
     if (ratingPosition === "disadvantage") {
-      recommendations.push("Foque em melhorar atendimento (mais avaliações 5★)");
+      recommendations.push(
+        "Foque em melhorar atendimento (mais avaliações 5★)"
+      );
     }
-    recommendations.push("Invista em fotos profissionais e descrições completas");
+    recommendations.push(
+      "Invista em fotos profissionais e descrições completas"
+    );
   } else {
     recommendations.push("Ação urgente: ajuste preço e melhore avaliações");
-    recommendations.push("Considere promoções temporárias para aumentar vendas");
+    recommendations.push(
+      "Considere promoções temporárias para aumentar vendas"
+    );
     if (product.sold_quantity < 10) {
       recommendations.push("Baixo volume: otimize título e use ML Ads");
     }

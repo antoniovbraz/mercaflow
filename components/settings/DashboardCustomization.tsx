@@ -105,7 +105,10 @@ export default function DashboardCustomization({
         <select
           value={settings.dashboard_auto_refresh_interval}
           onChange={(e) =>
-            onChange("dashboard_auto_refresh_interval", parseInt(e.target.value))
+            onChange(
+              "dashboard_auto_refresh_interval",
+              parseInt(e.target.value)
+            )
           }
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
         >

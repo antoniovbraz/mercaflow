@@ -53,16 +53,16 @@ export default function ProductTitleQuality({
 
   return (
     <Card
-      className={`p-3 ${getCardBackground(analysis.status)} border-l-4 ${getCardBorder(analysis.status)}`}
+      className={`p-3 ${getCardBackground(
+        analysis.status
+      )} border-l-4 ${getCardBorder(analysis.status)}`}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <div
             className={`p-1.5 rounded-lg ${getIconBackground(analysis.status)}`}
           >
-            <FileText
-              className={`h-4 w-4 ${getIconColor(analysis.status)}`}
-            />
+            <FileText className={`h-4 w-4 ${getIconColor(analysis.status)}`} />
           </div>
           <h4 className="text-sm font-semibold text-gray-900">
             Qualidade do Título
@@ -80,10 +80,10 @@ export default function ProductTitleQuality({
           {analysis.status === "excellent"
             ? "Excelente"
             : analysis.status === "good"
-              ? "Bom"
-              : analysis.status === "needs-improvement"
-                ? "Melhorar"
-                : "Crítico"}
+            ? "Bom"
+            : analysis.status === "needs-improvement"
+            ? "Melhorar"
+            : "Crítico"}
         </Badge>
       </div>
 
@@ -108,7 +108,11 @@ export default function ProductTitleQuality({
         <div className="bg-white/50 rounded-lg p-2 text-center">
           <p className="text-xs text-gray-600 mb-1">Tamanho</p>
           <p
-            className={`text-sm font-bold ${analysis.breakdown.length >= 30 ? "text-green-700" : "text-red-700"}`}
+            className={`text-sm font-bold ${
+              analysis.breakdown.length >= 30
+                ? "text-green-700"
+                : "text-red-700"
+            }`}
           >
             {analysis.breakdown.length > 0 ? "✓" : "✗"}
           </p>
@@ -116,7 +120,11 @@ export default function ProductTitleQuality({
         <div className="bg-white/50 rounded-lg p-2 text-center">
           <p className="text-xs text-gray-600 mb-1">Keywords</p>
           <p
-            className={`text-sm font-bold ${analysis.breakdown.keywords >= 25 ? "text-green-700" : "text-yellow-700"}`}
+            className={`text-sm font-bold ${
+              analysis.breakdown.keywords >= 25
+                ? "text-green-700"
+                : "text-yellow-700"
+            }`}
           >
             {Math.round((analysis.breakdown.keywords / 35) * 3)}/3
           </p>
@@ -124,7 +132,11 @@ export default function ProductTitleQuality({
         <div className="bg-white/50 rounded-lg p-2 text-center">
           <p className="text-xs text-gray-600 mb-1">Proibidos</p>
           <p
-            className={`text-sm font-bold ${analysis.breakdown.forbidden === 0 ? "text-green-700" : "text-red-700"}`}
+            className={`text-sm font-bold ${
+              analysis.breakdown.forbidden === 0
+                ? "text-green-700"
+                : "text-red-700"
+            }`}
           >
             {analysis.breakdown.forbidden > 0 ? "✗" : "✓"}
           </p>
@@ -167,9 +179,7 @@ function analyzeTitleQuality(title: string): TitleAnalysis {
   // Length Score (35 points max)
   // Ideal: 40-60 characters
   const lengthScore =
-    length >= 40 && length <= 60
-      ? 35
-      : Math.max(0, 35 - Math.abs(50 - length));
+    length >= 40 && length <= 60 ? 35 : Math.max(0, 35 - Math.abs(50 - length));
 
   // Keywords Score (35 points max)
   // Top ML keywords: original, novo, garantia, frete grátis, entrega

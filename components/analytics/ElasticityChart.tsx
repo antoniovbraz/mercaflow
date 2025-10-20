@@ -366,8 +366,12 @@ export function ElasticityChart({
           <p>
             <strong>Recomendação:</strong>{" "}
             {shouldIncrease
-              ? `Aumentar preço em ${Math.abs(priceChange).toFixed(1)}% pode aumentar receita.`
-              : `Reduzir preço em ${Math.abs(priceChange).toFixed(1)}% pode aumentar receita.`}
+              ? `Aumentar preço em ${Math.abs(priceChange).toFixed(
+                  1
+                )}% pode aumentar receita.`
+              : `Reduzir preço em ${Math.abs(priceChange).toFixed(
+                  1
+                )}% pode aumentar receita.`}
           </p>
         </div>
       </div>

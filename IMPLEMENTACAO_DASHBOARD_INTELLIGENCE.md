@@ -11,11 +11,13 @@
 ### Filosofia de Design
 
 **❌ Dashboard Passivo (ANTES)**:
+
 - Mostra números: "Você vendeu 127 unidades"
 - Gráficos sem contexto
 - Dados sem ação sugerida
 
 **✅ Dashboard Ativo com Intelligence (DEPOIS)**:
+
 - Insights acionáveis: "🔥 AÇÃO URGENTE: Aumente preço 8% AGORA"
 - ROI estimado sempre visível
 - Botões de ação em cada insight
@@ -28,6 +30,7 @@
 ### 1. `/dashboard` - Overview Inteligente (PRIORIDADE #1)
 
 **Layout**:
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ 🧠 INTELLIGENCE CENTER (70% da tela)                    │
@@ -54,6 +57,7 @@
 ```
 
 **Componentes**:
+
 - `<IntelligenceCenter />` - Top 5 priority insights
 - `<QuickMetricsBar />` - KPIs compactos
 - `<InsightCard />` - Individual insight (já criado)
@@ -66,24 +70,28 @@
 **Seções**:
 
 **A. Elasticidade-Preço** (destaque)
+
 - Chart de curva de demanda
 - Ponto de equilíbrio otimizado
 - Simulador de cenários
 - "Se aumentar 5% → Impacto: +R$ 890/mês"
 
 **B. Análise Preditiva**
+
 - Forecast 30/60/90 dias
 - Sazonalidade detectada
 - Alertas de ruptura de estoque
 - "Próximo pico: 23/11 (Black Friday) - Estoque recomendado: 340 un"
 
 **C. Análise Competitiva**
+
 - Posição vs Top 5 concorrentes
 - Alertas de mudança de preço
 - Benchmarking de categoria
 - "Você está 12% mais caro que média"
 
 **D. Performance Inteligente**
+
 - Produtos com melhor ROI
 - Oportunidades de otimização
 - Análise de conversão
@@ -94,6 +102,7 @@
 ### 3. `/dashboard/produtos` - Products with Intelligence
 
 **Por Produto**:
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ [Produto #142 - Tênis Nike Air Max]                     │
@@ -121,6 +130,7 @@
 ### 4. `/dashboard/configuracoes` - Settings
 
 **Seções**:
+
 - Integrações ML (OAuth management)
 - Preferências de notificações
 - Configuração de alertas
@@ -136,27 +146,22 @@
    - Lista top 5-8 insights por prioridade
    - Filtros por categoria (PRICE, PERFORMANCE, AUTOMATION, etc)
    - Real-time updates via polling
-   
 2. **`<QuickMetricsBar />`** - KPIs compactos
    - Revenue, Orders, Conversion, Stock
    - Sparklines para tendência
    - Comparação com período anterior
-   
 3. **`<ElasticityChart />`** - Curva de demanda
    - Recharts com pontos de equilíbrio
    - Interativo (hover mostra impacto)
    - Simulador inline
-   
 4. **`<ForecastChart />`** - Previsão temporal
    - Linha de tendência + confidence interval
    - Marcadores de eventos (Black Friday, etc)
    - Alertas visuais
-   
 5. **`<CompetitorAnalysis />`** - Benchmarking
    - Table com top 5 competitors
    - Alertas de mudança recente
    - Comparação de features
-   
 6. **`<ActionableInsightCard />`** - Enhanced InsightCard
    - CTA button com tracking
    - ROI estimate sempre visível
@@ -168,24 +173,28 @@
 ## 📦 INTEGRAÇÃO COM BACKEND
 
 ### APIs Existentes
+
 ✅ `/api/intelligence/insights/generate` - Gerar insights  
 ✅ `/api/intelligence/insights/list` - Listar com filtros  
 ✅ `/api/intelligence/insights/[id]/dismiss` - Descartar  
-✅ `/api/intelligence/insights/[id]/complete` - Completar  
+✅ `/api/intelligence/insights/[id]/complete` - Completar
 
 ### APIs Novas Necessárias
 
 1. **`/api/dashboard/kpis`** - Quick metrics
+
    - Revenue, orders, conversion
    - Period comparison
    - Cached (5 min TTL)
 
 2. **`/api/analytics/elasticity`** - Elasticidade data
+
    - Historical price changes
    - Sales response
    - Optimal price calculation
 
 3. **`/api/analytics/forecast`** - Previsão
+
    - ML predictions 30/60/90 days
    - Confidence intervals
    - Seasonality factors
@@ -200,6 +209,7 @@
 ## 🗓️ CRONOGRAMA DE IMPLEMENTAÇÃO
 
 ### Sprint 1: Dashboard Principal (3-4h)
+
 - [ ] Criar `<IntelligenceCenter />` component
 - [ ] Criar `<QuickMetricsBar />` component
 - [ ] Refatorar `/dashboard/page.tsx` com novo layout
@@ -208,6 +218,7 @@
 - [ ] Deploy e teste
 
 ### Sprint 2: Analytics Dashboard (4-5h)
+
 - [ ] Criar página `/dashboard/analytics/page.tsx`
 - [ ] Implementar `<ElasticityChart />` com Recharts
 - [ ] Implementar `<ForecastChart />`
@@ -216,6 +227,7 @@
 - [ ] Deploy e teste
 
 ### Sprint 3: Produtos Intelligence (3-4h)
+
 - [ ] Atualizar `/dashboard/produtos/page.tsx`
 - [ ] Product-specific insights integration
 - [ ] Per-product optimization suggestions
@@ -223,6 +235,7 @@
 - [ ] Deploy e teste
 
 ### Sprint 4: Configurações & Polish (2-3h)
+
 - [ ] Criar `/dashboard/configuracoes/page.tsx`
 - [ ] ML integration management UI
 - [ ] Notification preferences
@@ -235,15 +248,15 @@
 
 ### Métricas de Qualidade
 
-| Critério | Target | Como Validar |
-|----------|--------|--------------|
-| **Intelligence First** | ≥70% tela | Visual inspection |
-| **Insights Ativos** | ≥5 cards | Dashboard count |
-| **ROI Visível** | 100% insights | Code review |
-| **CTA Present** | 100% insights | UI inspection |
-| **Load Time** | <2s | Chrome DevTools |
-| **TypeScript** | 0 errors | `npm run type-check` |
-| **Mobile Responsive** | ✅ | Test 375px/768px/1024px |
+| Critério               | Target        | Como Validar            |
+| ---------------------- | ------------- | ----------------------- |
+| **Intelligence First** | ≥70% tela     | Visual inspection       |
+| **Insights Ativos**    | ≥5 cards      | Dashboard count         |
+| **ROI Visível**        | 100% insights | Code review             |
+| **CTA Present**        | 100% insights | UI inspection           |
+| **Load Time**          | <2s           | Chrome DevTools         |
+| **TypeScript**         | 0 errors      | `npm run type-check`    |
+| **Mobile Responsive**  | ✅            | Test 375px/768px/1024px |
 
 ### Checklist de Alinhamento
 

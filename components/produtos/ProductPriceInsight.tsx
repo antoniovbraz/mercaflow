@@ -1,6 +1,11 @@
 "use client";
 
-import { TrendingUp, TrendingDown, DollarSign, AlertCircle } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  AlertCircle,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -43,8 +48,8 @@ export default function ProductPriceInsight({
           analysis.status === "optimal"
             ? "default"
             : analysis.status === "opportunity"
-              ? "default"
-              : "destructive"
+            ? "default"
+            : "destructive"
         }
         className={`${getStatusBgColor(analysis.status)} text-xs`}
       >
@@ -55,11 +60,19 @@ export default function ProductPriceInsight({
   }
 
   return (
-    <Card className={`p-3 ${getCardBackground(analysis.status)} border-l-4 ${getCardBorder(analysis.status)}`}>
+    <Card
+      className={`p-3 ${getCardBackground(
+        analysis.status
+      )} border-l-4 ${getCardBorder(analysis.status)}`}
+    >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div className={`p-1.5 rounded-lg ${getIconBackground(analysis.status)}`}>
-            <DollarSign className={`h-4 w-4 ${getIconColor(analysis.status)}`} />
+          <div
+            className={`p-1.5 rounded-lg ${getIconBackground(analysis.status)}`}
+          >
+            <DollarSign
+              className={`h-4 w-4 ${getIconColor(analysis.status)}`}
+            />
           </div>
           <h4 className="text-sm font-semibold text-gray-900">
             Otimização de Preço
@@ -72,8 +85,8 @@ export default function ProductPriceInsight({
           {analysis.status === "optimal"
             ? "Ótimo"
             : analysis.status === "opportunity"
-              ? "Oportunidade"
-              : "Crítico"}
+            ? "Oportunidade"
+            : "Crítico"}
         </Badge>
       </div>
 
@@ -109,8 +122,8 @@ export default function ProductPriceInsight({
             {Math.abs(analysis.elasticity) > 1.5
               ? "Muito elástico"
               : Math.abs(analysis.elasticity) > 1.0
-                ? "Moderado"
-                : "Inelástico"}
+              ? "Moderado"
+              : "Inelástico"}
             )
           </p>
         </div>
@@ -187,9 +200,13 @@ function analyzePriceOptimization(product: Product): PriceAnalysis {
   // Generate recommendation
   let recommendation: string;
   if (difference > 0) {
-    recommendation = `Aumente ${Math.abs(differencePercent).toFixed(1)}% para R$ ${optimalPrice.toFixed(2)}`;
+    recommendation = `Aumente ${Math.abs(differencePercent).toFixed(
+      1
+    )}% para R$ ${optimalPrice.toFixed(2)}`;
   } else if (difference < 0) {
-    recommendation = `Reduza ${Math.abs(differencePercent).toFixed(1)}% para R$ ${optimalPrice.toFixed(2)}`;
+    recommendation = `Reduza ${Math.abs(differencePercent).toFixed(
+      1
+    )}% para R$ ${optimalPrice.toFixed(2)}`;
   } else {
     recommendation = "Preço está no ponto ótimo";
   }

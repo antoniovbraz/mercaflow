@@ -70,12 +70,16 @@ export default function ProductIntelligenceBar({
           {insights.map((insight, index) => (
             <Card
               key={index}
-              className={`p-4 ${getInsightBackground(insight.type)} border-l-4 ${getInsightBorder(insight.type)}`}
+              className={`p-4 ${getInsightBackground(
+                insight.type
+              )} border-l-4 ${getInsightBorder(insight.type)}`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`p-2 rounded-lg ${getIconBackground(insight.type)}`}
+                    className={`p-2 rounded-lg ${getIconBackground(
+                      insight.type
+                    )}`}
                   >
                     {getInsightIcon(insight.type)}
                   </div>
@@ -89,23 +93,25 @@ export default function ProductIntelligenceBar({
                           insight.priority === "high"
                             ? "destructive"
                             : insight.priority === "medium"
-                              ? "default"
-                              : "secondary"
+                            ? "default"
+                            : "secondary"
                         }
                         className="text-xs"
                       >
                         {insight.priority === "high"
                           ? "Alta"
                           : insight.priority === "medium"
-                            ? "Média"
-                            : "Baixa"}
+                          ? "Média"
+                          : "Baixa"}
                       </Badge>
                     </div>
                     <p className="text-xs text-gray-600 mb-2">
                       {insight.description}
                     </p>
                     <p
-                      className={`text-lg font-bold ${getValueColor(insight.type)}`}
+                      className={`text-lg font-bold ${getValueColor(
+                        insight.type
+                      )}`}
                     >
                       {insight.value}
                     </p>
@@ -158,7 +164,10 @@ function calculateTopInsights(stats: ProductStats): TopInsight[] {
       type: "roi",
       title: "Maior Oportunidade ROI",
       description: "Produtos com potencial de otimização de preço",
-      value: `R$ ${potentialRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      value: `R$ ${potentialRevenue.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
       priority: potentialRevenue > 5000 ? "high" : "medium",
     });
   } else {
@@ -174,7 +183,8 @@ function calculateTopInsights(stats: ProductStats): TopInsight[] {
 
   // Insight 2: Critical (estoque baixo ou pausados)
   if (stats.paused > 0 || stats.totalStock < stats.active * 5) {
-    const criticalCount = stats.paused > 0 ? stats.paused : Math.floor(stats.active * 0.2);
+    const criticalCount =
+      stats.paused > 0 ? stats.paused : Math.floor(stats.active * 0.2);
     insights.push({
       type: "critical",
       title: "Produtos Críticos",

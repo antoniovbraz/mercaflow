@@ -57,8 +57,7 @@ export default function NotificationSettings({
                 Threshold ROI Mínimo
               </label>
               <Badge variant="secondary" className="text-xs">
-                R${" "}
-                {settings.notification_roi_threshold.toLocaleString("pt-BR")}
+                R$ {settings.notification_roi_threshold.toLocaleString("pt-BR")}
               </Badge>
             </div>
             <input
@@ -68,10 +67,7 @@ export default function NotificationSettings({
               step="500"
               value={settings.notification_roi_threshold}
               onChange={(e) =>
-                onChange(
-                  "notification_roi_threshold",
-                  parseInt(e.target.value)
-                )
+                onChange("notification_roi_threshold", parseInt(e.target.value))
               }
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />

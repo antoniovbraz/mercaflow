@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import { InsightList } from "@/components/intelligence/InsightList";
 import { Insight } from "@/components/intelligence/InsightCard";
 import { InsightModal } from "@/components/intelligence/InsightModal";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,7 +38,9 @@ export function IntelligenceCenter({
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Stats calculados
-  const urgentCount = insights.filter((i) => i.priority === "HIGH" && i.status === "ACTIVE").length;
+  const urgentCount = insights.filter(
+    (i) => i.priority === "HIGH" && i.status === "ACTIVE"
+  ).length;
   const opportunityCount = insights.filter(
     (i) => i.category === "PRICE_OPTIMIZATION" && i.status === "ACTIVE"
   ).length;
@@ -184,7 +192,8 @@ export function IntelligenceCenter({
                           {insight.priority}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          {Math.round(insight.confidence_score * 100)}% confiança
+                          {Math.round(insight.confidence_score * 100)}%
+                          confiança
                         </span>
                       </div>
                       <p className="text-sm font-semibold line-clamp-2">
@@ -192,7 +201,8 @@ export function IntelligenceCenter({
                       </p>
                       {insight.estimated_impact?.revenue && (
                         <p className="text-xs text-green-600 mt-1">
-                          ROI: {formatCurrency(insight.estimated_impact.revenue)}
+                          ROI:{" "}
+                          {formatCurrency(insight.estimated_impact.revenue)}
                         </p>
                       )}
                     </div>
@@ -237,7 +247,9 @@ export function IntelligenceCenter({
                 <Brain className="h-8 w-8 text-white" />
               </div>
               <div>
-                <CardTitle className="text-2xl">🧠 Intelligence Center</CardTitle>
+                <CardTitle className="text-2xl">
+                  🧠 Intelligence Center
+                </CardTitle>
                 <CardDescription>
                   Insights acionáveis baseados em economia aplicada e IA
                 </CardDescription>

@@ -289,9 +289,7 @@ export function CompetitorAnalysis({
       <div className="h-80 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-sm text-gray-600">
-            Analisando concorrência...
-          </p>
+          <p className="text-sm text-gray-600">Analisando concorrência...</p>
         </div>
       </div>
     );
@@ -345,9 +343,7 @@ export function CompetitorAnalysis({
               </span>
               <Trophy className="w-5 h-5 text-green-500" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">
-              {yourPosition}º
-            </p>
+            <p className="text-2xl font-bold text-gray-900">{yourPosition}º</p>
             <p className="text-xs text-gray-500 mt-2">De 15 vendedores</p>
           </CardContent>
         </Card>
@@ -553,9 +549,13 @@ export function CompetitorAnalysis({
           </h4>
           <p className="text-xs text-blue-800">
             {priceDiffFromAvg > 5
-              ? `Seu preço está ${Math.abs(priceDiffFromAvg).toFixed(1)}% acima da média. Considere reduzir para aumentar competitividade.`
+              ? `Seu preço está ${Math.abs(priceDiffFromAvg).toFixed(
+                  1
+                )}% acima da média. Considere reduzir para aumentar competitividade.`
               : priceDiffFromAvg < -5
-              ? `Seu preço está ${Math.abs(priceDiffFromAvg).toFixed(1)}% abaixo da média. Você pode aumentar margem sem perder vendas.`
+              ? `Seu preço está ${Math.abs(priceDiffFromAvg).toFixed(
+                  1
+                )}% abaixo da média. Você pode aumentar margem sem perder vendas.`
               : "Seu preço está alinhado com o mercado. Mantenha competitividade via qualidade e atendimento."}
           </p>
         </div>

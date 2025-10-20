@@ -53,7 +53,9 @@ export default function MLIntegrationSettings({
     if (!settings.ml_last_sync_at) return "Nunca sincronizado";
     const lastSync = new Date(settings.ml_last_sync_at);
     const now = new Date();
-    const diffMinutes = Math.floor((now.getTime() - lastSync.getTime()) / 60000);
+    const diffMinutes = Math.floor(
+      (now.getTime() - lastSync.getTime()) / 60000
+    );
 
     if (diffMinutes < 1) return "Agora mesmo";
     if (diffMinutes < 60) return `Há ${diffMinutes} minutos`;
@@ -66,12 +68,8 @@ export default function MLIntegrationSettings({
       {/* Connection Status */}
       <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
         <div>
-          <p className="text-sm font-medium text-gray-900">
-            Status da Conexão
-          </p>
-          <p className="text-xs text-gray-600 mt-1">
-            Mercado Livre API
-          </p>
+          <p className="text-sm font-medium text-gray-900">Status da Conexão</p>
+          <p className="text-xs text-gray-600 mt-1">Mercado Livre API</p>
         </div>
         <div className="flex items-center gap-3">
           {getStatusBadge()}
@@ -95,9 +93,7 @@ export default function MLIntegrationSettings({
           <p className="text-sm font-medium text-gray-900">
             Última Sincronização
           </p>
-          <p className="text-xs text-gray-600 mt-1">
-            {getLastSyncText()}
-          </p>
+          <p className="text-xs text-gray-600 mt-1">{getLastSyncText()}</p>
         </div>
         <p className="text-xs text-gray-500">
           {settings.ml_last_sync_at
@@ -126,9 +122,7 @@ export default function MLIntegrationSettings({
           <input
             type="checkbox"
             checked={settings.ml_auto_sync_enabled}
-            onChange={(e) =>
-              onChange("ml_auto_sync_enabled", e.target.checked)
-            }
+            onChange={(e) => onChange("ml_auto_sync_enabled", e.target.checked)}
             className="sr-only peer"
           />
           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>

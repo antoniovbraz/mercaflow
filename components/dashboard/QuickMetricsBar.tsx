@@ -232,7 +232,9 @@ export function QuickMetricsBar({
               <TrendingDown className="h-5 w-5 text-red-600" />
             )}
           </div>
-          <p className="text-2xl font-bold text-gray-900">{data.orders.current}</p>
+          <p className="text-2xl font-bold text-gray-900">
+            {data.orders.current}
+          </p>
           <div className="flex items-center justify-between mt-2">
             <p className="text-xs text-muted-foreground">Pedidos (30d)</p>
             <p
@@ -294,14 +296,13 @@ export function QuickMetricsBar({
             </div>
             {data.stock.lowStock > 0 && (
               <div className="p-1 bg-orange-200 rounded-full">
-                <span className="text-xs font-bold text-orange-700">
-                  !
-                </span>
+                <span className="text-xs font-bold text-orange-700">!</span>
               </div>
             )}
           </div>
           <p className="text-2xl font-bold text-gray-900">
-            {data.stock.current} <span className="text-lg text-muted-foreground">un</span>
+            {data.stock.current}{" "}
+            <span className="text-lg text-muted-foreground">un</span>
           </p>
           <div className="flex items-center justify-between mt-2">
             <p className="text-xs text-muted-foreground">Estoque Total</p>

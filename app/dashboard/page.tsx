@@ -330,9 +330,7 @@ export default async function DashboardPage() {
                   <p className="text-xs text-gray-500">Sistema</p>
                 </div>
               </div>
-              <p className="text-sm text-gray-600">
-                Personalize seu dashboard
-              </p>
+              <p className="text-sm text-gray-600">Personalize seu dashboard</p>
             </div>
           </Link>
         </div>
@@ -388,7 +386,8 @@ export default async function DashboardPage() {
         {/* Footer Info */}
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            Logado como <span className="font-semibold text-gray-700">{user.email}</span> •{" "}
+            Logado como{" "}
+            <span className="font-semibold text-gray-700">{user.email}</span> •{" "}
             <span className="font-semibold text-gray-700">
               {userRole === "super_admin"
                 ? "Super Admin"

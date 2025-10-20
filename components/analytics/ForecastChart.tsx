@@ -170,8 +170,7 @@ export function ForecastChart({
     return "Estabilidade prevista";
   };
 
-  const lastActualValue =
-    data.find((d) => d.actual !== undefined)?.actual || 0;
+  const lastActualValue = data.find((d) => d.actual !== undefined)?.actual || 0;
   const lastForecastValue = data[data.length - 1]?.forecast || 0;
   const forecastChange =
     ((lastForecastValue - lastActualValue) / lastActualValue) * 100;
@@ -417,9 +416,15 @@ export function ForecastChart({
           </h4>
           <p className="text-xs text-purple-800">
             {trend === "up"
-              ? `Crescimento de ${Math.abs(forecastChange).toFixed(1)}% previsto. Considere aumentar estoque em ${Math.ceil(Math.abs(forecastChange) / 2)}% para atender demanda.`
+              ? `Crescimento de ${Math.abs(forecastChange).toFixed(
+                  1
+                )}% previsto. Considere aumentar estoque em ${Math.ceil(
+                  Math.abs(forecastChange) / 2
+                )}% para atender demanda.`
               : trend === "down"
-              ? `Queda de ${Math.abs(forecastChange).toFixed(1)}% prevista. Avalie promoções ou ajustes de preço para estimular vendas.`
+              ? `Queda de ${Math.abs(forecastChange).toFixed(
+                  1
+                )}% prevista. Avalie promoções ou ajustes de preço para estimular vendas.`
               : "Vendas estáveis. Mantenha estratégia atual e monitore concorrência."}
           </p>
         </div>

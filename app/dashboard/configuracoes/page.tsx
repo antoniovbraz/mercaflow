@@ -78,6 +78,8 @@ export default function ConfiguracoesPage() {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [hasAccess, setHasAccess] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -96,17 +98,34 @@ export default function ConfiguracoesPage() {
   }, [router]);
 
   useEffect(() => {
-    // Load settings from localStorage
-    const savedSettings = localStorage.getItem("mercaflow_user_settings");
-    if (savedSettings) {
+    // Load settings from API
+    const loadSettings = async () => {
+      setIsLoading(true);
       try {
-        setSettings(JSON.parse(savedSettings));
-      } catch {
-        // If parsing fails, use defaults
-        setSettings(DEFAULT_SETTINGS);
+        const response = await fetch("/api/settings");
+
+        if (!response.ok) {
+          throw new Error(`Failed to load settings: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.success && data.settings) {
+          setSettings(data.settings);
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+        toast.error("Erro ao carregar configurações", {
+          description: "Usando configurações padrão.",
+        });
+      } finally {
+        setIsLoading(false);
       }
+    };
+
+    if (hasAccess) {
+      loadSettings();
     }
-  }, []);
+  }, [hasAccess]);
 
   const handleChange = (key: string, value: unknown) => {
     setSettings((prev) => ({
@@ -116,17 +135,37 @@ export default function ConfiguracoesPage() {
     setHasChanges(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setIsSaving(true);
     try {
-      localStorage.setItem("mercaflow_user_settings", JSON.stringify(settings));
-      setHasChanges(false);
-      toast.success("Configurações salvas!", {
-        description: "Suas preferências foram atualizadas com sucesso.",
+      const response = await fetch("/api/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(settings),
       });
-    } catch {
+
+      if (!response.ok) {
+        throw new Error(`Failed to save settings: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setHasChanges(false);
+        toast.success("Configurações salvas!", {
+          description: "Suas preferências foram atualizadas com sucesso.",
+        });
+      } else {
+        throw new Error(data.error || "Unknown error");
+      }
+    } catch (error) {
+      console.error("Error saving settings:", error);
       toast.error("Erro ao salvar", {
         description: "Não foi possível salvar as configurações.",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -134,7 +173,8 @@ export default function ConfiguracoesPage() {
     setSettings(DEFAULT_SETTINGS);
     setHasChanges(true);
     toast.info("Configurações resetadas", {
-      description: "Valores padrão restaurados. Clique em Salvar para confirmar.",
+      description:
+        "Valores padrão restaurados. Clique em Salvar para confirmar.",
     });
   };
 
@@ -180,6 +220,17 @@ export default function ConfiguracoesPage() {
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="text-gray-600">Carregando configurações...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -204,14 +255,14 @@ export default function ConfiguracoesPage() {
                 <Button
                   variant="outline"
                   onClick={handleReset}
-                  disabled={!hasChanges}
+                  disabled={!hasChanges || isSaving}
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Resetar
                 </Button>
-                <Button onClick={handleSave} disabled={!hasChanges}>
+                <Button onClick={handleSave} disabled={!hasChanges || isSaving}>
                   <Save className="h-4 w-4 mr-2" />
-                  Salvar Alterações
+                  {isSaving ? "Salvando..." : "Salvar Alterações"}
                 </Button>
               </div>
             </div>
@@ -247,7 +298,8 @@ export default function ConfiguracoesPage() {
           >
             <NotificationSettings
               settings={{
-                email_notifications_enabled: settings.email_notifications_enabled,
+                email_notifications_enabled:
+                  settings.email_notifications_enabled,
                 notification_roi_threshold: settings.notification_roi_threshold,
                 notification_confidence_threshold:
                   settings.notification_confidence_threshold,
@@ -324,4 +376,3 @@ export default function ConfiguracoesPage() {
     </div>
   );
 }
-
