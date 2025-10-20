@@ -8,15 +8,15 @@
 
 ## 📊 Resumo da Implementação
 
-| Componente | Linhas | Status | Commit |
-|------------|--------|--------|--------|
-| Zod Schemas | 420 | ✅ | d44dc1a |
-| MLIntelligenceAPI | 687 | ✅ | d44dc1a |
-| InsightGenerator | 662 | ✅ | 7f97709 |
-| Database Migration | SQL | ✅ | 7f97709 |
-| API Endpoints | 744 | ✅ | 273d7de |
-| UI Components | 1,083 | ✅ | 9f90080 |
-| **TOTAL** | **3,596** | **✅** | - |
+| Componente         | Linhas    | Status | Commit  |
+| ------------------ | --------- | ------ | ------- |
+| Zod Schemas        | 420       | ✅     | d44dc1a |
+| MLIntelligenceAPI  | 687       | ✅     | d44dc1a |
+| InsightGenerator   | 662       | ✅     | 7f97709 |
+| Database Migration | SQL       | ✅     | 7f97709 |
+| API Endpoints      | 744       | ✅     | 273d7de |
+| UI Components      | 1,083     | ✅     | 9f90080 |
+| **TOTAL**          | **3,596** | **✅** | -       |
 
 ---
 
@@ -173,6 +173,7 @@
 **Endpoints Implementados**:
 
 ✅ **POST `/api/intelligence/insights/generate`** (205 linhas)
+
 - Validação Zod: 1-100 item_ids, categorias opcionais
 - Lookup de ML integration na database
 - Geração paralela de insights via InsightGenerator
@@ -182,6 +183,7 @@
 - Logging estruturado em todas as operações
 
 ✅ **GET `/api/intelligence/insights/list`** (168 linhas)
+
 - Query params: status, category, priority, limit, offset, sort, order
 - Validação de todos os filtros (enum checks)
 - Paginação: 1-100 items/page (padrão 50)
@@ -190,6 +192,7 @@
 - Tenant isolation automático via RLS
 
 ✅ **POST `/api/intelligence/insights/[id]/dismiss`** (184 linhas)
+
 - Validação UUID format
 - Tenant ownership check
 - Status validation (não pode descartar se completed)
@@ -198,6 +201,7 @@
 - Retorna insight atualizado
 
 ✅ **POST `/api/intelligence/insights/[id]/complete`** (187 linhas)
+
 - Similar ao dismiss endpoint
 - Marca status → COMPLETED, completed_at → now()
 - Calcula e retorna ROI realizado
@@ -205,6 +209,7 @@
 - Tracking para analytics
 
 **Padrões Implementados**:
+
 - ✅ Autenticação via `getCurrentUser()`
 - ✅ Autorização via `getCurrentTenantId()`
 - ✅ Validação Zod em request bodies
@@ -217,6 +222,7 @@
 **Arquivos**: `components/intelligence/**` (1,083 linhas)
 
 ✅ **InsightCard.tsx** (322 linhas)
+
 - Display de insight individual com todos os detalhes
 - Badges de prioridade com cores (HIGH/MEDIUM/LOW)
 - Ícones de categoria: Price, Automation, Performance, Market Trend
@@ -229,6 +235,7 @@
 - TypeScript types exportados
 
 ✅ **InsightList.tsx** (393 linhas)
+
 - Lista principal com filtros avançados
 - Multi-filtro: status, category, priority
 - Busca em tempo real (título e descrição)
@@ -241,6 +248,7 @@
 - Reset filters functionality
 
 ✅ **InsightModal.tsx** (368 linhas)
+
 - Dialog modal para visualização detalhada
 - Scrollable content (max-height 90vh)
 - Lista completa de action items (numerados)
@@ -253,6 +261,7 @@
 - Acessibilidade (ARIA labels)
 
 **Tecnologias Utilizadas**:
+
 - ✅ shadcn/ui: Dialog, Card, Badge, Button, Select, ScrollArea
 - ✅ Sonner: Toast notifications (em vez de custom hook)
 - ✅ Lucide React: Ícones consistentes
@@ -261,6 +270,7 @@
 - ✅ Portuguese (pt-BR): Locale e formatação
 
 **Export Index**:
+
 - ✅ `components/intelligence/index.ts` para imports limpos
 
 ---

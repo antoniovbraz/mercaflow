@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { InsightCard, Insight, InsightPriority, InsightStatus, InsightCategory } from "./InsightCard";
+import {
+  InsightCard,
+  Insight,
+  InsightPriority,
+  InsightStatus,
+  InsightCategory,
+} from "./InsightCard";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -24,7 +30,10 @@ interface InsightListProps {
   };
 }
 
-export function InsightList({ onViewDetails, initialFilters }: InsightListProps) {
+export function InsightList({
+  onViewDetails,
+  initialFilters,
+}: InsightListProps) {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -48,7 +57,9 @@ export function InsightList({ onViewDetails, initialFilters }: InsightListProps)
   const itemsPerPage = 20;
 
   // Ordenação
-  const [sortBy, setSortBy] = useState<"created_at" | "priority" | "confidence_score">("created_at");
+  const [sortBy, setSortBy] = useState<
+    "created_at" | "priority" | "confidence_score"
+  >("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const fetchInsights = async () => {
@@ -89,7 +100,14 @@ export function InsightList({ onViewDetails, initialFilters }: InsightListProps)
   useEffect(() => {
     fetchInsights();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, statusFilter, categoryFilter, priorityFilter, sortBy, sortOrder]);
+  }, [
+    currentPage,
+    statusFilter,
+    categoryFilter,
+    priorityFilter,
+    sortBy,
+    sortOrder,
+  ]);
 
   const handleDismiss = async (id: string) => {
     try {
@@ -123,9 +141,12 @@ export function InsightList({ onViewDetails, initialFilters }: InsightListProps)
     try {
       setActionLoading(id);
 
-      const response = await fetch(`/api/intelligence/insights/${id}/complete`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `/api/intelligence/insights/${id}/complete`,
+        {
+          method: "POST",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Falha ao completar insight");
@@ -208,7 +229,9 @@ export function InsightList({ onViewDetails, initialFilters }: InsightListProps)
 
           <Select
             value={statusFilter}
-            onValueChange={(value) => setStatusFilter(value as InsightStatus | "ALL")}
+            onValueChange={(value) =>
+              setStatusFilter(value as InsightStatus | "ALL")
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Status" />
@@ -223,23 +246,31 @@ export function InsightList({ onViewDetails, initialFilters }: InsightListProps)
 
           <Select
             value={categoryFilter}
-            onValueChange={(value) => setCategoryFilter(value as InsightCategory | "ALL")}
+            onValueChange={(value) =>
+              setCategoryFilter(value as InsightCategory | "ALL")
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Categoria" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">Todas as Categorias</SelectItem>
-              <SelectItem value="PRICE_OPTIMIZATION">Otimização de Preço</SelectItem>
+              <SelectItem value="PRICE_OPTIMIZATION">
+                Otimização de Preço
+              </SelectItem>
               <SelectItem value="AUTOMATION_OPPORTUNITY">Automação</SelectItem>
-              <SelectItem value="PERFORMANCE_WARNING">Alerta de Performance</SelectItem>
+              <SelectItem value="PERFORMANCE_WARNING">
+                Alerta de Performance
+              </SelectItem>
               <SelectItem value="MARKET_TREND">Tendência de Mercado</SelectItem>
             </SelectContent>
           </Select>
 
           <Select
             value={priorityFilter}
-            onValueChange={(value) => setPriorityFilter(value as InsightPriority | "ALL")}
+            onValueChange={(value) =>
+              setPriorityFilter(value as InsightPriority | "ALL")
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Prioridade" />
@@ -259,7 +290,9 @@ export function InsightList({ onViewDetails, initialFilters }: InsightListProps)
             <Select
               value={sortBy}
               onValueChange={(value) =>
-                setSortBy(value as "created_at" | "priority" | "confidence_score")
+                setSortBy(
+                  value as "created_at" | "priority" | "confidence_score"
+                )
               }
             >
               <SelectTrigger className="w-[180px]">
@@ -293,7 +326,9 @@ export function InsightList({ onViewDetails, initialFilters }: InsightListProps)
             disabled={isLoading}
             className="ml-auto"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
             Atualizar
           </Button>
         </div>
@@ -304,7 +339,8 @@ export function InsightList({ onViewDetails, initialFilters }: InsightListProps)
         <div>
           <h2 className="text-2xl font-bold">Insights</h2>
           <p className="text-sm text-muted-foreground">
-            {totalCount} insight{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
+            {totalCount} insight{totalCount !== 1 ? "s" : ""} encontrado
+            {totalCount !== 1 ? "s" : ""}
           </p>
         </div>
       </div>

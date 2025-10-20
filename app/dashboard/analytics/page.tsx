@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/utils/supabase/server";
 import Link from "next/link";
+import { ElasticityChart } from "@/components/analytics/ElasticityChart";
 
 export default async function AnalyticsPage() {
   // Require authentication
@@ -204,30 +205,7 @@ export default async function AnalyticsPage() {
                 </div>
               </div>
               <div className="p-6">
-                {/* ElasticityChart será inserido aqui */}
-                <div className="h-80 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-dashed border-blue-200">
-                  <div className="text-center">
-                    <svg
-                      className="w-16 h-16 text-blue-400 mx-auto mb-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                    <p className="text-gray-600 font-medium mb-2">
-                      Gráfico de Elasticidade
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Em desenvolvimento - Sprint 2
-                    </p>
-                  </div>
-                </div>
+                <ElasticityChart compactMode={false} />
               </div>
             </div>
 

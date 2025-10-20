@@ -27,7 +27,12 @@ import {
   Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Insight, InsightPriority, InsightCategory, InsightStatus } from "./InsightCard";
+import {
+  Insight,
+  InsightPriority,
+  InsightCategory,
+  InsightStatus,
+} from "./InsightCard";
 import { toast } from "sonner";
 import { logger } from "@/utils/logger";
 
@@ -132,9 +137,12 @@ export function InsightModal({
     try {
       setIsLoading(true);
 
-      const response = await fetch(`/api/intelligence/insights/${insight.id}/dismiss`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `/api/intelligence/insights/${insight.id}/dismiss`,
+        {
+          method: "POST",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Falha ao descartar insight");
@@ -144,7 +152,10 @@ export function InsightModal({
       onRefresh?.();
       onOpenChange(false);
     } catch (error) {
-      logger.error("Error dismissing insight", { error, insightId: insight.id });
+      logger.error("Error dismissing insight", {
+        error,
+        insightId: insight.id,
+      });
       toast.error("Erro ao descartar insight", {
         description: "Não foi possível descartar o insight. Tente novamente.",
       });
@@ -157,9 +168,12 @@ export function InsightModal({
     try {
       setIsLoading(true);
 
-      const response = await fetch(`/api/intelligence/insights/${insight.id}/complete`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `/api/intelligence/insights/${insight.id}/complete`,
+        {
+          method: "POST",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Falha ao completar insight");
@@ -176,7 +190,10 @@ export function InsightModal({
       onRefresh?.();
       onOpenChange(false);
     } catch (error) {
-      logger.error("Error completing insight", { error, insightId: insight.id });
+      logger.error("Error completing insight", {
+        error,
+        insightId: insight.id,
+      });
       toast.error("Erro ao completar insight", {
         description: "Não foi possível completar o insight. Tente novamente.",
       });
@@ -191,10 +208,7 @@ export function InsightModal({
         <DialogHeader>
           <div className="flex items-start gap-4">
             <div
-              className={cn(
-                "p-3 rounded-lg",
-                categoryColors[insight.category]
-              )}
+              className={cn("p-3 rounded-lg", categoryColors[insight.category])}
             >
               <CategoryIcon className="h-6 w-6" />
             </div>
@@ -292,7 +306,9 @@ export function InsightModal({
                           </span>
                         </div>
                         <p className="text-2xl font-bold text-blue-600">
-                          {formatPercentage(insight.estimated_impact.conversion_rate)}
+                          {formatPercentage(
+                            insight.estimated_impact.conversion_rate
+                          )}
                         </p>
                       </div>
                     )}

@@ -140,10 +140,7 @@ export function InsightCard({
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 flex-1">
             <div
-              className={cn(
-                "p-2 rounded-lg",
-                categoryColors[insight.category]
-              )}
+              className={cn("p-2 rounded-lg", categoryColors[insight.category])}
             >
               <CategoryIcon className="h-5 w-5" />
             </div>
@@ -282,9 +279,7 @@ export function InsightCard({
         </div>
 
         <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
-          <span>
-            Confiança: {Math.round(insight.confidence_score * 100)}%
-          </span>
+          <span>Confiança: {Math.round(insight.confidence_score * 100)}%</span>
           <span>
             Criado:{" "}
             {new Date(insight.created_at).toLocaleDateString("pt-BR", {
