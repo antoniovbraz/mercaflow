@@ -89,8 +89,7 @@ CREATE POLICY "Users can view their tenant insights"
         tenant_id IN (
             SELECT tenant_id FROM public.profiles WHERE id = auth.uid()
         )
-    )
-    WITH CHECK (security_invoker = true);
+    );
 
 -- Policy: Users can insert insights to their tenant
 CREATE POLICY "Users can create insights for their tenant"
@@ -100,8 +99,7 @@ CREATE POLICY "Users can create insights for their tenant"
         tenant_id IN (
             SELECT tenant_id FROM public.profiles WHERE id = auth.uid()
         )
-    )
-    WITH CHECK (security_invoker = true);
+    );
 
 -- Policy: Users can update insights from their tenant
 CREATE POLICY "Users can update their tenant insights"
@@ -116,8 +114,7 @@ CREATE POLICY "Users can update their tenant insights"
         tenant_id IN (
             SELECT tenant_id FROM public.profiles WHERE id = auth.uid()
         )
-    )
-    WITH CHECK (security_invoker = true);
+    );
 
 -- Policy: Users can delete insights from their tenant (soft delete via status)
 CREATE POLICY "Users can delete their tenant insights"
@@ -127,8 +124,7 @@ CREATE POLICY "Users can delete their tenant insights"
         tenant_id IN (
             SELECT tenant_id FROM public.profiles WHERE id = auth.uid()
         )
-    )
-    WITH CHECK (security_invoker = true);
+    );
 
 -- ============================================================================
 -- TRIGGERS
@@ -202,7 +198,7 @@ COMMENT ON COLUMN public.insights.completed_at IS 'When user completed the actio
 
 -- Grant authenticated users access to insights table
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.insights TO authenticated;
-GRANT USAGE ON SEQUENCE insights_id_seq TO authenticated; -- If using serial instead of UUID
+-- Note: No sequence needed - using UUID with gen_random_uuid()
 
 -- ============================================================================
 -- SAMPLE DATA (Optional - for testing)
