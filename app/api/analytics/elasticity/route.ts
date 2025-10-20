@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getCurrentUser } from "@/utils/supabase/roles";
 import { getCurrentTenantId } from "@/utils/supabase/tenancy";
 import { logger } from "@/utils/logger";
+import * as Sentry from "@sentry/nextjs";
 
 /**
  * GET /api/analytics/elasticity
@@ -15,7 +16,19 @@ import { logger } from "@/utils/logger";
  * 4. Estimate optimal price (max revenue = price × demand)
  */
 export async function GET(request: NextRequest) {
+  return Sentry.withServerActionInstrumentation(
+    "api.analytics.elasticity",
+    {
+      recordResponse: true,
+    },
+    async () => {
   try {
+    Sentry.addBreadcrumb({
+      category: "analytics",
+      message: "Elasticity API called",
+      level: "info",
+    });
+
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json(
@@ -35,6 +48,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const itemId = searchParams.get("item_id");
     const days = parseInt(searchParams.get("days") || "30");
+
+    // Add context tags for Sentry
+    Sentry.setTag("api.endpoint", "elasticity");
+    Sentry.setTag("api.item_id", itemId || "all");
+    Sentry.setTag("api.days", days.toString());
+    Sentry.setUser({ id: user.id });
 
     const supabase = await createClient();
 
@@ -101,11 +120,14 @@ export async function GET(request: NextRequest) {
     logger.error("Unexpected error in GET /api/analytics/elasticity", {
       error,
     });
+    Sentry.captureException(error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
   }
+  }
+  );
 }
 
 /**
