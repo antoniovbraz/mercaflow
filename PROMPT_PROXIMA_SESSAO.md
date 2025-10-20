@@ -9,12 +9,14 @@
 ## ✅ O QUE JÁ FOI CONCLUÍDO
 
 ### 1. Zod Schemas Completos (100%) ✅
+
 - Arquivo: `utils/validation/ml-intelligence-schemas.ts` (420 linhas)
 - 7 schemas principais + 20+ auxiliares
 - Validações rigorosas com enum types
 - TypeScript: 0 erros
 
 ### 2. MLIntelligenceAPI Class (100%) ✅
+
 - Arquivo: `utils/mercadolivre/intelligence.ts` (687 linhas)
 - 9 métodos implementados e testados
 - Cache pattern correto usando `getCached()`
@@ -34,6 +36,7 @@
 **Objetivo**: Transformar dados brutos da MLIntelligenceAPI em insights acionáveis para os usuários.
 
 **Conceito**: O InsightGenerator analisa dados de preço, mercado e performance para gerar recomendações automáticas com:
+
 - **Prioridade** (1-5): Urgência da ação
 - **Confidence** (0-100%): Confiança na recomendação
 - **ROI Estimate**: Impacto financeiro estimado
@@ -49,13 +52,13 @@
 /**
  * Insight categories
  */
-export type InsightCategory = 
-  | 'PRICE_OPTIMIZATION'
-  | 'AUTOMATION_OPPORTUNITY'
-  | 'MARKET_TREND'
-  | 'PERFORMANCE_WARNING'
-  | 'QUALITY_IMPROVEMENT'
-  | 'COMPETITOR_ALERT';
+export type InsightCategory =
+  | "PRICE_OPTIMIZATION"
+  | "AUTOMATION_OPPORTUNITY"
+  | "MARKET_TREND"
+  | "PERFORMANCE_WARNING"
+  | "QUALITY_IMPROVEMENT"
+  | "COMPETITOR_ALERT";
 
 /**
  * Insight priority (1 = highest, 5 = lowest)
@@ -65,27 +68,27 @@ export type InsightPriority = 1 | 2 | 3 | 4 | 5;
 /**
  * Insight status
  */
-export type InsightStatus = 
-  | 'PENDING'      // Waiting for user action
-  | 'DISMISSED'    // User dismissed
-  | 'COMPLETED'    // User completed action
-  | 'EXPIRED';     // No longer relevant
+export type InsightStatus =
+  | "PENDING" // Waiting for user action
+  | "DISMISSED" // User dismissed
+  | "COMPLETED" // User completed action
+  | "EXPIRED"; // No longer relevant
 
 /**
  * Base insight interface
  */
 export interface Insight {
-  id: string;                     // UUID
+  id: string; // UUID
   category: InsightCategory;
   priority: InsightPriority;
-  confidence: number;             // 0-100%
-  title: string;                  // Short title (50 chars)
-  description: string;            // Detailed explanation
-  roi_estimate?: number;          // Estimated financial impact (R$)
-  action_items: string[];         // Specific steps to take
-  metadata: Record<string, any>;  // Category-specific data
-  created_at: string;             // ISO 8601
-  expires_at?: string;            // ISO 8601
+  confidence: number; // 0-100%
+  title: string; // Short title (50 chars)
+  description: string; // Detailed explanation
+  roi_estimate?: number; // Estimated financial impact (R$)
+  action_items: string[]; // Specific steps to take
+  metadata: Record<string, any>; // Category-specific data
+  created_at: string; // ISO 8601
+  expires_at?: string; // ISO 8601
   status: InsightStatus;
 }
 
@@ -108,7 +111,7 @@ export interface TrendInsightMetadata {
   trend_keyword: string;
   trend_url: string;
   category_id?: string;
-  relevance_score: number;  // 0-100
+  relevance_score: number; // 0-100
 }
 
 /**
@@ -119,7 +122,7 @@ export interface PerformanceInsightMetadata {
   current_score: number;
   potential_score: number;
   improvement_areas: string[];
-  visit_trend: number;  // Percentage change
+  visit_trend: number; // Percentage change
 }
 ```
 
@@ -193,10 +196,12 @@ export class InsightGenerator {
 ### 1. Price Optimization Insights
 
 **Quando gerar**:
+
 - Preço atual > 10% acima do sugerido → "Você está perdendo vendas"
 - Preço atual < 10% abaixo do sugerido → "Você está deixando dinheiro na mesa"
 
 **Cálculo de ROI**:
+
 ```typescript
 // Exemplo: Item a R$ 120, ML sugere R$ 100
 // 50 visitas/dia, conversão 5%
@@ -206,6 +211,7 @@ export class InsightGenerator {
 ```
 
 **Priority**:
+
 - ROI > R$ 1000: Priority 1
 - ROI > R$ 500: Priority 2
 - ROI > R$ 100: Priority 3
@@ -214,6 +220,7 @@ export class InsightGenerator {
 ### 2. Automation Opportunity Insights
 
 **Quando gerar**:
+
 - Item sem automação AND preço volátil (mudou 3+ vezes em 7 dias)
 - Item com concorrência alta (10+ competidores)
 
@@ -222,10 +229,12 @@ export class InsightGenerator {
 ### 3. Market Trend Insights
 
 **Quando gerar**:
+
 - Trend keyword match com categoria do usuário
 - Relevance score > 70%
 
 **Relevance score**:
+
 ```typescript
 // Match trend keyword com:
 // - Category name (50%)
@@ -236,6 +245,7 @@ export class InsightGenerator {
 ### 4. Performance Warning Insights
 
 **Quando gerar**:
+
 - Quality score < 70
 - Visits trend < -20% (últimas 2 semanas)
 - Seller reputation < 4 stars
@@ -247,16 +257,16 @@ export class InsightGenerator {
 ## 📚 IMPORTS NECESSÁRIOS
 
 ```typescript
-import { getMLIntelligenceAPI } from '@/utils/mercadolivre/intelligence';
-import { logger } from '@/utils/logger';
-import { v4 as uuidv4 } from 'uuid';
+import { getMLIntelligenceAPI } from "@/utils/mercadolivre/intelligence";
+import { logger } from "@/utils/logger";
+import { v4 as uuidv4 } from "uuid";
 import type {
   MLPriceSuggestion,
   MLAutomationRule,
   MLTrend,
   MLVisits,
   MLPerformance,
-} from '@/utils/validation/ml-intelligence-schemas';
+} from "@/utils/validation/ml-intelligence-schemas";
 ```
 
 ---
@@ -264,21 +274,25 @@ import type {
 ## ⚠️ ATENÇÕES CRÍTICAS
 
 1. **Confidence Scoring**: Baseie em qualidade dos dados
+
    - Dados completos (sugestão + visitas + performance): 95%
    - Dados parciais: 70-80%
    - Apenas um dado: 50%
 
 2. **ROI Calculations**: Seja conservador
+
    - Use conversion rate padrão de 3-5% se não tiver dados
    - Considere apenas 30 dias para estimativas
    - Arredonde para baixo (melhor subestimar que prometer demais)
 
 3. **Priority Algorithm**: Combine múltiplos fatores
+
    - ROI (40% do peso)
    - Confidence (30% do peso)
    - Urgency (30% do peso)
 
 4. **Expiration Logic**:
+
    - Price insights: 24 horas (preços mudam rápido)
    - Trend insights: 7 dias (trends semanais)
    - Performance insights: 3 dias (score pode melhorar)
@@ -312,11 +326,13 @@ import type {
 Próximas tarefas em ordem:
 
 1. **Database Migration** (Alta prioridade)
+
    - Criar tabela `insights` com RLS
    - Indexes para queries eficientes
    - Trigger para auto-expire insights
 
 2. **API Endpoints** (4 endpoints)
+
    - POST `/api/intelligence/insights/generate`
    - GET `/api/intelligence/insights/list`
    - POST `/api/intelligence/insights/[id]/dismiss`
@@ -335,7 +351,7 @@ Próximas tarefas em ordem:
 const generator = new InsightGenerator(integrationId, tenantId);
 
 // Get all active item IDs from database
-const itemIds = ['MLB123', 'MLB456', 'MLB789'];
+const itemIds = ["MLB123", "MLB456", "MLB789"];
 
 // Generate all insights
 const insights = await generator.generateAllInsights(itemIds);
@@ -343,12 +359,12 @@ const insights = await generator.generateAllInsights(itemIds);
 console.log(`Generated ${insights.length} insights`);
 
 // Filter by priority
-const urgent = insights.filter(i => i.priority <= 2);
+const urgent = insights.filter((i) => i.priority <= 2);
 console.log(`${urgent.length} urgent actions needed`);
 
 // Calculate total potential ROI
 const totalROI = insights
-  .filter(i => i.roi_estimate)
+  .filter((i) => i.roi_estimate)
   .reduce((sum, i) => sum + (i.roi_estimate || 0), 0);
 
 console.log(`Potential monthly gain: R$ ${totalROI.toFixed(2)}`);
