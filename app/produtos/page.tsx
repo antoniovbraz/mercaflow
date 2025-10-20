@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { hasRole } from "@/utils/supabase/client-roles";
+import ProductIntelligenceBar from "@/components/produtos/ProductIntelligenceBar";
+import ProductIntelligenceRow from "@/components/produtos/ProductIntelligenceRow";
 
 interface Product {
   id: string;
@@ -107,35 +108,9 @@ export default function ProdutosPage() {
       // Reload products after sync
       await loadProducts();
     } catch {
-      // Removed console.error - errors handled by error boundaries;
+      // Removed console.error - errors handled by error boundaries
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "paused":
-        return "bg-yellow-100 text-yellow-800";
-      case "closed":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "active":
-        return "Ativo";
-      case "paused":
-        return "Pausado";
-      case "closed":
-        return "Encerrado";
-      default:
-        return status;
     }
   };
 
@@ -149,63 +124,14 @@ export default function ProdutosPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Produtos</h1>
-                <p className="mt-1 text-sm text-gray-600">
-                  Gerencie seus produtos do Mercado Livre
-                </p>
-              </div>
-              <button
-                onClick={syncProducts}
-                disabled={loading}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {loading ? (
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                ) : (
-                  <svg
-                    className="-ml-1 mr-2 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    ></path>
-                  </svg>
-                )}
-                Sincronizar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Intelligence Bar */}
+      {stats && (
+        <ProductIntelligenceBar
+          stats={stats}
+          onSync={syncProducts}
+          isLoading={loading}
+        />
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
@@ -398,7 +324,7 @@ export default function ProdutosPage() {
           </div>
         </div>
 
-        {/* Products List */}
+        {/* Products Intelligence List */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -426,87 +352,17 @@ export default function ProdutosPage() {
               <p className="mt-1 text-sm text-gray-500">
                 {searchTerm || statusFilter
                   ? "Tente ajustar os filtros de busca."
-                  : 'Clique em "Sincronizar" para carregar seus produtos do Mercado Livre.'}
+                  : 'Clique em "Atualizar" para carregar seus produtos do Mercado Livre.'}
               </p>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-200">
+            <ul>
               {products.map((product) => (
-                <li
+                <ProductIntelligenceRow
                   key={product.id}
-                  className="px-4 py-4 sm:px-6 hover:bg-gray-50"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      {product.thumbnail ? (
-                        <Image
-                          className="h-12 w-12 rounded-lg object-cover"
-                          src={product.thumbnail}
-                          alt={product.title}
-                          width={48}
-                          height={48}
-                        />
-                      ) : (
-                        <div className="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
-                          <svg
-                            className="h-6 w-6 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            ></path>
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {product.title}
-                        </p>
-                        <div className="flex items-center space-x-2">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                              product.status
-                            )}`}
-                          >
-                            {getStatusText(product.status)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mt-2 flex items-center text-sm text-gray-500">
-                        <span className="font-medium text-gray-900">
-                          R$ {product.price.toFixed(2)}
-                        </span>
-                        <span className="mx-2">•</span>
-                        <span>Estoque: {product.available_quantity}</span>
-                        <span className="mx-2">•</span>
-                        <span>Vendidos: {product.sold_quantity}</span>
-                        <span className="mx-2">•</span>
-                        <span>ID: {product.ml_item_id}</span>
-                      </div>
-                      <div className="mt-1 text-xs text-gray-400">
-                        Última sincronização:{" "}
-                        {new Date(product.last_sync_at).toLocaleString("pt-BR")}
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <a
-                        href={product.permalink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        Ver no ML
-                      </a>
-                    </div>
-                  </div>
-                </li>
+                  product={product}
+                  defaultExpanded={false}
+                />
               ))}
             </ul>
           )}
