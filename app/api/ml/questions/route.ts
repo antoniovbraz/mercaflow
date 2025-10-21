@@ -158,13 +158,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           const errorText = await mlResponse.text();
           logger.error('ML Questions API Error:', mlResponse.status, errorText);
           
-          // Log error
-          await tokenManager['logSync'](integration.id, 'questions', 'error', {
-            action: 'questions_fetch_failed',
-            error: errorText,
-            status_code: mlResponse.status,
-          });
-          
           throw new Error(`ML API returned status ${mlResponse.status}: ${errorText}`);
         }
 
@@ -174,13 +167,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         if (apiData.questions && apiData.questions.length > 0) {
           await syncQuestionsToDatabase(integration.id, apiData.questions);
         }
-
-        // Log successful sync
-        await tokenManager['logSync'](integration.id, 'questions', 'success', {
-          action: 'questions_fetched',
-          count: apiData.questions?.length || 0,
-          total: apiData.total || 0,
-        });
 
         logger.info('✅ Successfully fetched ML questions:', apiData.questions.length);
         return apiData;
@@ -331,12 +317,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Log successful answer
-    await tokenManager['logSync'](integration.id, 'questions', 'success', {
-      action: 'question_answered',
-      question_id: question_id.toString(),
-      is_template: !!is_template,
-    });
-
     logger.info('✅ Successfully answered ML question:', question_id);
     return NextResponse.json(responseData);
 
