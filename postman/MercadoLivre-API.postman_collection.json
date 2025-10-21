@@ -1,0 +1,396 @@
+{
+  "info": {
+    "name": "Mercado Livre API - MercaFlow",
+    "description": "Collection completa para testar todas as APIs do Mercado Livre integradas com MercaFlow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "ml_base_url",
+      "value": "https://api.mercadolibre.com",
+      "type": "string"
+    },
+    {
+      "key": "ml_token",
+      "value": "SEU_TOKEN_AQUI",
+      "type": "string"
+    },
+    {
+      "key": "ml_user_id",
+      "value": "669073070",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "GET User Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ml_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{ml_base_url}}/users/me",
+              "host": ["{{ml_base_url}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Retorna informações detalhadas do usuário autenticado, incluindo reputação, vendas e endereço."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has id field', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "});",
+                  "",
+                  "// Save user_id automatically",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('ml_user_id', jsonData.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "GET Items - Active",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ml_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{ml_base_url}}/users/me/items/search?status=active&limit=20&offset=0",
+              "host": ["{{ml_base_url}}"],
+              "path": ["users", "me", "items", "search"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active",
+                  "description": "Status do produto"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Limite de resultados"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Offset para paginação"
+                }
+              ]
+            },
+            "description": "Lista todos os produtos ativos do vendedor com paginação."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has results array', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('results');",
+                  "    pm.expect(jsonData.results).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Item Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ml_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{ml_base_url}}/items/MLB2015713558",
+              "host": ["{{ml_base_url}}"],
+              "path": ["items", "MLB2015713558"]
+            },
+            "description": "Retorna detalhes completos de um produto específico (título, preço, estoque, fotos, etc)."
+          }
+        },
+        {
+          "name": "PUT Update Item Price",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ml_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 29.90\n}"
+            },
+            "url": {
+              "raw": "{{ml_base_url}}/items/MLB2015713558",
+              "host": ["{{ml_base_url}}"],
+              "path": ["items", "MLB2015713558"]
+            },
+            "description": "Atualiza o preço de um produto. Substitua MLB2015713558 pelo ID real."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "GET Orders - Recent",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ml_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{ml_base_url}}/orders/search?seller={{ml_user_id}}&sort=date_desc&limit=10",
+              "host": ["{{ml_base_url}}"],
+              "path": ["orders", "search"],
+              "query": [
+                {
+                  "key": "seller",
+                  "value": "{{ml_user_id}}",
+                  "description": "ID do vendedor"
+                },
+                {
+                  "key": "sort",
+                  "value": "date_desc",
+                  "description": "Ordenação por data"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Limite de resultados"
+                }
+              ]
+            },
+            "description": "Lista os 10 pedidos mais recentes do vendedor."
+          }
+        },
+        {
+          "name": "GET Orders - Pending Payment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ml_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{ml_base_url}}/orders/search?seller={{ml_user_id}}&order.status=payment_required",
+              "host": ["{{ml_base_url}}"],
+              "path": ["orders", "search"],
+              "query": [
+                {
+                  "key": "seller",
+                  "value": "{{ml_user_id}}"
+                },
+                {
+                  "key": "order.status",
+                  "value": "payment_required",
+                  "description": "Filtro por status"
+                }
+              ]
+            },
+            "description": "Lista pedidos com pagamento pendente."
+          }
+        },
+        {
+          "name": "GET Order Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ml_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{ml_base_url}}/orders/12345678901",
+              "host": ["{{ml_base_url}}"],
+              "path": ["orders", "12345678901"]
+            },
+            "description": "Retorna detalhes completos de um pedido específico. Substitua 12345678901 pelo ID real."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Questions",
+      "item": [
+        {
+          "name": "GET Questions - Unanswered",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ml_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{ml_base_url}}/my/received_questions/search?api_version=4&status=UNANSWERED&limit=10",
+              "host": ["{{ml_base_url}}"],
+              "path": ["my", "received_questions", "search"],
+              "query": [
+                {
+                  "key": "api_version",
+                  "value": "4",
+                  "description": "Versão da API (obrigatório)"
+                },
+                {
+                  "key": "status",
+                  "value": "UNANSWERED",
+                  "description": "Filtro por status"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lista perguntas não respondidas."
+          }
+        },
+        {
+          "name": "GET Questions - All",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ml_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{ml_base_url}}/my/received_questions/search?api_version=4&limit=20",
+              "host": ["{{ml_base_url}}"],
+              "path": ["my", "received_questions", "search"],
+              "query": [
+                {
+                  "key": "api_version",
+                  "value": "4"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Lista todas as perguntas recebidas (respondidas e não respondidas)."
+          }
+        },
+        {
+          "name": "POST Answer Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ml_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question_id\": 9876543210,\n  \"text\": \"Sim, todos os nossos produtos têm 3 meses de garantia!\"\n}"
+            },
+            "url": {
+              "raw": "{{ml_base_url}}/answers",
+              "host": ["{{ml_base_url}}"],
+              "path": ["answers"]
+            },
+            "description": "Responde uma pergunta. Substitua question_id pelo ID real da pergunta."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "GET My Feeds",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ml_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{ml_base_url}}/myfeeds?limit=20",
+              "host": ["{{ml_base_url}}"],
+              "path": ["myfeeds"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Lista notificações recentes (novos pedidos, perguntas, mensagens, etc)."
+          }
+        }
+      ]
+    }
+  ]
+}
