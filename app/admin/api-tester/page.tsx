@@ -54,7 +54,7 @@ export default function APITestPage() {
       apis: [
         { name: "ML Auth Status", method: "GET", path: "/api/ml/auth/status" },
         { name: "ML Products", method: "GET", path: "/api/ml/products" },
-        { name: "ML Orders", method: "GET", path: "/api/ml/orders" },
+        // ML Orders requires integration_id - will be fetched dynamically
       ]
     },
   ];
@@ -79,10 +79,23 @@ export default function APITestPage() {
       const responseTime = Math.round(endTime - startTime);
 
       let data;
+      const contentType = response.headers.get("content-type");
+      
       try {
-        data = await response.json();
+        // Only try to parse JSON if content-type indicates JSON
+        if (contentType && contentType.includes("application/json")) {
+          data = await response.json();
+        } else {
+          // For other content types, get as text
+          data = await response.text();
+        }
       } catch {
-        data = await response.text();
+        // If parsing fails, try to get any remaining content
+        try {
+          data = await response.text();
+        } catch {
+          data = { message: "Could not parse response" };
+        }
       }
 
       const result: APITestResult = {
@@ -318,10 +331,28 @@ export default function APITestPage() {
         </CardHeader>
         <CardContent className="text-sm text-blue-600 dark:text-blue-400 space-y-2">
           <p>• Esta página testa os endpoints usando sua sessão atual (cookies)</p>
-          <p>• Status 401 = Não autenticado (faça login primeiro)</p>
           <p>• Status 200 = Sucesso</p>
+          <p>• Status 201 = Recurso criado com sucesso</p>
+          <p>• Status 400 = Requisição inválida (verifique parâmetros)</p>
+          <p>• Status 401 = Não autenticado (faça login primeiro)</p>
           <p>• Status 403 = Sem permissão (verifique seu tenant)</p>
-          <p>• Status 500 = Erro do servidor</p>
+          <p>• Status 500 = Erro do servidor (verifique logs)</p>
+        </CardContent>
+      </Card>
+
+      {/* Warning about Analytics */}
+      <Card className="mt-4 bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800">
+        <CardHeader>
+          <CardTitle className="text-yellow-700 dark:text-yellow-300">
+            ⚠️ Analytics APIs - Dados Insuficientes
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-yellow-600 dark:text-yellow-400 space-y-2">
+          <p><strong>As APIs de Analytics podem retornar erro 500 se:</strong></p>
+          <p>• Não há pedidos/vendas suficientes (precisa histórico de 30+ dias)</p>
+          <p>• Produtos foram sincronizados recentemente (aguarde dados acumularem)</p>
+          <p>• Integração ML configurada mas sem vendas recentes</p>
+          <p><strong>Solução:</strong> Continue vendendo e aguarde acúmulo de dados para analytics funcionarem</p>
         </CardContent>
       </Card>
     </div>
