@@ -43,6 +43,9 @@ export default async function AdminLayout({
                 <a href="/admin/tenants" className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Tenants
                 </a>
+                <a href="/admin/api-tester" className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  🧪 API Tester
+                </a>
                 <a href="/admin/system" className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Sistema
                 </a>
