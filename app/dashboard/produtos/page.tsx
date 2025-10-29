@@ -3,7 +3,13 @@ import { redirect } from "next/navigation";
 import { ArrowUpRight, Boxes, Sparkles } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TooltipHelp } from "@/components/ui/tooltip-help";
@@ -98,8 +104,10 @@ const STOCK_LABEL: Record<string, string> = {
 };
 
 const ALERT_BADGE_STYLE: Record<InventoryAlert["status"], string> = {
-  "Reposição urgente": "border-transparent bg-intent-danger/10 text-intent-danger",
-  "Ajuste recomendado": "border-transparent bg-intent-warning/10 text-intent-warning",
+  "Reposição urgente":
+    "border-transparent bg-intent-danger/10 text-intent-danger",
+  "Ajuste recomendado":
+    "border-transparent bg-intent-warning/10 text-intent-warning",
   Monitorar: "border-outline-subtle bg-surface text-text-secondary",
 };
 
@@ -138,7 +146,9 @@ function formatDays(value: number): string {
   return `${rounded} dia${rounded > 1 ? "s" : ""}`;
 }
 
-function extractOrderItems(raw: RawOrder): Array<{ id: string; quantity: number; unitPrice: number }> {
+function extractOrderItems(
+  raw: RawOrder
+): Array<{ id: string; quantity: number; unitPrice: number }> {
   const sources = [raw.items, raw.ml_data?.order_items];
 
   for (const source of sources) {
@@ -154,7 +164,7 @@ function extractOrderItems(raw: RawOrder): Array<{ id: string; quantity: number;
             : undefined;
 
         const idCandidate = [data.item_id, nestedItem?.id, data.id].find(
-          (value) => typeof value === "string" && value.trim().length > 0,
+          (value) => typeof value === "string" && value.trim().length > 0
         );
 
         const sku = typeof idCandidate === "string" ? idCandidate : "";
@@ -169,7 +179,10 @@ function extractOrderItems(raw: RawOrder): Array<{ id: string; quantity: number;
           unitPrice,
         };
       })
-      .filter((item): item is { id: string; quantity: number; unitPrice: number } => Boolean(item));
+      .filter(
+        (item): item is { id: string; quantity: number; unitPrice: number } =>
+          Boolean(item)
+      );
 
     if (items.length > 0) {
       return items;
@@ -200,8 +213,16 @@ function buildSoldMap(orders: RawOrder[]): Map<string, SoldSkuMetrics> {
 }
 
 function derivePosition(product: RawProduct): string {
-  const category = typeof product.category_id === "string" && product.category_id.trim().length > 0 ? product.category_id : null;
-  const listing = typeof product.listing_type_id === "string" && product.listing_type_id.trim().length > 0 ? product.listing_type_id : null;
+  const category =
+    typeof product.category_id === "string" &&
+    product.category_id.trim().length > 0
+      ? product.category_id
+      : null;
+  const listing =
+    typeof product.listing_type_id === "string" &&
+    product.listing_type_id.trim().length > 0
+      ? product.listing_type_id
+      : null;
 
   if (category) return `Categoria ${category}`;
   if (listing) return `Formato ${listing}`;
@@ -215,10 +236,17 @@ function computeStockStatus(available: number): keyof typeof STOCK_STYLE {
   return "monitor";
 }
 
-function buildAlerts(products: RawProduct[], soldMap: Map<string, SoldSkuMetrics>): InventoryAlert[] {
+function buildAlerts(
+  products: RawProduct[],
+  soldMap: Map<string, SoldSkuMetrics>
+): InventoryAlert[] {
   const candidates = products
-    .filter((product) => toNumber(product.available_quantity) <= ATTENTION_THRESHOLD)
-    .sort((a, b) => toNumber(a.available_quantity) - toNumber(b.available_quantity))
+    .filter(
+      (product) => toNumber(product.available_quantity) <= ATTENTION_THRESHOLD
+    )
+    .sort(
+      (a, b) => toNumber(a.available_quantity) - toNumber(b.available_quantity)
+    )
     .slice(0, 3);
 
   return candidates.map((product) => {
@@ -228,23 +256,36 @@ function buildAlerts(products: RawProduct[], soldMap: Map<string, SoldSkuMetrics
     const dailyVelocity = sold / SELL_THROUGH_WINDOW_DAYS;
     const daysLeft = dailyVelocity > 0 ? available / dailyVelocity : null;
 
-    const status: InventoryAlert["status"] = available <= LOW_STOCK_THRESHOLD ? "Reposição urgente" : sold > 0 ? "Ajuste recomendado" : "Monitorar";
+    const status: InventoryAlert["status"] =
+      available <= LOW_STOCK_THRESHOLD
+        ? "Reposição urgente"
+        : sold > 0
+        ? "Ajuste recomendado"
+        : "Monitorar";
     const action =
       dailyVelocity > 0
-        ? `Solicitar ${Math.max(Math.round(dailyVelocity * 7), 1)} un. para manter o giro semanal`
+        ? `Solicitar ${Math.max(
+            Math.round(dailyVelocity * 7),
+            1
+          )} un. para manter o giro semanal`
         : "Ativar promoção ou revisar preço para gerar giro";
 
     return {
       sku,
       name: product.title ?? "Produto sem título",
-      daysLeft: daysLeft !== null && Number.isFinite(daysLeft) ? formatDays(daysLeft) : "Sem histórico",
+      daysLeft:
+        daysLeft !== null && Number.isFinite(daysLeft)
+          ? formatDays(daysLeft)
+          : "Sem histórico",
       action,
       status,
     };
   });
 }
 
-async function loadProductsOverview(tenantId: string): Promise<ProductsOverview> {
+async function loadProductsOverview(
+  tenantId: string
+): Promise<ProductsOverview> {
   const supabase = await createClient();
 
   const { data: integrations, error: integrationsError } = await supabase
@@ -254,7 +295,9 @@ async function loadProductsOverview(tenantId: string): Promise<ProductsOverview>
     .eq("status", "active");
 
   if (integrationsError) {
-    logger.error("Erro ao carregar integrações para métricas de produtos", { error: integrationsError });
+    logger.error("Erro ao carregar integrações para métricas de produtos", {
+      error: integrationsError,
+    });
     return {
       metrics: getEmptyMetrics(false),
       topSkus: [],
@@ -263,7 +306,9 @@ async function loadProductsOverview(tenantId: string): Promise<ProductsOverview>
     };
   }
 
-  const integrationIds = (integrations ?? []).map((integration) => integration.id).filter(Boolean);
+  const integrationIds = (integrations ?? [])
+    .map((integration) => integration.id)
+    .filter(Boolean);
   const hasIntegrations = integrationIds.length > 0;
 
   if (!hasIntegrations) {
@@ -276,14 +321,18 @@ async function loadProductsOverview(tenantId: string): Promise<ProductsOverview>
   }
 
   const now = new Date();
-  const last30Iso = new Date(now.getTime() - SELL_THROUGH_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
-  const recentUpdateThreshold = new Date(now.getTime() - RECENT_UPDATE_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const last30Iso = new Date(
+    now.getTime() - SELL_THROUGH_WINDOW_DAYS * 24 * 60 * 60 * 1000
+  ).toISOString();
+  const recentUpdateThreshold = new Date(
+    now.getTime() - RECENT_UPDATE_WINDOW_DAYS * 24 * 60 * 60 * 1000
+  );
   const newSkuThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   const productsQuery = supabase
     .from("ml_products")
     .select(
-      "ml_item_id,title,price,available_quantity,sold_quantity,listing_type_id,category_id,updated_at,created_at,status,ml_data",
+      "ml_item_id,title,price,available_quantity,sold_quantity,listing_type_id,category_id,updated_at,created_at,status,ml_data"
     )
     .eq("status", "active");
 
@@ -301,25 +350,40 @@ async function loadProductsOverview(tenantId: string): Promise<ProductsOverview>
     ordersQuery.in("integration_id", integrationIds);
   }
 
-  const [productsResult, ordersResult] = await Promise.all([productsQuery, ordersQuery]);
+  const [productsResult, ordersResult] = await Promise.all([
+    productsQuery,
+    ordersQuery,
+  ]);
 
   if (productsResult.error) {
-    logger.error("Erro ao carregar produtos para métricas", { error: productsResult.error });
+    logger.error("Erro ao carregar produtos para métricas", {
+      error: productsResult.error,
+    });
   }
   if (ordersResult.error) {
-    logger.error("Erro ao carregar pedidos para consolidar métricas de produtos", {
-      error: ordersResult.error,
-    });
+    logger.error(
+      "Erro ao carregar pedidos para consolidar métricas de produtos",
+      {
+        error: ordersResult.error,
+      }
+    );
   }
 
   const products = (productsResult.data ?? []) as RawProduct[];
   const orders = (ordersResult.data ?? []) as RawOrder[];
   const soldMap = buildSoldMap(orders);
 
-  const totalInventory = products.reduce((sum, product) => sum + Math.max(toNumber(product.available_quantity), 0), 0);
-  const totalSoldLast30 = Array.from(soldMap.values()).reduce((sum, entry) => sum + entry.quantity, 0);
+  const totalInventory = products.reduce(
+    (sum, product) => sum + Math.max(toNumber(product.available_quantity), 0),
+    0
+  );
+  const totalSoldLast30 = Array.from(soldMap.values()).reduce(
+    (sum, entry) => sum + entry.quantity,
+    0
+  );
   const dailyVelocity = totalSoldLast30 / SELL_THROUGH_WINDOW_DAYS;
-  const coverageDays = dailyVelocity > 0 ? totalInventory / dailyVelocity : null;
+  const coverageDays =
+    dailyVelocity > 0 ? totalInventory / dailyVelocity : null;
 
   const activeSkus = products.length;
   const newSkus = products.filter((product) => {
@@ -335,10 +399,10 @@ async function loadProductsOverview(tenantId: string): Promise<ProductsOverview>
   }).length;
 
   const alertCandidatesCount = products.filter(
-    (product) => toNumber(product.available_quantity) <= ATTENTION_THRESHOLD,
+    (product) => toNumber(product.available_quantity) <= ATTENTION_THRESHOLD
   ).length;
   const criticalAlertsCount = products.filter(
-    (product) => toNumber(product.available_quantity) <= LOW_STOCK_THRESHOLD,
+    (product) => toNumber(product.available_quantity) <= LOW_STOCK_THRESHOLD
   ).length;
 
   const priceRefreshRatio = activeSkus > 0 ? recentlyUpdated / activeSkus : 0;
@@ -346,15 +410,22 @@ async function loadProductsOverview(tenantId: string): Promise<ProductsOverview>
     priceRefreshRatio >= PRICE_REFRESH_TARGET
       ? "Meta atingida"
       : activeSkus > 0
-      ? `Atualizar ${Math.max(Math.round((PRICE_REFRESH_TARGET - priceRefreshRatio) * activeSkus), 1)} SKU(s)`
+      ? `Atualizar ${Math.max(
+          Math.round((PRICE_REFRESH_TARGET - priceRefreshRatio) * activeSkus),
+          1
+        )} SKU(s)`
       : "Sem SKUs ativos";
 
   const metrics: ProductMetric[] = [
     {
       label: "SKUs ativos",
       value: formatNumber(activeSkus),
-      helper: activeSkus > 0 ? "Produtos sincronizados" : "Sem produtos disponíveis",
-      badge: newSkus > 0 ? `+${formatNumber(newSkus)} novos nesta semana` : "Nenhum SKU novo",
+      helper:
+        activeSkus > 0 ? "Produtos sincronizados" : "Sem produtos disponíveis",
+      badge:
+        newSkus > 0
+          ? `+${formatNumber(newSkus)} novos nesta semana`
+          : "Nenhum SKU novo",
     },
     {
       label: "Cobertura de estoque",
@@ -364,7 +435,9 @@ async function loadProductsOverview(tenantId: string): Promise<ProductsOverview>
         coverageDays !== null
           ? coverageDays >= COVERAGE_TARGET_DAYS
             ? "Meta mínima: 21 dias"
-            : `Faltam ${formatDays(Math.max(COVERAGE_TARGET_DAYS - coverageDays, 0))}`
+            : `Faltam ${formatDays(
+                Math.max(COVERAGE_TARGET_DAYS - coverageDays, 0)
+              )}`
           : "Aguardando histórico de vendas",
     },
     {
@@ -388,7 +461,9 @@ async function loadProductsOverview(tenantId: string): Promise<ProductsOverview>
     .map((product) => {
       const sku = product.ml_item_id ?? "";
       const available = Math.max(toNumber(product.available_quantity), 0);
-      const sold = soldMap.get(sku)?.quantity ?? Math.max(toNumber(product.sold_quantity), 0);
+      const sold =
+        soldMap.get(sku)?.quantity ??
+        Math.max(toNumber(product.sold_quantity), 0);
       const price = toNumber(product.price);
       const total = available + sold;
       const sellThrough = total > 0 ? Math.min((sold / total) * 100, 100) : 0;
@@ -424,7 +499,9 @@ function getEmptyMetrics(hasIntegrations: boolean): ProductMetric[] {
     {
       label: "SKUs ativos",
       value: "0",
-      helper: hasIntegrations ? "Sem produtos sincronizados" : "Conecte uma integração",
+      helper: hasIntegrations
+        ? "Sem produtos sincronizados"
+        : "Conecte uma integração",
       badge: "Nenhum SKU novo",
     },
     {
@@ -488,11 +565,15 @@ export default async function ProdutosPage() {
       <section aria-labelledby="products-metrics" className="space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="products-metrics" className="text-lg font-semibold text-text-primary">
+            <h2
+              id="products-metrics"
+              className="text-lg font-semibold text-text-primary"
+            >
               Indicadores de catálogo
             </h2>
             <p className="text-sm text-text-secondary">
-              Acompanhe saúde de estoque e atualização de preços para priorizar ações no marketplace.
+              Acompanhe saúde de estoque e atualização de preços para priorizar
+              ações no marketplace.
             </p>
           </div>
           <TooltipHelp
@@ -503,12 +584,17 @@ export default async function ProdutosPage() {
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {overview.metrics.map((metric) => (
-            <Card key={metric.label} className="border-outline-subtle bg-surface-elevated">
+            <Card
+              key={metric.label}
+              className="border-outline-subtle bg-surface-elevated"
+            >
               <CardHeader className="space-y-1 pb-3">
                 <CardTitle className="text-sm font-semibold text-text-secondary">
                   {metric.label}
                 </CardTitle>
-                <p className="text-2xl font-semibold text-text-primary">{metric.value}</p>
+                <p className="text-2xl font-semibold text-text-primary">
+                  {metric.value}
+                </p>
               </CardHeader>
               <CardContent className="flex items-center justify-between gap-2 pt-0 text-sm text-text-muted">
                 <span>{metric.helper}</span>
@@ -524,11 +610,15 @@ export default async function ProdutosPage() {
       <section aria-labelledby="products-performance" className="space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="products-performance" className="text-lg font-semibold text-text-primary">
+            <h2
+              id="products-performance"
+              className="text-lg font-semibold text-text-primary"
+            >
               SKUs com melhor desempenho
             </h2>
             <p className="text-sm text-text-secondary">
-              Utilize esta visão para manter estoque saudável nos itens que mais convertem nas últimas semanas.
+              Utilize esta visão para manter estoque saudável nos itens que mais
+              convertem nas últimas semanas.
             </p>
           </div>
         </div>
@@ -540,7 +630,8 @@ export default async function ProdutosPage() {
                 Top SKUs por giro (30 dias)
               </CardTitle>
               <CardDescription className="text-text-secondary">
-                Ranking baseado em volume vendido e estoque disponível para evitar ruptura nos produtos líderes.
+                Ranking baseado em volume vendido e estoque disponível para
+                evitar ruptura nos produtos líderes.
               </CardDescription>
             </div>
           </CardHeader>
@@ -571,33 +662,57 @@ export default async function ProdutosPage() {
               <TableBody>
                 {hasTopSkus ? (
                   overview.topSkus.map((sku) => (
-                    <TableRow key={sku.sku} className="border-outline-subtle/80">
-                      <TableCell className="font-semibold text-text-primary">{sku.sku}</TableCell>
+                    <TableRow
+                      key={sku.sku}
+                      className="border-outline-subtle/80"
+                    >
+                      <TableCell className="font-semibold text-text-primary">
+                        {sku.sku}
+                      </TableCell>
                       <TableCell className="max-w-[260px] truncate text-text-secondary">
                         {sku.name}
                       </TableCell>
                       <TableCell className="text-center font-semibold text-text-primary">
                         {sku.conversion}
                       </TableCell>
-                      <TableCell className="text-right text-text-primary">{sku.price}</TableCell>
+                      <TableCell className="text-right text-text-primary">
+                        {sku.price}
+                      </TableCell>
                       <TableCell className="text-center">
-                        <Badge className={STOCK_STYLE[sku.stockStatus] ?? STOCK_STYLE.monitor}>
+                        <Badge
+                          className={
+                            STOCK_STYLE[sku.stockStatus] ?? STOCK_STYLE.monitor
+                          }
+                        >
                           {STOCK_LABEL[sku.stockStatus] ?? STOCK_LABEL.monitor}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-text-secondary">{sku.position}</TableCell>
+                      <TableCell className="text-text-secondary">
+                        {sku.position}
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="py-10 text-center text-sm text-text-muted">
-                      Nenhum SKU com vendas nos últimos 30 dias. Sincronize o catálogo para gerar histórico e liberar esta visão.
+                    <TableCell
+                      colSpan={6}
+                      className="py-10 text-center text-sm text-text-muted"
+                    >
+                      Nenhum SKU com vendas nos últimos 30 dias. Sincronize o
+                      catálogo para gerar histórico e liberar esta visão.
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
               <TableCaption className="text-left">
-                Em <Link href="/produtos" className="font-semibold text-intent-brand underline-offset-4 hover:underline">Produtos &gt; Lista</Link> é possível ajustar preços, variações e campanhas individuais.
+                Em{" "}
+                <Link
+                  href="/produtos"
+                  className="font-semibold text-intent-brand underline-offset-4 hover:underline"
+                >
+                  Produtos &gt; Lista
+                </Link>{" "}
+                é possível ajustar preços, variações e campanhas individuais.
               </TableCaption>
             </Table>
           </CardContent>
@@ -607,11 +722,15 @@ export default async function ProdutosPage() {
       <section aria-labelledby="inventory-alerts" className="space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="inventory-alerts" className="text-lg font-semibold text-text-primary">
+            <h2
+              id="inventory-alerts"
+              className="text-lg font-semibold text-text-primary"
+            >
               Alertas prioritários
             </h2>
             <p className="text-sm text-text-secondary">
-              Liste ações recomendadas com base em estoque crítico, giro recente e risco de ruptura.
+              Liste ações recomendadas com base em estoque crítico, giro recente
+              e risco de ruptura.
             </p>
           </div>
           <TooltipHelp
@@ -623,7 +742,10 @@ export default async function ProdutosPage() {
         <div className="grid gap-4 lg:grid-cols-3">
           {hasAlerts ? (
             overview.alerts.map((alert) => (
-              <Card key={alert.sku} className="border-outline-subtle bg-surface-elevated">
+              <Card
+                key={alert.sku}
+                className="border-outline-subtle bg-surface-elevated"
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
@@ -634,7 +756,9 @@ export default async function ProdutosPage() {
                         SKU {alert.sku}
                       </CardDescription>
                     </div>
-                    <Badge className={ALERT_BADGE_STYLE[alert.status]}>{alert.status}</Badge>
+                    <Badge className={ALERT_BADGE_STYLE[alert.status]}>
+                      {alert.status}
+                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-text-secondary">
@@ -643,7 +767,10 @@ export default async function ProdutosPage() {
                     <span>Estoque estimado: {alert.daysLeft}</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <Sparkles className="mt-0.5 h-4 w-4 text-intent-brand" aria-hidden="true" />
+                    <Sparkles
+                      className="mt-0.5 h-4 w-4 text-intent-brand"
+                      aria-hidden="true"
+                    />
                     <span>{alert.action}</span>
                   </div>
                 </CardContent>
@@ -656,11 +783,13 @@ export default async function ProdutosPage() {
                   Sem alertas críticos no momento
                 </CardTitle>
                 <CardDescription className="text-text-secondary">
-                  Mantenha o giro monitorado diariamente para antecipar reposições e evitar ruptura nas campanhas ativas.
+                  Mantenha o giro monitorado diariamente para antecipar
+                  reposições e evitar ruptura nas campanhas ativas.
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-sm text-text-secondary">
-                Ajuste metas de estoque mínimo no catálogo para receber alertas mais cedo ou sincronize novos pedidos para atualizar o giro.
+                Ajuste metas de estoque mínimo no catálogo para receber alertas
+                mais cedo ou sincronize novos pedidos para atualizar o giro.
               </CardContent>
             </Card>
           )}

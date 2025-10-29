@@ -25,7 +25,10 @@ interface DashboardNavigationProps {
   onNavigate?: () => void;
 }
 
-export function DashboardNavigation({ sections, onNavigate }: DashboardNavigationProps) {
+export function DashboardNavigation({
+  sections,
+  onNavigate,
+}: DashboardNavigationProps) {
   const pathname = usePathname();
 
   return (
@@ -37,7 +40,8 @@ export function DashboardNavigation({ sections, onNavigate }: DashboardNavigatio
           </p>
           <ul className="space-y-1">
             {section.items.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const isActive =
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
 
               const linkClasses = cn(
                 "group inline-flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",

@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { ReactNode } from "react";
@@ -32,11 +30,17 @@ export function PageHeader({
   return (
     <div className={cn("space-y-4", className)}>
       {breadcrumbs && breadcrumbs.length > 0 ? (
-        <nav aria-label="Breadcrumb" className="flex items-center text-sm text-text-muted">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center text-sm text-text-muted"
+        >
           {breadcrumbs.map((crumb, index) => {
             const isLast = index === breadcrumbs.length - 1;
             return (
-              <span key={`${crumb.label}-${index}`} className="flex items-center">
+              <span
+                key={`${crumb.label}-${index}`}
+                className="flex items-center"
+              >
                 {crumb.href && !isLast ? (
                   <Link
                     href={crumb.href}
@@ -45,9 +49,21 @@ export function PageHeader({
                     {crumb.label}
                   </Link>
                 ) : (
-                  <span className={cn("font-medium", isLast ? "text-text-primary" : "text-text-secondary")}>{crumb.label}</span>
+                  <span
+                    className={cn(
+                      "font-medium",
+                      isLast ? "text-text-primary" : "text-text-secondary"
+                    )}
+                  >
+                    {crumb.label}
+                  </span>
                 )}
-                {!isLast ? <ChevronRight className="mx-2 h-4 w-4 text-outline-strong/60" aria-hidden="true" /> : null}
+                {!isLast ? (
+                  <ChevronRight
+                    className="mx-2 h-4 w-4 text-outline-strong/60"
+                    aria-hidden="true"
+                  />
+                ) : null}
               </span>
             );
           })}
@@ -57,12 +73,22 @@ export function PageHeader({
       <div className="flex flex-col gap-4 border-b border-outline-subtle pb-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold text-text-primary md:text-3xl">{title}</h1>
-            {helpText ? <TooltipHelp label={title} description={helpText} /> : null}
+            <h1 className="text-2xl font-semibold text-text-primary md:text-3xl">
+              {title}
+            </h1>
+            {helpText ? (
+              <TooltipHelp label={title} description={helpText} />
+            ) : null}
           </div>
-          {description ? <p className="max-w-2xl text-sm text-text-secondary">{description}</p> : null}
+          {description ? (
+            <p className="max-w-2xl text-sm text-text-secondary">
+              {description}
+            </p>
+          ) : null}
         </div>
-        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+        {actions ? (
+          <div className="flex flex-wrap items-center gap-2">{actions}</div>
+        ) : null}
       </div>
     </div>
   );

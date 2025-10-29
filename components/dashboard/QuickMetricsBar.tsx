@@ -50,7 +50,14 @@ interface CompactMetricProps {
   helper?: string;
 }
 
-function CompactMetric({ icon: Icon, label, value, change, positive, helper }: CompactMetricProps) {
+function CompactMetric({
+  icon: Icon,
+  label,
+  value,
+  change,
+  positive,
+  helper,
+}: CompactMetricProps) {
   return (
     <div className="flex min-w-[160px] flex-1 items-start gap-3">
       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-intent-brand/10 text-intent-brand">
@@ -135,11 +142,16 @@ export function QuickMetricsBar({
 
   if (isLoading || !data) {
     return (
-      <Card className="border-outline-subtle bg-surface-elevated" aria-live="polite">
+      <Card
+        className="border-outline-subtle bg-surface-elevated"
+        aria-live="polite"
+      >
         <CardContent className="py-6">
           <div className="flex flex-col items-center justify-center gap-3 text-text-secondary">
             <RefreshCw className="h-5 w-5 animate-spin" aria-hidden="true" />
-            <span className="text-sm font-medium">Atualizando indicadores...</span>
+            <span className="text-sm font-medium">
+              Atualizando indicadores...
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -148,7 +160,10 @@ export function QuickMetricsBar({
 
   if (compactMode) {
     return (
-      <Card className="border-outline-subtle bg-surface-elevated" aria-live="polite">
+      <Card
+        className="border-outline-subtle bg-surface-elevated"
+        aria-live="polite"
+      >
         <CardContent className="py-4">
           <div className="flex flex-wrap items-center gap-4">
             <CompactMetric
@@ -192,7 +207,10 @@ export function QuickMetricsBar({
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <Card className="border-outline-subtle bg-surface-elevated" aria-live="polite">
+      <Card
+        className="border-outline-subtle bg-surface-elevated"
+        aria-live="polite"
+      >
         <CardContent className="space-y-6 p-6">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
@@ -204,9 +222,15 @@ export function QuickMetricsBar({
               </p>
               <div className="flex items-center gap-2 text-sm font-medium">
                 {data.revenue.change >= 0 ? (
-                  <TrendingUp className="h-4 w-4 text-intent-success" aria-hidden="true" />
+                  <TrendingUp
+                    className="h-4 w-4 text-intent-success"
+                    aria-hidden="true"
+                  />
                 ) : (
-                  <TrendingDown className="h-4 w-4 text-intent-danger" aria-hidden="true" />
+                  <TrendingDown
+                    className="h-4 w-4 text-intent-danger"
+                    aria-hidden="true"
+                  />
                 )}
                 <span
                   className={
@@ -229,7 +253,10 @@ export function QuickMetricsBar({
         </CardContent>
       </Card>
 
-      <Card className="border-outline-subtle bg-surface-elevated" aria-live="polite">
+      <Card
+        className="border-outline-subtle bg-surface-elevated"
+        aria-live="polite"
+      >
         <CardContent className="space-y-6 p-6">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
@@ -241,9 +268,15 @@ export function QuickMetricsBar({
               </p>
               <div className="flex items-center gap-2 text-sm font-medium">
                 {data.orders.change >= 0 ? (
-                  <TrendingUp className="h-4 w-4 text-intent-success" aria-hidden="true" />
+                  <TrendingUp
+                    className="h-4 w-4 text-intent-success"
+                    aria-hidden="true"
+                  />
                 ) : (
-                  <TrendingDown className="h-4 w-4 text-intent-danger" aria-hidden="true" />
+                  <TrendingDown
+                    className="h-4 w-4 text-intent-danger"
+                    aria-hidden="true"
+                  />
                 )}
                 <span
                   className={
@@ -266,7 +299,10 @@ export function QuickMetricsBar({
         </CardContent>
       </Card>
 
-      <Card className="border-outline-subtle bg-surface-elevated" aria-live="polite">
+      <Card
+        className="border-outline-subtle bg-surface-elevated"
+        aria-live="polite"
+      >
         <CardContent className="space-y-6 p-6">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
@@ -278,9 +314,15 @@ export function QuickMetricsBar({
               </p>
               <div className="flex items-center gap-2 text-sm font-medium">
                 {data.conversion.change >= 0 ? (
-                  <TrendingUp className="h-4 w-4 text-intent-success" aria-hidden="true" />
+                  <TrendingUp
+                    className="h-4 w-4 text-intent-success"
+                    aria-hidden="true"
+                  />
                 ) : (
-                  <TrendingDown className="h-4 w-4 text-intent-danger" aria-hidden="true" />
+                  <TrendingDown
+                    className="h-4 w-4 text-intent-danger"
+                    aria-hidden="true"
+                  />
                 )}
                 <span
                   className={
@@ -289,7 +331,8 @@ export function QuickMetricsBar({
                       : "text-intent-danger"
                   }
                 >
-                  {formatPercentage(data.conversion.change)} na última comparação
+                  {formatPercentage(data.conversion.change)} na última
+                  comparação
                 </span>
               </div>
             </div>
@@ -303,7 +346,10 @@ export function QuickMetricsBar({
         </CardContent>
       </Card>
 
-      <Card className="border-outline-subtle bg-surface-elevated" aria-live="polite">
+      <Card
+        className="border-outline-subtle bg-surface-elevated"
+        aria-live="polite"
+      >
         <CardContent className="space-y-6 p-6">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
@@ -311,7 +357,10 @@ export function QuickMetricsBar({
                 Estoque total
               </p>
               <p className="text-2xl font-semibold text-text-primary">
-                {data.stock.current} <span className="text-base font-medium text-text-secondary">un</span>
+                {data.stock.current}{" "}
+                <span className="text-base font-medium text-text-secondary">
+                  un
+                </span>
               </p>
               {data.stock.lowStock > 0 ? (
                 <p className="text-sm font-medium text-intent-warning">

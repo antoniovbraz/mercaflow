@@ -5,7 +5,13 @@ import { ElasticityChart } from "@/components/analytics/ElasticityChart";
 import { ForecastChart } from "@/components/analytics/ForecastChart";
 import { CompetitorAnalysis } from "@/components/analytics/CompetitorAnalysis";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TooltipHelp } from "@/components/ui/tooltip-help";
 import { getCurrentUser } from "@/utils/supabase/server";
@@ -60,11 +66,15 @@ export default async function AnalyticsPage() {
       <section aria-labelledby="analytics-overview" className="space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="analytics-overview" className="text-lg font-semibold text-text-primary">
+            <h2
+              id="analytics-overview"
+              className="text-lg font-semibold text-text-primary"
+            >
               Indicadores avançados
             </h2>
             <p className="text-sm text-text-secondary">
-              Valores comparados com o período anterior e atualizados na última sincronização.
+              Valores comparados com o período anterior e atualizados na última
+              sincronização.
             </p>
           </div>
           <TooltipHelp
@@ -75,7 +85,10 @@ export default async function AnalyticsPage() {
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {HIGHLIGHTS.map((item) => (
-            <Card key={item.title} className="border-outline-subtle bg-surface-elevated">
+            <Card
+              key={item.title}
+              className="border-outline-subtle bg-surface-elevated"
+            >
               <CardHeader className="space-y-1 pb-3">
                 <CardTitle className="text-sm font-semibold text-text-secondary">
                   {item.title}
@@ -95,11 +108,15 @@ export default async function AnalyticsPage() {
       <section aria-labelledby="analytics-models" className="space-y-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="analytics-models" className="text-lg font-semibold text-text-primary">
+            <h2
+              id="analytics-models"
+              className="text-lg font-semibold text-text-primary"
+            >
               Modelos e previsões
             </h2>
             <p className="text-sm text-text-secondary">
-              Explore relações de preço-demanda, projeções de vendas e benchmark com concorrência.
+              Explore relações de preço-demanda, projeções de vendas e benchmark
+              com concorrência.
             </p>
           </div>
         </div>
@@ -170,11 +187,15 @@ export default async function AnalyticsPage() {
       <section aria-labelledby="analytics-insights" className="space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="analytics-insights" className="text-lg font-semibold text-text-primary">
+            <h2
+              id="analytics-insights"
+              className="text-lg font-semibold text-text-primary"
+            >
               Insights rápidos
             </h2>
             <p className="text-sm text-text-secondary">
-              Sugestões geradas automaticamente a partir dos dados mais recentes.
+              Sugestões geradas automaticamente a partir dos dados mais
+              recentes.
             </p>
           </div>
         </div>

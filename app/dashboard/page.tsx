@@ -11,7 +11,12 @@ import { getUserRole, type UserRole } from "@/utils/supabase/roles";
 
 const quickAccessCards = (
   role: UserRole
-): Array<{ title: string; description: string; href: string; badge?: string }> => {
+): Array<{
+  title: string;
+  description: string;
+  href: string;
+  badge?: string;
+}> => {
   const cards = [
     {
       title: "Catálogo de produtos",
@@ -20,18 +25,21 @@ const quickAccessCards = (
     },
     {
       title: "Pedidos e SLA",
-      description: "Acompanhe vendas, prazos de entrega e notificações críticas.",
+      description:
+        "Acompanhe vendas, prazos de entrega e notificações críticas.",
       href: "/dashboard/pedidos",
     },
     {
       title: "Integração Mercado Livre",
-      description: "Gerencie tokens, webhooks e status da sincronização em tempo real.",
+      description:
+        "Gerencie tokens, webhooks e status da sincronização em tempo real.",
       href: "/dashboard/ml",
       badge: "Integração",
     },
     {
       title: "Configurações do tenant",
-      description: "Personalize limites, notificações e preferências da equipe.",
+      description:
+        "Personalize limites, notificações e preferências da equipe.",
       href: "/dashboard/configuracoes",
     },
   ];
@@ -39,7 +47,8 @@ const quickAccessCards = (
   if (role === "super_admin") {
     cards.push({
       title: "Painel administrativo",
-      description: "Gerencie tenants, usuários e políticas globais com auditoria.",
+      description:
+        "Gerencie tenants, usuários e políticas globais com auditoria.",
       href: "/admin",
       badge: "Super admin",
     });
@@ -79,7 +88,10 @@ export default async function DashboardPage() {
       <section aria-labelledby="dashboard-kpis" className="space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="dashboard-kpis" className="text-lg font-semibold text-text-primary">
+            <h2
+              id="dashboard-kpis"
+              className="text-lg font-semibold text-text-primary"
+            >
               Indicadores rápidos
             </h2>
             <p className="text-sm text-text-secondary">
@@ -97,11 +109,15 @@ export default async function DashboardPage() {
       <section aria-labelledby="dashboard-intelligence" className="space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="dashboard-intelligence" className="text-lg font-semibold text-text-primary">
+            <h2
+              id="dashboard-intelligence"
+              className="text-lg font-semibold text-text-primary"
+            >
               Recomendações da IA
             </h2>
             <p className="text-sm text-text-secondary">
-              Priorize ações de maior impacto sugeridas pelo Intelligence Center.
+              Priorize ações de maior impacto sugeridas pelo Intelligence
+              Center.
             </p>
           </div>
           <TooltipHelp
@@ -115,7 +131,10 @@ export default async function DashboardPage() {
       <section aria-labelledby="dashboard-atalhos" className="space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="dashboard-atalhos" className="text-lg font-semibold text-text-primary">
+            <h2
+              id="dashboard-atalhos"
+              className="text-lg font-semibold text-text-primary"
+            >
               Próximas ações
             </h2>
             <p className="text-sm text-text-secondary">

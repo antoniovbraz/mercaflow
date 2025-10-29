@@ -133,7 +133,10 @@ export function IntelligenceCenter({
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg border border-outline-subtle bg-surface p-3 text-center">
               <div className="mb-1 flex items-center justify-center gap-1">
-                <AlertTriangle className="h-4 w-4 text-intent-danger" aria-hidden="true" />
+                <AlertTriangle
+                  className="h-4 w-4 text-intent-danger"
+                  aria-hidden="true"
+                />
                 <span className="text-2xl font-bold text-intent-danger">
                   {urgentCount}
                 </span>
@@ -142,7 +145,10 @@ export function IntelligenceCenter({
             </div>
             <div className="rounded-lg border border-outline-subtle bg-surface p-3 text-center">
               <div className="mb-1 flex items-center justify-center gap-1">
-                <TrendingUp className="h-4 w-4 text-intent-success" aria-hidden="true" />
+                <TrendingUp
+                  className="h-4 w-4 text-intent-success"
+                  aria-hidden="true"
+                />
                 <span className="text-2xl font-bold text-intent-success">
                   {opportunityCount}
                 </span>
@@ -273,7 +279,10 @@ export function IntelligenceCenter({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="rounded-lg border border-outline-subtle bg-surface p-6">
               <div className="mb-2 flex items-center gap-3">
-                <AlertTriangle className="h-6 w-6 text-intent-danger" aria-hidden="true" />
+                <AlertTriangle
+                  className="h-6 w-6 text-intent-danger"
+                  aria-hidden="true"
+                />
                 <span className="text-3xl font-bold text-intent-danger">
                   {urgentCount}
                 </span>
@@ -288,7 +297,10 @@ export function IntelligenceCenter({
 
             <div className="rounded-lg border border-outline-subtle bg-surface p-6">
               <div className="mb-2 flex items-center gap-3">
-                <TrendingUp className="h-6 w-6 text-intent-success" aria-hidden="true" />
+                <TrendingUp
+                  className="h-6 w-6 text-intent-success"
+                  aria-hidden="true"
+                />
                 <span className="text-3xl font-bold text-intent-success">
                   {opportunityCount}
                 </span>

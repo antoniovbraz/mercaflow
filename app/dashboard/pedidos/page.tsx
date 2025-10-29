@@ -3,7 +3,13 @@ import { redirect } from "next/navigation";
 import { ArrowUpRight, RefreshCw } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TooltipHelp } from "@/components/ui/tooltip-help";
@@ -21,8 +27,19 @@ import { createClient } from "@/utils/supabase/server";
 import { getCurrentTenantId } from "@/utils/supabase/tenancy";
 import { logger } from "@/utils/logger";
 
-const REVENUE_STATUSES = new Set(["paid", "shipped", "delivered", "closed", "partially_paid"]);
-const ON_TIME_SHIPPING_STATUSES = new Set(["ready_to_ship", "shipped", "delivered", "to_be_agreed"]);
+const REVENUE_STATUSES = new Set([
+  "paid",
+  "shipped",
+  "delivered",
+  "closed",
+  "partially_paid",
+]);
+const ON_TIME_SHIPPING_STATUSES = new Set([
+  "ready_to_ship",
+  "shipped",
+  "delivered",
+  "to_be_agreed",
+]);
 const SLA_TARGET = 0.96;
 
 interface OrderMetric {
@@ -87,7 +104,11 @@ function formatPercent(value: number, digits = 1): string {
   });
 }
 
-function formatChange(current: number, previous: number, suffix: string): string {
+function formatChange(
+  current: number,
+  previous: number,
+  suffix: string
+): string {
   if (!Number.isFinite(previous) || previous <= 0) {
     return "Sem histórico";
   }
@@ -113,7 +134,9 @@ function formatDateTime(value: string | null | undefined): string {
   }).format(date);
 }
 
-function extractOrderItems(raw: RawOrder): Array<{ title: string; quantity: number; unitPrice: number }> {
+function extractOrderItems(
+  raw: RawOrder
+): Array<{ title: string; quantity: number; unitPrice: number }> {
   const sources = [raw.items, raw.ml_data?.order_items];
 
   for (const source of sources) {
@@ -128,9 +151,11 @@ function extractOrderItems(raw: RawOrder): Array<{ title: string; quantity: numb
             ? (data.item as Record<string, unknown>)
             : undefined;
 
-        const titleCandidate = [data.item_title, nestedItem?.title, data.title].find(
-          (value) => typeof value === "string" && value.trim().length > 0,
-        );
+        const titleCandidate = [
+          data.item_title,
+          nestedItem?.title,
+          data.title,
+        ].find((value) => typeof value === "string" && value.trim().length > 0);
 
         const title = typeof titleCandidate === "string" ? titleCandidate : "";
         const quantity = toNumber(data.quantity ?? nestedItem?.quantity);
@@ -144,7 +169,12 @@ function extractOrderItems(raw: RawOrder): Array<{ title: string; quantity: numb
           unitPrice,
         };
       })
-      .filter((item): item is { title: string; quantity: number; unitPrice: number } => Boolean(item));
+      .filter(
+        (
+          item
+        ): item is { title: string; quantity: number; unitPrice: number } =>
+          Boolean(item)
+      );
 
     if (items.length > 0) {
       return items;
@@ -164,7 +194,9 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
     .eq("status", "active");
 
   if (integrationsError) {
-    logger.error("Erro ao carregar integrações para métricas de pedidos", { error: integrationsError });
+    logger.error("Erro ao carregar integrações para métricas de pedidos", {
+      error: integrationsError,
+    });
     return {
       metrics: getEmptyMetrics(false),
       recentOrders: [],
@@ -172,7 +204,9 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
     };
   }
 
-  const integrationIds = (integrations ?? []).map((integration) => integration.id).filter(Boolean);
+  const integrationIds = (integrations ?? [])
+    .map((integration) => integration.id)
+    .filter(Boolean);
   const hasIntegrations = integrationIds.length > 0;
 
   if (!hasIntegrations) {
@@ -186,8 +220,12 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
   const now = new Date();
   const nowIso = now.toISOString();
   const last24Iso = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-  const previous24StartIso = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
-  const last30Iso = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const previous24StartIso = new Date(
+    now.getTime() - 48 * 60 * 60 * 1000
+  ).toISOString();
+  const last30Iso = new Date(
+    now.getTime() - 30 * 24 * 60 * 60 * 1000
+  ).toISOString();
 
   const ordersNowQuery = supabase
     .from("ml_orders")
@@ -201,7 +239,10 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
     .gte("date_created", previous24StartIso)
     .lt("date_created", last24Iso);
 
-  const pendingQuery = supabase.from("ml_orders").select("date_created").eq("status", "pending");
+  const pendingQuery = supabase
+    .from("ml_orders")
+    .select("date_created")
+    .eq("status", "pending");
 
   const shippingQuery = supabase
     .from("ml_orders")
@@ -210,7 +251,9 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
 
   const latestQuery = supabase
     .from("ml_orders")
-    .select("ml_order_id,status,total_amount,buyer_nickname,shipping_status,date_created,ml_data,items")
+    .select(
+      "ml_order_id,status,total_amount,buyer_nickname,shipping_status,date_created,ml_data,items"
+    )
     .order("date_created", { ascending: false })
     .limit(6);
 
@@ -229,7 +272,13 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
     latestQuery.in("integration_id", integrationIds);
   }
 
-  const [ordersNowResult, ordersPrevResult, pendingResult, shippingResult, latestResult] = await Promise.all([
+  const [
+    ordersNowResult,
+    ordersPrevResult,
+    pendingResult,
+    shippingResult,
+    latestResult,
+  ] = await Promise.all([
     ordersNowQuery,
     ordersPrevQuery,
     pendingQuery,
@@ -239,12 +288,18 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
 
   const ordersNow = (ordersNowResult.data ?? []) as RawOrder[];
   const ordersPrev = (ordersPrevResult.data ?? []) as RawOrder[];
-  const pendingOrders = (pendingResult.data ?? []) as Array<{ date_created: string | null }>;
-  const shippingOrders = (shippingResult.data ?? []) as Array<{ shipping_status: string | null }>;
+  const pendingOrders = (pendingResult.data ?? []) as Array<{
+    date_created: string | null;
+  }>;
+  const shippingOrders = (shippingResult.data ?? []) as Array<{
+    shipping_status: string | null;
+  }>;
   const latestOrdersRaw = (latestResult.data ?? []) as RawOrder[];
 
   if (ordersNowResult.error) {
-    logger.error("Erro ao carregar pedidos recentes para métricas", { error: ordersNowResult.error });
+    logger.error("Erro ao carregar pedidos recentes para métricas", {
+      error: ordersNowResult.error,
+    });
   }
   if (ordersPrevResult.error) {
     logger.error("Erro ao carregar histórico para comparação de pedidos", {
@@ -252,7 +307,9 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
     });
   }
   if (pendingResult.error) {
-    logger.error("Erro ao carregar pedidos pendentes", { error: pendingResult.error });
+    logger.error("Erro ao carregar pedidos pendentes", {
+      error: pendingResult.error,
+    });
   }
   if (shippingResult.error) {
     logger.error("Erro ao carregar dados de envio para SLA", {
@@ -260,14 +317,28 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
     });
   }
   if (latestResult.error) {
-    logger.error("Erro ao carregar lista de pedidos recentes", { error: latestResult.error });
+    logger.error("Erro ao carregar lista de pedidos recentes", {
+      error: latestResult.error,
+    });
   }
 
   const ordersNowCount = ordersNow.length;
   const ordersPrevCount = ordersPrev.length;
 
-  const revenueNow = ordersNow.reduce((sum, order) => (REVENUE_STATUSES.has((order.status ?? "").toLowerCase()) ? sum + toNumber(order.total_amount) : sum), 0);
-  const revenuePrev = ordersPrev.reduce((sum, order) => (REVENUE_STATUSES.has((order.status ?? "").toLowerCase()) ? sum + toNumber(order.total_amount) : sum), 0);
+  const revenueNow = ordersNow.reduce(
+    (sum, order) =>
+      REVENUE_STATUSES.has((order.status ?? "").toLowerCase())
+        ? sum + toNumber(order.total_amount)
+        : sum,
+    0
+  );
+  const revenuePrev = ordersPrev.reduce(
+    (sum, order) =>
+      REVENUE_STATUSES.has((order.status ?? "").toLowerCase())
+        ? sum + toNumber(order.total_amount)
+        : sum,
+    0
+  );
 
   const pendingCritical = pendingOrders.filter((order) => {
     if (!order?.date_created) return false;
@@ -278,7 +349,9 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
   }).length;
 
   const shippingTotal = shippingOrders.length;
-  const shippingOnTime = shippingOrders.filter((order) => ON_TIME_SHIPPING_STATUSES.has((order.shipping_status ?? "").toLowerCase())).length;
+  const shippingOnTime = shippingOrders.filter((order) =>
+    ON_TIME_SHIPPING_STATUSES.has((order.shipping_status ?? "").toLowerCase())
+  ).length;
   const shippingRate = shippingTotal > 0 ? shippingOnTime / shippingTotal : 0;
 
   const metrics: OrderMetric[] = [
@@ -286,7 +359,11 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
       label: "Pedidos sincronizados",
       value: formatNumber(ordersNowCount),
       helper: "Últimas 24h",
-      trend: formatChange(ordersNowCount, ordersPrevCount, "vs. 24h anteriores"),
+      trend: formatChange(
+        ordersNowCount,
+        ordersPrevCount,
+        "vs. 24h anteriores"
+      ),
     },
     {
       label: "Receita confirmada",
@@ -298,7 +375,10 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
       label: "Pedidos pendentes",
       value: formatNumber(pendingOrders.length),
       helper: "Aguardam pagamento",
-      trend: pendingCritical > 0 ? `${pendingCritical} com mais de 48h` : "Todos dentro do SLA",
+      trend:
+        pendingCritical > 0
+          ? `${pendingCritical} com mais de 48h`
+          : "Todos dentro do SLA",
     },
     {
       label: "SLA de envio",
@@ -307,7 +387,10 @@ async function loadOrdersOverview(tenantId: string): Promise<OrdersOverview> {
       trend:
         shippingRate >= SLA_TARGET
           ? "Meta interna atingida"
-          : `Faltam ${formatPercent(Math.max(SLA_TARGET * 100 - shippingRate * 100, 0), 1)} pp`,
+          : `Faltam ${formatPercent(
+              Math.max(SLA_TARGET * 100 - shippingRate * 100, 0),
+              1
+            )} pp`,
     },
   ];
 
@@ -337,7 +420,9 @@ function getEmptyMetrics(hasIntegrations: boolean): OrderMetric[] {
     {
       label: "Pedidos sincronizados",
       value: "0",
-      helper: hasIntegrations ? "Sem registros recentes" : "Conecte uma integração para começar",
+      helper: hasIntegrations
+        ? "Sem registros recentes"
+        : "Conecte uma integração para começar",
       trend: "Sem histórico",
     },
     {
@@ -418,11 +503,15 @@ export default async function PedidosPage() {
       <section aria-labelledby="orders-metrics" className="space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="orders-metrics" className="text-lg font-semibold text-text-primary">
+            <h2
+              id="orders-metrics"
+              className="text-lg font-semibold text-text-primary"
+            >
               Indicadores operacionais
             </h2>
             <p className="text-sm text-text-secondary">
-              KPIs atualizados com base nos pedidos sincronizados em tempo real com o Mercado Livre.
+              KPIs atualizados com base nos pedidos sincronizados em tempo real
+              com o Mercado Livre.
             </p>
           </div>
           <TooltipHelp
@@ -433,12 +522,17 @@ export default async function PedidosPage() {
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {overview.metrics.map((metric) => (
-            <Card key={metric.label} className="border-outline-subtle bg-surface-elevated">
+            <Card
+              key={metric.label}
+              className="border-outline-subtle bg-surface-elevated"
+            >
               <CardHeader className="space-y-1 pb-3">
                 <CardTitle className="text-sm font-semibold text-text-secondary">
                   {metric.label}
                 </CardTitle>
-                <p className="text-2xl font-semibold text-text-primary">{metric.value}</p>
+                <p className="text-2xl font-semibold text-text-primary">
+                  {metric.value}
+                </p>
               </CardHeader>
               <CardContent className="flex items-center justify-between gap-2 pt-0 text-sm text-text-muted">
                 <span>{metric.helper}</span>
@@ -454,11 +548,16 @@ export default async function PedidosPage() {
       <section aria-labelledby="orders-sync" className="space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 id="orders-sync" className="text-lg font-semibold text-text-primary">
+            <h2
+              id="orders-sync"
+              className="text-lg font-semibold text-text-primary"
+            >
               Sincronização com Mercado Livre
             </h2>
             <p className="text-sm text-text-secondary">
-              Os pedidos são atualizados automaticamente a cada 15 minutos. Utilize a lista completa para forçar uma nova captura quando necessário.
+              Os pedidos são atualizados automaticamente a cada 15 minutos.
+              Utilize a lista completa para forçar uma nova captura quando
+              necessário.
             </p>
           </div>
           <Button variant="outline" size="sm" className="gap-2" asChild>
@@ -476,7 +575,8 @@ export default async function PedidosPage() {
                 Pedidos recentes
               </CardTitle>
               <CardDescription className="text-text-secondary">
-                Lista dos pedidos mais recentes para validar totais e status antes de abrir a visão detalhada.
+                Lista dos pedidos mais recentes para validar totais e status
+                antes de abrir a visão detalhada.
               </CardDescription>
             </div>
           </CardHeader>
@@ -507,19 +607,29 @@ export default async function PedidosPage() {
               <TableBody>
                 {hasRecentOrders ? (
                   overview.recentOrders.map((order) => (
-                    <TableRow key={`${order.orderId}-${order.updatedAt}`} className="border-outline-subtle/80">
+                    <TableRow
+                      key={`${order.orderId}-${order.updatedAt}`}
+                      className="border-outline-subtle/80"
+                    >
                       <TableCell className="font-semibold text-text-primary">
                         {order.orderId}
                       </TableCell>
                       <TableCell className="max-w-[240px] truncate text-text-secondary">
                         {order.title}
                       </TableCell>
-                      <TableCell className="text-text-secondary">{order.buyer}</TableCell>
+                      <TableCell className="text-text-secondary">
+                        {order.buyer}
+                      </TableCell>
                       <TableCell className="text-right font-semibold text-text-primary">
                         {order.total}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge className={STATUS_STYLE[order.status] ?? "bg-surface text-text-secondary border-outline-subtle"}>
+                        <Badge
+                          className={
+                            STATUS_STYLE[order.status] ??
+                            "bg-surface text-text-secondary border-outline-subtle"
+                          }
+                        >
                           {STATUS_LABEL[order.status] ?? order.status}
                         </Badge>
                       </TableCell>
@@ -530,14 +640,25 @@ export default async function PedidosPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="py-10 text-center text-sm text-text-muted">
-                      Nenhum pedido recente disponível. Conecte uma integração ou sincronize manualmente para ver atualizações aqui.
+                    <TableCell
+                      colSpan={6}
+                      className="py-10 text-center text-sm text-text-muted"
+                    >
+                      Nenhum pedido recente disponível. Conecte uma integração
+                      ou sincronize manualmente para ver atualizações aqui.
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
               <TableCaption className="text-left">
-                Acesse a lista completa em <Link href="/pedidos" className="font-semibold text-intent-brand underline-offset-4 hover:underline">Pedidos &gt; Lista</Link> para filtros, exportações e ações em massa.
+                Acesse a lista completa em{" "}
+                <Link
+                  href="/pedidos"
+                  className="font-semibold text-intent-brand underline-offset-4 hover:underline"
+                >
+                  Pedidos &gt; Lista
+                </Link>{" "}
+                para filtros, exportações e ações em massa.
               </TableCaption>
             </Table>
           </CardContent>

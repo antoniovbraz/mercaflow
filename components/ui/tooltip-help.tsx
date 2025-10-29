@@ -1,7 +1,12 @@
 "use client";
 
 import { HelpCircle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface TooltipHelpProps {
@@ -10,7 +15,11 @@ interface TooltipHelpProps {
   className?: string;
 }
 
-export function TooltipHelp({ label, description, className }: TooltipHelpProps) {
+export function TooltipHelp({
+  label,
+  description,
+  className,
+}: TooltipHelpProps) {
   return (
     <TooltipProvider>
       <Tooltip delayDuration={150} disableHoverableContent>
@@ -28,7 +37,9 @@ export function TooltipHelp({ label, description, className }: TooltipHelpProps)
         <TooltipContent className="text-sm">
           <p className="font-semibold text-text-primary">{label}</p>
           {description ? (
-            <span className="mt-1 block text-sm text-text-secondary">{description}</span>
+            <span className="mt-1 block text-sm text-text-secondary">
+              {description}
+            </span>
           ) : null}
         </TooltipContent>
       </Tooltip>

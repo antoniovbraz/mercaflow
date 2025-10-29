@@ -2,16 +2,12 @@
 
 import Link from "next/link";
 import { ReactNode, useMemo, useState } from "react";
-import {
-  Bell,
-  LifeBuoy,
-  Menu,
-  Search,
-  X,
-  Building2,
-} from "lucide-react";
+import { Bell, LifeBuoy, Menu, Search, X, Building2 } from "lucide-react";
 
-import { DashboardNavigation, DashboardNavSection } from "@/components/dashboard/dashboard-navigation";
+import {
+  DashboardNavigation,
+  DashboardNavSection,
+} from "@/components/dashboard/dashboard-navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -62,7 +58,9 @@ export function DashboardShell({
               MF
             </div>
             <div className="space-y-0.5">
-              <p className="text-sm font-semibold text-text-primary">MercaFlow</p>
+              <p className="text-sm font-semibold text-text-primary">
+                MercaFlow
+              </p>
               <div className="flex items-center gap-1 text-xs text-text-muted">
                 <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
                 <span className="truncate" title={tenantName ?? "Conta"}>
@@ -114,7 +112,10 @@ export function DashboardShell({
 
             <div className="flex flex-1 justify-center md:justify-start">
               <div className="relative w-full max-w-md">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
+                  aria-hidden="true"
+                />
                 <input
                   type="search"
                   placeholder="Buscar no painel"
@@ -140,7 +141,10 @@ export function DashboardShell({
                 <Bell className="h-4 w-4" aria-hidden="true" />
               </button>
               <div className="hidden min-w-[160px] flex-col items-start md:flex">
-                <span className="text-sm font-semibold text-text-primary" title={userEmail}>
+                <span
+                  className="text-sm font-semibold text-text-primary"
+                  title={userEmail}
+                >
                   {userEmail}
                 </span>
                 <Badge variant="secondary" className="mt-1">
@@ -151,13 +155,27 @@ export function DashboardShell({
           </div>
         </header>
 
-        <main id="dashboard-content" className="flex-1 bg-surface px-4 pb-10 pt-6 md:px-8">
-          <div className={cn("mx-auto w-full max-w-7xl space-y-8", contentClassName)}>{children}</div>
+        <main
+          id="dashboard-content"
+          className="flex-1 bg-surface px-4 pb-10 pt-6 md:px-8"
+        >
+          <div
+            className={cn(
+              "mx-auto w-full max-w-7xl space-y-8",
+              contentClassName
+            )}
+          >
+            {children}
+          </div>
         </main>
       </div>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-50 flex md:hidden" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 z-50 flex md:hidden"
+          role="dialog"
+          aria-modal="true"
+        >
           <button
             type="button"
             className="flex-1 bg-black/40"
