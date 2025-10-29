@@ -1,12 +1,39 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/utils/supabase/server";
 import Link from "next/link";
+
 import { ElasticityChart } from "@/components/analytics/ElasticityChart";
 import { ForecastChart } from "@/components/analytics/ForecastChart";
 import { CompetitorAnalysis } from "@/components/analytics/CompetitorAnalysis";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { TooltipHelp } from "@/components/ui/tooltip-help";
+import { getCurrentUser } from "@/utils/supabase/server";
+
+const HIGHLIGHTS = [
+  {
+    title: "Elasticidade média",
+    value: "-1,2",
+    helper: "Demanda elástica detectada",
+  },
+  {
+    title: "Precisão do forecast",
+    value: "87%",
+    helper: "Últimos 30 dias",
+  },
+  {
+    title: "Posição competitiva",
+    value: "2º",
+    helper: "Entre 15 vendedores",
+  },
+  {
+    title: "ROI potencial",
+    value: "R$ 8,5 mil",
+    helper: "Com base em recomendações da IA",
+  },
+];
 
 export default async function AnalyticsPage() {
-  // Require authentication
   const user = await getCurrentUser();
 
   if (!user) {
@@ -14,306 +41,182 @@ export default async function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Background decorative elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-32 w-80 h-80 rounded-full bg-gradient-to-br from-blue-400/10 to-indigo-600/10 blur-3xl" />
-        <div className="absolute top-80 -left-32 w-80 h-80 rounded-full bg-gradient-to-br from-indigo-400/10 to-purple-600/10 blur-3xl" />
-      </div>
+    <div className="space-y-10">
+      <PageHeader
+        title="Analytics Intelligence"
+        description="Modelos de elasticidade, previsão e competitividade para orientar decisões de preço e estoque."
+        helpText="Os gráficos consideram os últimos 90 dias, com atualização automática a cada sincronização completa do Mercado Livre."
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Analytics" },
+        ]}
+        actions={
+          <Badge variant="secondary" className="uppercase">
+            Em tempo real
+          </Badge>
+        }
+      />
 
-      <div className="relative">
-        {/* Header */}
-        <div className="border-b border-gray-200/50 bg-white/80 backdrop-blur-md">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-2 transition-colors"
-                >
-                  <svg
-                    className="w-4 h-4 mr-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                  Voltar ao Dashboard
-                </Link>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Analytics Intelligence
-                </h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  Análises avançadas: Elasticidade, Forecast e Competitividade
+      <section aria-labelledby="analytics-overview" className="space-y-4">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 id="analytics-overview" className="text-lg font-semibold text-text-primary">
+              Indicadores avançados
+            </h2>
+            <p className="text-sm text-text-secondary">
+              Valores comparados com o período anterior e atualizados na última sincronização.
+            </p>
+          </div>
+          <TooltipHelp
+            label="Sobre os indicadores"
+            description="Elasticidade inferior a -1 indica demanda elástica. A posição competitiva acompanha o ranking da categoria monitorada."
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {HIGHLIGHTS.map((item) => (
+            <Card key={item.title} className="border-outline-subtle bg-surface-elevated">
+              <CardHeader className="space-y-1 pb-3">
+                <CardTitle className="text-sm font-semibold text-text-secondary">
+                  {item.title}
+                </CardTitle>
+                <p className="text-2xl font-semibold text-text-primary">
+                  {item.value}
                 </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
-                  Em Tempo Real
-                </span>
-              </div>
-            </div>
+              </CardHeader>
+              <CardContent className="pt-0 text-sm text-text-muted">
+                {item.helper}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="analytics-models" className="space-y-6">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 id="analytics-models" className="text-lg font-semibold text-text-primary">
+              Modelos e previsões
+            </h2>
+            <p className="text-sm text-text-secondary">
+              Explore relações de preço-demanda, projeções de vendas e benchmark com concorrência.
+            </p>
           </div>
         </div>
 
-        {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            {/* Elasticidade Média */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100/50 p-6 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                    />
-                  </svg>
-                </div>
+        <div className="grid gap-6 xl:grid-cols-2">
+          <Card className="border-outline-subtle bg-surface-elevated">
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div>
+                <CardTitle className="text-xl text-text-primary">
+                  Elasticidade de preços
+                </CardTitle>
+                <CardDescription className="text-text-secondary">
+                  Curva preço-demanda e pontos ideais de ajuste.
+                </CardDescription>
               </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">
-                Elasticidade Média
-              </h3>
-              <p className="text-2xl font-bold text-gray-900">-1.2</p>
-              <p className="text-xs text-gray-500 mt-1">
-                Demanda elástica detectada
+              <TooltipHelp
+                label="Como interpretar"
+                description="A elasticidade indica o quanto a demanda varia conforme ajustes de preço. Valores menores que -1 indicam alta sensibilidade."
+              />
+            </CardHeader>
+            <CardContent className="pt-0">
+              <ElasticityChart compactMode={false} />
+            </CardContent>
+          </Card>
+
+          <Card className="border-outline-subtle bg-surface-elevated">
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div>
+                <CardTitle className="text-xl text-text-primary">
+                  Forecast de vendas
+                </CardTitle>
+                <CardDescription className="text-text-secondary">
+                  Projeções de 30, 60 e 90 dias com intervalo de confiança.
+                </CardDescription>
+              </div>
+              <TooltipHelp
+                label="Sobre o forecast"
+                description="Os modelos combinam séries temporais e variáveis externas (preço, sazonalidade, estoque) para estimar demanda futura."
+              />
+            </CardHeader>
+            <CardContent className="pt-0">
+              <ForecastChart compactMode={false} />
+            </CardContent>
+          </Card>
+
+          <Card className="border-outline-subtle bg-surface-elevated xl:col-span-2">
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div>
+                <CardTitle className="text-xl text-text-primary">
+                  Análise competitiva
+                </CardTitle>
+                <CardDescription className="text-text-secondary">
+                  Benchmarking com os principais concorrentes acompanhados.
+                </CardDescription>
+              </div>
+              <TooltipHelp
+                label="Origem dos dados"
+                description="Comparação baseada em scraping autorizado do Mercado Livre, considerando preço, reputação e SLA de envio."
+              />
+            </CardHeader>
+            <CardContent className="pt-0">
+              <CompetitorAnalysis category="Eletrônicos" />
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <section aria-labelledby="analytics-insights" className="space-y-4">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 id="analytics-insights" className="text-lg font-semibold text-text-primary">
+              Insights rápidos
+            </h2>
+            <p className="text-sm text-text-secondary">
+              Sugestões geradas automaticamente a partir dos dados mais recentes.
+            </p>
+          </div>
+        </div>
+
+        <Card className="border-outline-subtle bg-surface-elevated">
+          <CardContent className="grid gap-4 p-6 md:grid-cols-3">
+            <div className="rounded-lg border border-outline-subtle bg-surface p-4">
+              <p className="text-sm font-semibold text-text-primary">
+                Melhor janela para ajustes
+              </p>
+              <p className="mt-1 text-sm text-text-secondary">
+                Terça-feira, 10h às 12h concentra 28% das visualizações.
               </p>
             </div>
-
-            {/* Forecast Accuracy */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100/50 p-6 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">
-                Precisão Forecast
-              </h3>
-              <p className="text-2xl font-bold text-gray-900">87%</p>
-              <p className="text-xs text-gray-500 mt-1">Últimos 30 dias</p>
-            </div>
-
-            {/* Posição Competitiva */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100/50 p-6 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">
-                Posição Competitiva
-              </h3>
-              <p className="text-2xl font-bold text-gray-900">2º</p>
-              <p className="text-xs text-gray-500 mt-1">De 15 vendedores</p>
-            </div>
-
-            {/* ROI Potencial */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100/50 p-6 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">
-                ROI Potencial
-              </h3>
-              <p className="text-2xl font-bold text-gray-900">R$ 8.5k</p>
-              <p className="text-xs text-gray-500 mt-1">
-                Otimizações sugeridas
+            <div className="rounded-lg border border-outline-subtle bg-surface p-4">
+              <p className="text-sm font-semibold text-text-primary">
+                Categoria em alta
+              </p>
+              <p className="mt-1 text-sm text-text-secondary">
+                Eletrônicos cresceram 32% na última semana vs. base histórica.
               </p>
             </div>
-          </div>
-
-          {/* Analytics Sections Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Elasticidade de Preços */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100/50 shadow-xl">
-              <div className="p-6 border-b border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">
-                      Elasticidade de Preços
-                    </h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Curva preço-demanda e pontos ótimos
-                    </p>
-                  </div>
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg
-                      className="w-6 h-6 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6">
-                <ElasticityChart compactMode={false} />
-              </div>
+            <div className="rounded-lg border border-outline-subtle bg-surface p-4">
+              <p className="text-sm font-semibold text-text-primary">
+                Produtos com margem ociosa
+              </p>
+              <p className="mt-1 text-sm text-text-secondary">
+                3 itens estão 15% abaixo do preço ideal estimado pela IA.
+              </p>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Forecast 30/60/90 dias */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100/50 shadow-xl">
-              <div className="p-6 border-b border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">
-                      Forecast de Vendas
-                    </h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Previsões 30/60/90 dias com intervalos
-                    </p>
-                  </div>
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <svg
-                      className="w-6 h-6 text-purple-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6">
-                <ForecastChart compactMode={false} />
-              </div>
-            </div>
-
-            {/* Análise Competitiva */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100/50 shadow-xl lg:col-span-2">
-              <div className="p-6 border-b border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">
-                      Análise Competitiva
-                    </h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Benchmarking com principais concorrentes
-                    </p>
-                  </div>
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg
-                      className="w-6 h-6 text-green-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6">
-                <CompetitorAnalysis category="Eletrônicos" />
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Insights */}
-          <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
-              💡 Insights Rápidos
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm font-medium text-gray-900 mb-1">
-                  Melhor Hora para Ajuste
-                </p>
-                <p className="text-xs text-gray-600">
-                  Terça-feira, 10h-12h - Pico de visualizações
-                </p>
-              </div>
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm font-medium text-gray-900 mb-1">
-                  Categoria em Alta
-                </p>
-                <p className="text-xs text-gray-600">
-                  Eletrônicos: +32% demanda vs semana anterior
-                </p>
-              </div>
-              <div className="bg-white/80 rounded-lg p-4">
-                <p className="text-sm font-medium text-gray-900 mb-1">
-                  Oportunidade Detectada
-                </p>
-                <p className="text-xs text-gray-600">
-                  3 produtos com preço 15% abaixo do ideal
-                </p>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
+        <div className="text-right">
+          <Link
+            href="/dashboard/analytics?export=csv"
+            className="text-sm font-semibold text-intent-brand underline-offset-4 hover:underline"
+          >
+            Exportar dados detalhados
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

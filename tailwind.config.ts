@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
@@ -51,13 +52,43 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        surface: {
+          DEFAULT: "var(--mf-surface-default)",
+          elevated: "var(--mf-surface-elevated)",
+          muted: "var(--mf-surface-muted)",
+        },
+        text: {
+          primary: "var(--mf-text-primary)",
+          secondary: "var(--mf-text-secondary)",
+          muted: "var(--mf-text-muted)",
+        },
+        outline: {
+          subtle: "var(--mf-border-subtle)",
+          strong: "var(--mf-border-strong)",
+        },
+        intent: {
+          brand: "var(--mf-color-brand-500)",
+          brandMuted: "var(--mf-color-brand-100)",
+          success: "var(--mf-color-success-500)",
+          warning: "var(--mf-color-warning-500)",
+          danger: "var(--mf-color-danger-500)",
+          info: "var(--mf-color-info-500)",
+        },
+      },
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", "Inter", "system-ui", "sans-serif"],
+        heading: ["var(--font-geist-sans)", "Inter", "system-ui", "sans-serif"],
       },
       borderRadius: {
+        xl: "calc(var(--radius) + 6px)",
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "calc(var(--radius) - 4px)",
+        sm: "calc(var(--radius) - 6px)",
+      },
+      boxShadow: {
+        focus: "0 0 0 3px var(--mf-focus-ring)",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

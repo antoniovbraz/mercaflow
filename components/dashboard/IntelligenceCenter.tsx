@@ -100,16 +100,18 @@ export function IntelligenceCenter({
 
   if (compactMode) {
     return (
-      <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
+      <Card className="border-outline-subtle bg-surface-elevated">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg">
-                <Brain className="h-5 w-5 text-white" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-intent-brand/10 text-intent-brand">
+                <Brain className="h-5 w-5" aria-hidden="true" />
               </div>
               <div>
-                <CardTitle className="text-lg">Intelligence Center</CardTitle>
-                <CardDescription className="text-xs">
+                <CardTitle className="text-lg text-text-primary">
+                  Intelligence Center
+                </CardTitle>
+                <CardDescription className="text-xs text-text-muted">
                   Insights ativos priorizados
                 </CardDescription>
               </div>
@@ -128,33 +130,33 @@ export function IntelligenceCenter({
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="p-3 bg-white rounded-lg text-center">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <AlertTriangle className="h-4 w-4 text-red-600" />
-                <span className="text-2xl font-bold text-red-600">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg border border-outline-subtle bg-surface p-3 text-center">
+              <div className="mb-1 flex items-center justify-center gap-1">
+                <AlertTriangle className="h-4 w-4 text-intent-danger" aria-hidden="true" />
+                <span className="text-2xl font-bold text-intent-danger">
                   {urgentCount}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">Urgentes</p>
+              <p className="text-xs text-text-muted">Urgentes</p>
             </div>
-            <div className="p-3 bg-white rounded-lg text-center">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                <span className="text-2xl font-bold text-green-600">
+            <div className="rounded-lg border border-outline-subtle bg-surface p-3 text-center">
+              <div className="mb-1 flex items-center justify-center gap-1">
+                <TrendingUp className="h-4 w-4 text-intent-success" aria-hidden="true" />
+                <span className="text-2xl font-bold text-intent-success">
                   {opportunityCount}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">Oportunidades</p>
+              <p className="text-xs text-text-muted">Oportunidades</p>
             </div>
-            <div className="p-3 bg-white rounded-lg text-center">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <Zap className="h-4 w-4 text-purple-600" />
-                <span className="text-lg font-bold text-purple-600">
+            <div className="rounded-lg border border-outline-subtle bg-surface p-3 text-center">
+              <div className="mb-1 flex items-center justify-center gap-1">
+                <Zap className="h-4 w-4 text-intent-brand" aria-hidden="true" />
+                <span className="text-lg font-bold text-intent-brand">
                   {formatCurrency(totalPotentialROI)}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">ROI Potencial</p>
+              <p className="text-xs text-text-muted">ROI Potencial</p>
             </div>
           </div>
 
@@ -175,7 +177,7 @@ export function IntelligenceCenter({
               {insights.slice(0, 3).map((insight) => (
                 <div
                   key={insight.id}
-                  className="p-3 bg-white rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                  className="cursor-pointer rounded-lg border border-outline-subtle bg-surface p-3 transition-colors hover:border-intent-brand hover:bg-intent-brand/5"
                   onClick={() => handleViewDetails(insight)}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -239,18 +241,18 @@ export function IntelligenceCenter({
   return (
     <div className="space-y-6">
       {/* Header com Stats */}
-      <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
+      <Card className="border-outline-subtle bg-surface-elevated">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-lg">
-                <Brain className="h-8 w-8 text-white" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-intent-brand/10 text-intent-brand">
+                <Brain className="h-7 w-7" aria-hidden="true" />
               </div>
               <div>
-                <CardTitle className="text-2xl">
-                  🧠 Intelligence Center
+                <CardTitle className="text-2xl text-text-primary">
+                  Intelligence Center
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-text-muted">
                   Insights acionáveis baseados em economia aplicada e IA
                 </CardDescription>
               </div>
@@ -268,48 +270,48 @@ export function IntelligenceCenter({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-6 bg-white rounded-xl shadow-sm border border-red-100">
-              <div className="flex items-center gap-3 mb-2">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
-                <span className="text-3xl font-bold text-red-600">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-lg border border-outline-subtle bg-surface p-6">
+              <div className="mb-2 flex items-center gap-3">
+                <AlertTriangle className="h-6 w-6 text-intent-danger" aria-hidden="true" />
+                <span className="text-3xl font-bold text-intent-danger">
                   {urgentCount}
                 </span>
               </div>
-              <p className="text-sm font-medium text-gray-700">
-                Ações Urgentes
+              <p className="text-sm font-semibold text-text-primary">
+                Ações urgentes
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-xs text-text-muted">
                 Alta prioridade - ação imediata recomendada
               </p>
             </div>
 
-            <div className="p-6 bg-white rounded-xl shadow-sm border border-green-100">
-              <div className="flex items-center gap-3 mb-2">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-                <span className="text-3xl font-bold text-green-600">
+            <div className="rounded-lg border border-outline-subtle bg-surface p-6">
+              <div className="mb-2 flex items-center gap-3">
+                <TrendingUp className="h-6 w-6 text-intent-success" aria-hidden="true" />
+                <span className="text-3xl font-bold text-intent-success">
                   {opportunityCount}
                 </span>
               </div>
-              <p className="text-sm font-medium text-gray-700">
-                Oportunidades de Preço
+              <p className="text-sm font-semibold text-text-primary">
+                Oportunidades de preço
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-xs text-text-muted">
                 Otimizações detectadas pela IA
               </p>
             </div>
 
-            <div className="p-6 bg-white rounded-xl shadow-sm border border-purple-100">
-              <div className="flex items-center gap-3 mb-2">
-                <Zap className="h-6 w-6 text-purple-600" />
-                <span className="text-2xl font-bold text-purple-600">
+            <div className="rounded-lg border border-outline-subtle bg-surface p-6">
+              <div className="mb-2 flex items-center gap-3">
+                <Zap className="h-6 w-6 text-intent-brand" aria-hidden="true" />
+                <span className="text-2xl font-bold text-intent-brand">
                   {formatCurrency(totalPotentialROI)}
                 </span>
               </div>
-              <p className="text-sm font-medium text-gray-700">
-                ROI Potencial Total
+              <p className="text-sm font-semibold text-text-primary">
+                ROI potencial total
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-xs text-text-muted">
                 Impacto estimado de todos os insights ativos
               </p>
             </div>
