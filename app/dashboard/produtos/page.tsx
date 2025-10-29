@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowUpRight, Boxes, Sparkles } from "lucide-react";
+import { Boxes, Sparkles } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
 import {
@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TooltipHelp } from "@/components/ui/tooltip-help";
 import {
@@ -552,14 +551,13 @@ export default async function ProdutosPage() {
           { label: "Dashboard", href: "/dashboard" },
           { label: "Produtos" },
         ]}
-        actions={
-          <Button asChild size="sm">
-            <Link href="/produtos" className="inline-flex items-center">
-              Gerenciar catálogo completo
-              <ArrowUpRight className="ml-1 h-4 w-4" aria-hidden="true" />
-            </Link>
-          </Button>
-        }
+        actions={[
+          {
+            href: "/produtos",
+            label: "Gerenciar catálogo completo",
+            variant: "default",
+          },
+        ]}
       />
 
       <section aria-labelledby="products-metrics" className="space-y-4">

@@ -12,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { TooltipHelp } from "@/components/ui/tooltip-help";
 import { getCurrentUser } from "@/utils/supabase/server";
 
@@ -56,11 +55,6 @@ export default async function AnalyticsPage() {
           { label: "Dashboard", href: "/dashboard" },
           { label: "Analytics" },
         ]}
-        actions={
-          <Badge variant="secondary" className="uppercase">
-            Em tempo real
-          </Badge>
-        }
       />
 
       <section aria-labelledby="analytics-overview" className="space-y-4">

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { IntelligenceCenter } from "@/components/dashboard/IntelligenceCenter";
 import { QuickMetricsBar } from "@/components/dashboard/QuickMetricsBar";
 import { PageHeader } from "@/components/ui/page-header";
-import { Button } from "@/components/ui/button";
 import { TooltipHelp } from "@/components/ui/tooltip-help";
 import { getCurrentUser } from "@/utils/supabase/server";
 import { getUserRole, type UserRole } from "@/utils/supabase/roles";
@@ -73,16 +72,18 @@ export default async function DashboardPage() {
         description="Acompanhe métricas críticas, recomendações da IA e próximos passos do tenant."
         helpText="Esta tela reúne KPIs, insights e atalhos para as áreas mais usadas. As métricas refletem o período dos últimos 30 dias."
         breadcrumbs={[{ label: "Dashboard" }]}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" asChild>
-              <Link href="/dashboard/ml">Status das integrações</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/dashboard/produtos">Abrir catálogo</Link>
-            </Button>
-          </div>
-        }
+        actions={[
+          {
+            href: "/dashboard/ml",
+            label: "Status das integrações",
+            variant: "outline",
+          },
+          {
+            href: "/dashboard/produtos",
+            label: "Abrir catálogo",
+            variant: "default",
+          },
+        ]}
       />
 
       <section aria-labelledby="dashboard-kpis" className="space-y-4">

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowUpRight, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
 import {
@@ -490,14 +490,13 @@ export default async function PedidosPage() {
           { label: "Dashboard", href: "/dashboard" },
           { label: "Pedidos" },
         ]}
-        actions={
-          <Button asChild size="sm">
-            <Link href="/pedidos" className="inline-flex items-center">
-              Abrir lista completa
-              <ArrowUpRight className="ml-1 h-4 w-4" aria-hidden="true" />
-            </Link>
-          </Button>
-        }
+        actions={[
+          {
+            href: "/pedidos",
+            label: "Abrir lista completa",
+            variant: "default",
+          },
+        ]}
       />
 
       <section aria-labelledby="orders-metrics" className="space-y-4">

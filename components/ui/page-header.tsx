@@ -1,21 +1,25 @@
-"use client";
-
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { TooltipHelp } from "@/components/ui/tooltip-help";
+import { PageHeaderActions } from "@/components/ui/page-header-actions";
 
 interface BreadcrumbItem {
   label: string;
   href?: string;
 }
 
+interface PageHeaderAction {
+  href: string;
+  label: string;
+  variant?: "default" | "outline" | "secondary" | "ghost" | "link";
+}
+
 interface PageHeaderProps {
   title: string;
   description?: string;
-  actions?: ReactNode;
+  actions?: PageHeaderAction[];
   breadcrumbs?: BreadcrumbItem[];
   helpText?: string;
   className?: string;
@@ -88,8 +92,8 @@ export function PageHeader({
             </p>
           ) : null}
         </div>
-        {actions ? (
-          <div className="flex flex-wrap items-center gap-2">{actions}</div>
+        {actions && actions.length > 0 ? (
+          <PageHeaderActions actions={actions} />
         ) : null}
       </div>
     </div>
