@@ -18,22 +18,25 @@ export async function GET() {
     // Get user's tenant ID
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id')
+      .select('tenant_id')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
-    if (profileError || !profile) {
+    if (profileError) {
+      console.error('Error loading profile for ML status:', profileError)
       return NextResponse.json(
-        { error: 'Perfil não encontrado' },
-        { status: 404 }
+        { error: 'Erro ao carregar perfil do usuário' },
+        { status: 500 }
       )
     }
+
+    const tenantId = profile?.tenant_id || user.id
 
     // Get all ML integrations for this tenant
     const { data: integrations, error: integrationError } = await supabase
       .from('ml_integrations')
       .select('*')
-      .eq('tenant_id', profile.id)
+      .eq('tenant_id', tenantId)
 
     if (integrationError) {
       console.error('ML Status Error:', integrationError)
@@ -43,8 +46,10 @@ export async function GET() {
       )
     }
     
+    const integrationList = integrations ?? []
+
     // Get counts separately to avoid RLS issues
-    const integrationIds = integrations?.map(i => i.id) || [];
+    const integrationIds = integrationList.map(i => i.id);
     
     const productCounts: Record<string, number> = {};
     const orderCounts: Record<string, number> = {};
@@ -73,12 +78,12 @@ export async function GET() {
 
     // Calculate overall status
     // Calculate overall status using the separate counts
-    const hasActiveIntegration = integrations.some(int => int.status === 'active')
+  const hasActiveIntegration = integrationList.some(int => int.status === 'active')
     const totalProducts = Object.values(productCounts).reduce((sum, count) => sum + count, 0)
     const totalOrders = Object.values(orderCounts).reduce((sum, count) => sum + count, 0)
 
     // Add counts to each integration
-    const integrationsWithCounts = integrations.map(int => ({
+    const integrationsWithCounts = integrationList.map(int => ({
       ...int,
       product_count: productCounts[int.id] || 0,
       order_count: orderCounts[int.id] || 0
@@ -86,12 +91,12 @@ export async function GET() {
 
     return NextResponse.json({
       status: hasActiveIntegration ? 'connected' : 'disconnected',
-      integrations: integrations.length,
-      active_integrations: integrations.filter(int => int.status === 'active').length,
+      integrations: integrationList.length,
+      active_integrations: integrationList.filter(int => int.status === 'active').length,
       total_products: totalProducts,
       total_orders: totalOrders,
       details: integrationsWithCounts,
-      last_sync: integrations.length > 0 ? Math.max(...integrations.map(int => new Date(int.last_sync_at || int.created_at).getTime())) : null
+      last_sync: integrationList.length > 0 ? Math.max(...integrationList.map(int => new Date(int.last_sync_at || int.created_at).getTime())) : null
     })
 
   } catch (error) {

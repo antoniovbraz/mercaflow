@@ -1,17 +1,23 @@
 /**
  * MercaFlow - ML Token Viewer (Admin Only)
- * 
+ *
  * Simple page to view and copy ML access token for testing
  */
 
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Copy, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Copy, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 
 interface TokenData {
   success: boolean;
@@ -47,18 +53,18 @@ export default function MLTokenPage() {
   const fetchToken = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/ml/debug-token');
+      const response = await fetch("/api/ml/debug-token");
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || `HTTP ${response.status}`);
       }
-      
+
       setTokenData(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch token');
+      setError(err instanceof Error ? err.message : "Failed to fetch token");
       setTokenData(null);
     } finally {
       setLoading(false);
@@ -99,7 +105,9 @@ export default function MLTokenPage() {
         <Card>
           <CardHeader>
             <CardTitle>🔑 ML Access Token</CardTitle>
-            <CardDescription>View and copy your Mercado Livre token</CardDescription>
+            <CardDescription>
+              View and copy your Mercado Livre token
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert variant="destructive">
@@ -109,12 +117,17 @@ export default function MLTokenPage() {
               </AlertDescription>
             </Alert>
 
-            {error.includes('No ML integration') && (
+            {error.includes("No ML integration") && (
               <Alert>
                 <AlertDescription>
                   <strong>Como resolver:</strong>
                   <ol className="list-decimal list-inside mt-2 space-y-1">
-                    <li>Vá para <a href="/ml/auth" className="text-blue-600 underline">/ml/auth</a></li>
+                    <li>
+                      Vá para{" "}
+                      <a href="/ml/auth" className="text-blue-600 underline">
+                        /ml/auth
+                      </a>
+                    </li>
                     <li>Clique em &quot;Conectar com Mercado Livre&quot;</li>
                     <li>Autorize a aplicação</li>
                     <li>Volte aqui para ver o token</li>
@@ -123,10 +136,11 @@ export default function MLTokenPage() {
               </Alert>
             )}
 
-            {error.includes('Super admin') && (
+            {error.includes("Super admin") && (
               <Alert>
                 <AlertDescription>
-                  <strong>Acesso Negado:</strong> Este recurso requer permissão de super_admin.
+                  <strong>Acesso Negado:</strong> Este recurso requer permissão
+                  de super_admin.
                 </AlertDescription>
               </Alert>
             )}
@@ -197,20 +211,22 @@ export default function MLTokenPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Criado em</p>
-                <p className="text-sm">{new Date(integration.created_at).toLocaleString('pt-BR')}</p>
+                <p className="text-sm">
+                  {new Date(integration.created_at).toLocaleString("pt-BR")}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Atualizado em</p>
-                <p className="text-sm">{new Date(integration.updated_at).toLocaleString('pt-BR')}</p>
+                <p className="text-sm">
+                  {new Date(integration.updated_at).toLocaleString("pt-BR")}
+                </p>
               </div>
             </div>
 
             <div className="border-t pt-3">
               <p className="text-sm text-gray-600 mb-2">Status do Token</p>
               {integration.is_expired ? (
-                <Badge variant="destructive">
-                  ❌ Token Expirado
-                </Badge>
+                <Badge variant="destructive">❌ Token Expirado</Badge>
               ) : (
                 <div className="flex items-center gap-2">
                   <Badge variant="default" className="bg-green-600">
@@ -222,7 +238,8 @@ export default function MLTokenPage() {
                 </div>
               )}
               <p className="text-xs text-gray-500 mt-1">
-                Expira em: {new Date(integration.expires_at).toLocaleString('pt-BR')}
+                Expira em:{" "}
+                {new Date(integration.expires_at).toLocaleString("pt-BR")}
               </p>
             </div>
 
@@ -230,8 +247,10 @@ export default function MLTokenPage() {
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Token expirado! Reconecte com Mercado Livre em{' '}
-                  <a href="/ml/auth" className="underline font-semibold">/ml/auth</a>
+                  Token expirado! Reconecte com Mercado Livre em{" "}
+                  <a href="/ml/auth" className="underline font-semibold">
+                    /ml/auth
+                  </a>
                 </AlertDescription>
               </Alert>
             )}
@@ -359,7 +378,8 @@ export default function MLTokenPage() {
 
           <Alert>
             <AlertDescription>
-              💡 <strong>Dica:</strong> Use o script PowerShell para testar todas as APIs de uma vez:
+              💡 <strong>Dica:</strong> Use o script PowerShell para testar
+              todas as APIs de uma vez:
               <br />
               <code className="text-xs bg-gray-100 px-2 py-1 rounded mt-1 inline-block">
                 {`.\\test_ml_token.ps1 -AccessToken "${token.access_token}"`}

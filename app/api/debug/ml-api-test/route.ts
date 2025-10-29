@@ -4,7 +4,9 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
+
+const integrationService = getMLIntegrationService();
 
 export async function GET() {
   // PROTEÇÃO: Bloquear em produção
@@ -22,10 +24,8 @@ export async function GET() {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const tokenManager = new MLTokenManager();
-
-    // Get integration
-    const integration = await tokenManager.getIntegrationByTenant(user.id);
+  // Get integration
+  const integration = await integrationService.getActiveTenantIntegration(user.id);
 
     if (!integration) {
       return NextResponse.json({ error: 'No ML integration found' }, { status: 404 });
@@ -56,7 +56,7 @@ export async function GET() {
     for (const test of tests) {
       try {
         console.log(`Testing ${test.name}: ${test.endpoint}`);
-        const response = await tokenManager.makeMLRequest(integration.id, test.endpoint);
+  const response = await integrationService.fetch(integration.id, test.endpoint);
 
         const result: {
           name: string;

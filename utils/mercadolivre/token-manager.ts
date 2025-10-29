@@ -9,6 +9,7 @@
 
 import { createClient } from '@/utils/supabase/server';
 import crypto from 'crypto';
+import { getMLTokenService } from './services';
 import {
   MLTokenResponseSchema,
   MLUserDataSchema,
@@ -51,15 +52,22 @@ interface SyncLogData {
 }
 
 export class MLTokenManager {
-  private readonly ENCRYPTION_KEY: string;
   private readonly ML_API_BASE = 'https://api.mercadolibre.com';
-  
+  private readonly tokenService = getMLTokenService();
+  private readonly legacyEncryptionKey: string | null;
+
   constructor() {
-    // Use a strong encryption key from environment
-    this.ENCRYPTION_KEY = process.env.ML_TOKEN_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || '';
-    
-    if (!this.ENCRYPTION_KEY || this.ENCRYPTION_KEY.length < 32) {
-      throw new Error('ML_TOKEN_ENCRYPTION_KEY must be at least 32 characters');
+    const legacyKey =
+      process.env.ML_TOKEN_ENCRYPTION_KEY ||
+      process.env.NEXTAUTH_SECRET ||
+      process.env.ENCRYPTION_KEY ||
+      null;
+
+    if (legacyKey && legacyKey.length < 32) {
+      console.warn('Detected legacy ML token encryption key shorter than 32 characters. Legacy token fallback disabled.');
+      this.legacyEncryptionKey = null;
+    } else {
+      this.legacyEncryptionKey = legacyKey;
     }
   }
 
@@ -331,74 +339,99 @@ export class MLTokenManager {
    * Encrypt token for database storage
    */
   private encryptToken(token: string): string {
-    // Check if token is already encrypted (has ':' separator and starts with hex)
-    if (token.includes(':') && /^[0-9a-f]+:/.test(token)) {
-      console.log('🔐 Token appears to be already encrypted, returning as-is');
+    if (!token || typeof token !== 'string') {
+      throw new Error('Token is null or not a string');
+    }
+
+    if (this.looksEncrypted(token)) {
       return token;
     }
 
-    const algorithm = 'aes-256-cbc';
-    const key = crypto.scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
-    const iv = crypto.randomBytes(16);
-    
-    const cipher = crypto.createCipheriv(algorithm, key, iv);
-    
-    let encrypted = cipher.update(token, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    
-    return `${iv.toString('hex')}:${encrypted}`;
+    try {
+      return this.tokenService.encryptToken(token);
+    } catch (error) {
+      console.error('❌ Failed to encrypt token with new strategy:', error);
+      throw new Error(`Token encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   /**
    * Decrypt token from database
    */
   private decryptToken(encryptedToken: string): string {
-    console.log('🔐 Attempting to decrypt token, length:', encryptedToken.length);
-    
+    console.log('🔐 Attempting to decrypt token, length:', encryptedToken?.length ?? 0);
+
     if (!encryptedToken || typeof encryptedToken !== 'string') {
       throw new Error('Token is null or not a string');
     }
 
-    // Check if token is already raw (not encrypted) - ML tokens start with 'TG-'
     if (encryptedToken.startsWith('TG-') || encryptedToken.startsWith('TG_')) {
       console.log('🔐 Token appears to be raw (not encrypted), returning as-is');
       return encryptedToken;
     }
 
-    const parts = encryptedToken.split(':');
-    console.log('🔐 Token parts count:', parts.length);
-    
-    // Handle both old format (iv:authTag:encrypted) and new format (iv:encrypted)
-    if (parts.length < 2) {
-      console.error('❌ Invalid token format: not enough parts', { partsCount: parts.length, tokenStart: encryptedToken.substring(0, 50) });
-      throw new Error('Invalid token format: not enough parts');
+    try {
+      return this.tokenService.decryptToken(encryptedToken);
+    } catch (error) {
+      if (this.isLegacyEncryptedFormat(encryptedToken)) {
+        console.warn('⚠️ Falling back to legacy token decryption logic');
+        return this.decryptLegacyToken(encryptedToken);
+      }
+
+      console.error('❌ Decryption failed using new strategy:', error);
+      throw new Error(`Token decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    
-    const ivHex = parts[0];
-    const encrypted = parts.length === 3 ? parts[2] : parts[1];
-    
-    if (!ivHex || !encrypted) {
-      console.error('❌ Invalid token format: missing iv or encrypted data', { ivHex: !!ivHex, encrypted: !!encrypted });
-      throw new Error('Invalid token format: missing components');
+  }
+
+  private looksEncrypted(token: string): boolean {
+    if (this.isLegacyEncryptedFormat(token)) {
+      return true;
     }
 
-    console.log('🔐 Decrypting with IV length:', ivHex.length, 'encrypted length:', encrypted.length);
-    
+    try {
+      this.tokenService.decryptToken(token);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private isLegacyEncryptedFormat(token: string): boolean {
+    return token.includes(':') && /^[0-9a-f]+:/.test(token);
+  }
+
+  private decryptLegacyToken(token: string): string {
+    if (!this.legacyEncryptionKey) {
+      throw new Error('Legacy encryption key not available');
+    }
+
+    const parts = token.split(':');
+
+    if (parts.length < 2) {
+      throw new Error('Invalid legacy token format');
+    }
+
+    const ivHex = parts[0];
+    const encrypted = parts.length === 3 ? parts[2] : parts[1];
+
+    if (!ivHex || !encrypted) {
+      throw new Error('Invalid legacy token components');
+    }
+
     try {
       const algorithm = 'aes-256-cbc';
-      const key = crypto.scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
+      const key = crypto.scryptSync(this.legacyEncryptionKey, 'salt', 32);
       const iv = Buffer.from(ivHex, 'hex');
-      
+
       const decipher = crypto.createDecipheriv(algorithm, key, iv);
-      
+
       let decrypted = decipher.update(encrypted, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
-      
-      console.log('✅ Token decrypted successfully');
+
       return decrypted;
     } catch (error) {
-      console.error('❌ Decryption failed:', error);
-      throw new Error(`Token decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('❌ Legacy token decryption failed:', error);
+      throw new Error(`Legacy token decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

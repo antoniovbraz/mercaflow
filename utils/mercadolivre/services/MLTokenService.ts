@@ -317,14 +317,38 @@ export class MLTokenService {
   ): Promise<void> {
     const supabase = await createClient();
 
-    await supabase
+    const { data: currentIntegration, error: fetchError } = await supabase
+      .from('ml_integrations')
+      .select('error_count')
+      .eq('id', integrationId)
+      .maybeSingle();
+
+    if (fetchError) {
+      logger.error('Failed to load integration before marking expired', {
+        integrationId,
+        error: fetchError,
+      });
+    }
+
+    const nextErrorCount = (currentIntegration?.error_count ?? 0) + 1;
+
+    const { error: updateError } = await supabase
       .from('ml_integrations')
       .update({
         status: 'expired',
         last_error: error instanceof Error ? error.message : String(error),
-        error_count: supabase.rpc('increment', { x: 1 }) as unknown as number, // Increment error count
+        error_count: nextErrorCount,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', integrationId);
+
+    if (updateError) {
+      logger.error('Failed to mark integration as expired', {
+        integrationId,
+        error: updateError,
+      });
+      return;
+    }
 
     logger.warn('Integration marked as expired', { integrationId });
   }

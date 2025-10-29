@@ -1,24 +1,29 @@
-import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/utils/supabase/server'
-import { hasRole } from '@/utils/supabase/roles'
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/utils/supabase/server";
+import { hasRole } from "@/utils/supabase/roles";
 
 export default async function AdminLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   // Require authentication
-  const user = await getCurrentUser()
-  
+  const user = await getCurrentUser();
+
   if (!user) {
-    redirect('/login')
+    redirect("/login");
   }
 
   // Require super admin role
-  const isSuperAdmin = await hasRole('super_admin')
-  
+  const isSuperAdmin = await hasRole("super_admin");
+
   if (!isSuperAdmin) {
-    redirect('/dashboard?error=' + encodeURIComponent('Acesso negado: apenas super admins podem acessar esta área'))
+    redirect(
+      "/dashboard?error=" +
+        encodeURIComponent(
+          "Acesso negado: apenas super admins podem acessar esta área"
+        )
+    );
   }
 
   return (
@@ -34,22 +39,40 @@ export default async function AdminLayout({
                 </h1>
               </div>
               <div className="hidden md:flex space-x-8">
-                <a href="/admin" className="text-gray-900 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <a
+                  href="/admin"
+                  className="text-gray-900 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
                   Dashboard
                 </a>
-                <a href="/admin/users" className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <a
+                  href="/admin/users"
+                  className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
                   Usuários
                 </a>
-                <a href="/admin/tenants" className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <a
+                  href="/admin/tenants"
+                  className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
                   Tenants
                 </a>
-                <a href="/admin/api-tester" className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <a
+                  href="/admin/api-tester"
+                  className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
                   🧪 API Tester
                 </a>
-                <a href="/admin/ml-token" className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <a
+                  href="/admin/ml-token"
+                  className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
                   🔑 ML Token
                 </a>
-                <a href="/admin/system" className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                <a
+                  href="/admin/system"
+                  className="text-gray-500 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
                   Sistema
                 </a>
               </div>
@@ -58,10 +81,8 @@ export default async function AdminLayout({
               <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                 Super Admin
               </span>
-              <span className="text-sm text-gray-700">
-                {user.email}
-              </span>
-              <a 
+              <span className="text-sm text-gray-700">{user.email}</span>
+              <a
                 href="/dashboard"
                 className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors"
               >
@@ -73,9 +94,7 @@ export default async function AdminLayout({
       </nav>
 
       {/* Admin Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {children}
-      </main>
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">{children}</main>
     </div>
-  )
+  );
 }

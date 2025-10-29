@@ -6,10 +6,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { syncProducts } from '@/utils/mercadolivre/product-sync';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
 
-const tokenManager = new MLTokenManager();
+const integrationService = getMLIntegrationService();
 
 /**
  * POST /api/products/sync - Trigger manual product synchronization
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const tenantId = profile?.tenant_id || user.id;
 
     // Get ML integration for this tenant
-    const integration = await tokenManager.getIntegrationByTenant(tenantId);
+    const integration = await integrationService.getActiveTenantIntegration(tenantId);
 
     if (!integration) {
       return NextResponse.json(
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Sync specific item
       console.log(`🔄 Syncing specific item: ${syncOptions.itemId}`);
 
-      const mlResponse = await tokenManager.makeMLRequest(
+      const mlResponse = await integrationService.fetch(
         integration.id,
         `/items/${syncOptions.itemId}`
       );
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         current_time: new Date().toISOString()
       });
 
-      const mlResponse = await tokenManager.makeMLRequest(
+      const mlResponse = await integrationService.fetch(
         integration.id,
         `/users/${integration.ml_user_id}/items/search?limit=50`
       );
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Log the sync operation
-    await tokenManager['logSync'](integration.id, 'products', 'success', {
+    await integrationService.logSyncEvent(integration.id, 'products', 'success', {
       action: syncOptions.itemId ? 'manual_item_sync' : 'manual_full_sync',
       count: syncResult.total,
       total: syncResult.total,

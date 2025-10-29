@@ -1,4 +1,5 @@
 # 🔐 Guia: Testando Endpoints Autenticados
+
 ## MercaFlow - Testing Authenticated APIs
 
 **Data:** 2025-01-22  
@@ -43,11 +44,13 @@ Existem **3 métodos principais** para testar endpoints que requerem autenticaç
 ### O que o Script Faz:
 
 1. **Login Automático:**
+
    - Faz POST para `/auth/login`
    - Captura cookies de sessão Supabase
    - Persiste cookies em `$session`
 
 2. **Testa APIs Protegidas:**
+
    - GET `/api/settings` - Configurações do usuário
    - GET `/api/analytics/elasticity` - Análise de elasticidade
    - GET `/api/analytics/forecast` - Previsões
@@ -56,6 +59,7 @@ Existem **3 métodos principais** para testar endpoints que requerem autenticaç
    - PUT `/api/settings` - Atualização de configurações
 
 3. **Testa Páginas Protegidas:**
+
    - `/dashboard` - Dashboard principal
    - `/dashboard/configuracoes` - Configurações
    - `/produtos` - Gerenciamento de produtos
@@ -179,7 +183,7 @@ try {
         -Uri "$BaseUrl/api/settings" `
         -Method GET `
         -WebSession $session
-    
+
     Write-Host "✓ API funcionando!" -ForegroundColor Green
     Write-Host "Dados: $($response.Content)" -ForegroundColor Gray
 } catch {
@@ -219,7 +223,7 @@ try {
         -Uri "$supabaseUrl/rest/v1/user_settings?select=*" `
         -Method GET `
         -Headers $headers
-    
+
     Write-Host "✓ Dados recuperados diretamente do banco" -ForegroundColor Green
     Write-Host "Total de registros: $($response.Count)" -ForegroundColor Gray
 } catch {
@@ -234,11 +238,13 @@ try {
 ### Problema: "Login failed (Status: 401)"
 
 **Causas:**
+
 - Email/senha incorretos
 - Usuário não confirmou email
 - Email ainda não verificado
 
 **Solução:**
+
 ```powershell
 # 1. Verificar se email foi confirmado
 # 2. Resetar senha se necessário
@@ -250,6 +256,7 @@ try {
 **Causa:** Token Supabase expirou (padrão: 1 hora)
 
 **Solução:**
+
 ```powershell
 # Re-executar script (fará novo login automático)
 .\test_e2e_authenticated.ps1 -Email "seu-email" -Password "sua-senha"
@@ -260,6 +267,7 @@ try {
 **Causa:** Conta nova sem dados
 
 **Solução:**
+
 ```powershell
 # 1. Configure integração com Mercado Livre
 # 2. Sincronize produtos
@@ -272,6 +280,7 @@ try {
 **Causa:** CORS não permite requisições de outros domínios
 
 **Solução:**
+
 ```powershell
 # Use scripts PowerShell (não sofrem de CORS)
 # OU configure CORS no Next.js para ambiente de teste
@@ -281,11 +290,11 @@ try {
 
 ## 📊 Comparação dos Métodos
 
-| Método | Facilidade | Automação | Segurança | Uso Recomendado |
-|--------|-----------|-----------|-----------|-----------------|
-| **Script Automático** | 🟢 Fácil | ✅ Total | 🟢 Alta | CI/CD, testes regulares |
-| **Cookie Manual** | 🟡 Médio | ❌ Manual | 🟡 Média | Debug pontual |
-| **Service Role** | 🔴 Difícil | ✅ Total | 🔴 Baixa | Testes internos apenas |
+| Método                | Facilidade | Automação | Segurança | Uso Recomendado         |
+| --------------------- | ---------- | --------- | --------- | ----------------------- |
+| **Script Automático** | 🟢 Fácil   | ✅ Total  | 🟢 Alta   | CI/CD, testes regulares |
+| **Cookie Manual**     | 🟡 Médio   | ❌ Manual | 🟡 Média  | Debug pontual           |
+| **Service Role**      | 🔴 Difícil | ✅ Total  | 🔴 Baixa  | Testes internos apenas  |
 
 ---
 
@@ -306,10 +315,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Run Authenticated E2E Tests
         shell: pwsh
         run: |
@@ -353,6 +362,7 @@ Antes de executar testes autenticados:
 ## 🎯 Próximos Passos
 
 1. **Criar Usuário de Teste:**
+
    ```
    https://mercaflow.vercel.app/register
    Email: teste@mercaflow.com
@@ -360,15 +370,18 @@ Antes de executar testes autenticados:
    ```
 
 2. **Confirmar Email:**
+
    - Verificar inbox
    - Clicar no link de confirmação
 
 3. **Executar Testes:**
+
    ```powershell
    .\test_e2e_authenticated.ps1 -Email "teste@mercaflow.com" -Password "TesteMercaFlow2025!"
    ```
 
 4. **Validar Resultados:**
+
    - Verificar 100% de sucesso
    - Revisar métricas de performance
    - Confirmar dados retornados
@@ -383,11 +396,13 @@ Antes de executar testes autenticados:
 ## 📞 Suporte
 
 **Problemas com autenticação?**
+
 - Verificar logs do Supabase: https://supabase.com/dashboard
 - Revisar RLS policies: `supabase/migrations/`
 - Testar manualmente no browser primeiro
 
 **Dúvidas sobre os scripts?**
+
 - Ver código fonte: `test_e2e_authenticated.ps1`
 - Executar com `-Verbose` para debug
 - Verificar documentação do PowerShell

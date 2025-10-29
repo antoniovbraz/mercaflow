@@ -7,7 +7,7 @@
  * - Performance Intelligence: Visits, quality score, seller reputation
  * 
  * Features:
- * - Automatic token refresh via MLTokenManager
+ * - Automatic token refresh via MLTokenService
  * - Response validation with Zod schemas
  * - Redis caching with appropriate TTLs
  * - Structured logging for debugging
@@ -19,7 +19,7 @@
 
 import { logger } from '@/utils/logger';
 import { getMLApiClient } from './api/MLApiClient';
-import { MLTokenManager } from './token-manager';
+import { getMLTokenService } from './services';
 import { getCached, invalidateCacheKey } from '@/utils/redis/cache';
 import { validateOutput } from '@/utils/validation';
 import {
@@ -113,12 +113,11 @@ export interface GetVisitsParams {
  */
 export class MLIntelligenceAPI {
   private readonly apiClient = getMLApiClient();
-  private readonly tokenManager: MLTokenManager;
+  private readonly tokenService = getMLTokenService();
   private integrationId: string;
 
   constructor(integrationId: string) {
-    this.integrationId = integrationId;
-    this.tokenManager = new MLTokenManager();
+  this.integrationId = integrationId;
   }
 
   // ==========================================================================
@@ -161,7 +160,7 @@ export class MLIntelligenceAPI {
       cacheKey,
       async () => {
         // Get valid access token (auto-refreshes if needed)
-        const accessToken = await this.tokenManager.getValidToken(this.integrationId);
+  const accessToken = await this.tokenService.getValidToken(this.integrationId);
         if (!accessToken) {
           throw new Error('No valid access token available');
         }
@@ -224,7 +223,7 @@ export class MLIntelligenceAPI {
     const result = await getCached<MLAutomationRule[]>(
       cacheKey,
       async () => {
-        const accessToken = await this.tokenManager.getValidToken(this.integrationId);
+  const accessToken = await this.tokenService.getValidToken(this.integrationId);
         if (!accessToken) {
           throw new Error('No valid access token available');
         }
@@ -290,7 +289,7 @@ export class MLIntelligenceAPI {
     const result = await getCached<MLPriceHistoryEvent[]>(
       cacheKey,
       async () => {
-        const accessToken = await this.tokenManager.getValidToken(this.integrationId);
+  const accessToken = await this.tokenService.getValidToken(this.integrationId);
         if (!accessToken) {
           throw new Error('No valid access token available');
         }
@@ -353,7 +352,7 @@ export class MLIntelligenceAPI {
 
     logger.info('Setting price automation', context);
 
-    const accessToken = await this.tokenManager.getValidToken(this.integrationId);
+  const accessToken = await this.tokenService.getValidToken(this.integrationId);
     if (!accessToken) {
       throw new Error('No valid access token available');
     }
@@ -430,7 +429,7 @@ export class MLIntelligenceAPI {
     const result = await getCached<MLTrend[]>(
       cacheKey,
       async () => {
-        const accessToken = await this.tokenManager.getValidToken(this.integrationId);
+  const accessToken = await this.tokenService.getValidToken(this.integrationId);
         if (!accessToken) {
           throw new Error('No valid access token available');
         }
@@ -488,7 +487,7 @@ export class MLIntelligenceAPI {
     const result = await getCached<string[]>(
       cacheKey,
       async () => {
-        const accessToken = await this.tokenManager.getValidToken(this.integrationId);
+  const accessToken = await this.tokenService.getValidToken(this.integrationId);
         if (!accessToken) {
           throw new Error('No valid access token available');
         }
@@ -577,7 +576,7 @@ export class MLIntelligenceAPI {
     const result = await getCached<MLVisits>(
       cacheKey,
       async () => {
-        const accessToken = await this.tokenManager.getValidToken(this.integrationId);
+  const accessToken = await this.tokenService.getValidToken(this.integrationId);
         if (!accessToken) {
           throw new Error('No valid access token available');
         }
@@ -643,7 +642,7 @@ export class MLIntelligenceAPI {
     const result = await getCached<MLPerformance>(
       cacheKey,
       async () => {
-        const accessToken = await this.tokenManager.getValidToken(this.integrationId);
+  const accessToken = await this.tokenService.getValidToken(this.integrationId);
         if (!accessToken) {
           throw new Error('No valid access token available');
         }
@@ -711,7 +710,7 @@ export class MLIntelligenceAPI {
     const result = await getCached<MLReputation>(
       cacheKey,
       async () => {
-        const accessToken = await this.tokenManager.getValidToken(this.integrationId);
+  const accessToken = await this.tokenService.getValidToken(this.integrationId);
         if (!accessToken) {
           throw new Error('No valid access token available');
         }

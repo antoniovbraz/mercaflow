@@ -53,7 +53,7 @@ export function ForecastChart({
         // Fetch real data from API
         const url = `/api/analytics/forecast?historical_days=${selectedPeriod}&forecast_days=7`;
         const response = await fetch(url);
-        
+
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
@@ -67,30 +67,39 @@ export function ForecastChart({
         // Transform API data to chart format
         const chartData: ForecastDataPoint[] = [
           // Historical data
-          ...(result.historical || []).map((point: { date: string; actual: number }) => ({
-            date: point.date,
-            dateLabel: new Date(point.date).toLocaleDateString("pt-BR", {
-              day: "2-digit",
-              month: "short",
-            }),
-            actual: point.actual,
-            forecast: point.actual,
-            lowerBound: point.actual,
-            upperBound: point.actual,
-            confidence: 100,
-          })),
+          ...(result.historical || []).map(
+            (point: { date: string; actual: number }) => ({
+              date: point.date,
+              dateLabel: new Date(point.date).toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "short",
+              }),
+              actual: point.actual,
+              forecast: point.actual,
+              lowerBound: point.actual,
+              upperBound: point.actual,
+              confidence: 100,
+            })
+          ),
           // Forecast data
-          ...(result.forecast || []).map((point: { date: string; predicted: number; lower: number; upper: number }) => ({
-            date: point.date,
-            dateLabel: new Date(point.date).toLocaleDateString("pt-BR", {
-              day: "2-digit",
-              month: "short",
-            }),
-            forecast: point.predicted,
-            lowerBound: point.lower,
-            upperBound: point.upper,
-            confidence: 80, // Assume 80% confidence for forecasts
-          })),
+          ...(result.forecast || []).map(
+            (point: {
+              date: string;
+              predicted: number;
+              lower: number;
+              upper: number;
+            }) => ({
+              date: point.date,
+              dateLabel: new Date(point.date).toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "short",
+              }),
+              forecast: point.predicted,
+              lowerBound: point.lower,
+              upperBound: point.upper,
+              confidence: 80, // Assume 80% confidence for forecasts
+            })
+          ),
         ];
 
         setData(chartData);

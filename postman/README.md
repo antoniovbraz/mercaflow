@@ -31,6 +31,7 @@ Collection completa e pronta para importar no Postman com todos os endpoints do 
 ### **3. Configurar Token**
 
 1. **Obtenha seu token:**
+
    - Acesse: https://mercaflow.vercel.app/admin/ml-token
    - Clique em "Copiar Token"
 
@@ -105,11 +106,11 @@ Collection completa e pronta para importar no Postman com todos os endpoints do 
 
 ## 🔧 Variáveis de Environment
 
-| Variável | Descrição | Exemplo |
-|----------|-----------|---------|
+| Variável      | Descrição          | Exemplo                        |
+| ------------- | ------------------ | ------------------------------ |
 | `ml_base_url` | URL base da API ML | `https://api.mercadolibre.com` |
-| `ml_token` | Access token do ML | `TG-67351d82e4b0ca...` |
-| `ml_user_id` | Seu user ID no ML | `669073070` |
+| `ml_token`    | Access token do ML | `TG-67351d82e4b0ca...`         |
+| `ml_user_id`  | Seu user ID no ML  | `669073070`                    |
 
 **Editar:** Environments → ML Production → Edit
 
@@ -150,19 +151,20 @@ Collection completa e pronta para importar no Postman com todos os endpoints do 
 Cada request vem com **tests automáticos** na aba "Tests":
 
 ### **User Info:**
+
 ```javascript
-pm.test('Status code is 200', function () {
-    pm.response.to.have.status(200);
+pm.test("Status code is 200", function () {
+  pm.response.to.have.status(200);
 });
 
-pm.test('Response has id field', function () {
-    var jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('id');
+pm.test("Response has id field", function () {
+  var jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("id");
 });
 
 // Salva user_id automaticamente
 var jsonData = pm.response.json();
-pm.collectionVariables.set('ml_user_id', jsonData.id);
+pm.collectionVariables.set("ml_user_id", jsonData.id);
 ```
 
 **Resultado:** Valida resposta e salva dados automaticamente!
@@ -174,11 +176,13 @@ pm.collectionVariables.set('ml_user_id', jsonData.id);
 ### **1. Usar Variáveis nas URLs**
 
 Em vez de:
+
 ```
 https://api.mercadolibre.com/users/me
 ```
 
 Use:
+
 ```
 {{ml_base_url}}/users/me
 ```
@@ -236,19 +240,22 @@ Adicione na aba **"Pre-request Script"** da collection:
 
 ```javascript
 // Auto-refresh token via MercaFlow API
-pm.sendRequest({
-    url: 'https://mercaflow.vercel.app/api/ml/debug-token',
-    method: 'GET',
+pm.sendRequest(
+  {
+    url: "https://mercaflow.vercel.app/api/ml/debug-token",
+    method: "GET",
     header: {
-        'Cookie': 'sb-access-token=SEU_COOKIE_SUPABASE'
-    }
-}, function (err, response) {
+      Cookie: "sb-access-token=SEU_COOKIE_SUPABASE",
+    },
+  },
+  function (err, response) {
     if (!err) {
-        const data = response.json();
-        pm.environment.set("ml_token", data.token.access_token);
-        console.log('✅ Token atualizado automaticamente!');
+      const data = response.json();
+      pm.environment.set("ml_token", data.token.access_token);
+      console.log("✅ Token atualizado automaticamente!");
     }
-});
+  }
+);
 ```
 
 **Resultado:** Token renovado automaticamente antes de cada request!
@@ -258,11 +265,13 @@ pm.sendRequest({
 ## 📚 Recursos
 
 ### **Documentação:**
+
 - **Guia Postman Completo:** `docs/POSTMAN_GUIDE.md`
 - **ML API Docs:** https://developers.mercadolibre.com.br/pt_br/api-docs
 - **Postman Learning:** https://learning.postman.com/
 
 ### **Ferramentas MercaFlow:**
+
 - **ML Token Viewer:** https://mercaflow.vercel.app/admin/ml-token
 - **API Tester:** https://mercaflow.vercel.app/admin/api-tester
 - **Dashboard:** https://mercaflow.vercel.app/dashboard
@@ -292,6 +301,7 @@ pm.sendRequest({
 ### **Erro: Variable "ml_token" not found**
 
 **Solução:**
+
 1. Selecione environment "ML Production"
 2. Verifique se variável `ml_token` está configurada
 3. Clique no ícone de olho 👁️ para verificar

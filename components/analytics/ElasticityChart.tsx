@@ -44,9 +44,11 @@ export function ElasticityChart({
         setIsLoading(true);
 
         // Fetch real data from API
-        const url = `/api/analytics/elasticity${productId ? `?item_id=${productId}&days=30` : "?days=30"}`;
+        const url = `/api/analytics/elasticity${
+          productId ? `?item_id=${productId}&days=30` : "?days=30"
+        }`;
         const response = await fetch(url);
-        
+
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
@@ -58,12 +60,14 @@ export function ElasticityChart({
         }
 
         // Transform API data to chart format
-        const chartData: ElasticityDataPoint[] = (result.dataPoints || []).map((point: { price: number; quantity: number; revenue: number }) => ({
-          price: point.price,
-          demand: point.quantity,
-          revenue: point.revenue,
-          elasticity: result.elasticity, // Overall elasticity
-        }));
+        const chartData: ElasticityDataPoint[] = (result.dataPoints || []).map(
+          (point: { price: number; quantity: number; revenue: number }) => ({
+            price: point.price,
+            demand: point.quantity,
+            revenue: point.revenue,
+            elasticity: result.elasticity, // Overall elasticity
+          })
+        );
 
         setData(chartData);
         setOptimalPrice(result.optimalPrice || 0);

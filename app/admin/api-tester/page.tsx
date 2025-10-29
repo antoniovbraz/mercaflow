@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -27,27 +33,41 @@ export default function APITestPage() {
       category: "Settings",
       apis: [
         { name: "Get Settings", method: "GET", path: "/api/settings" },
-        { 
-          name: "Update Settings", 
-          method: "PUT", 
+        {
+          name: "Update Settings",
+          method: "PUT",
           path: "/api/settings",
-          body: { notifications_enabled: true, auto_reprice: false, min_margin: 15.5 }
+          body: {
+            notifications_enabled: true,
+            auto_reprice: false,
+            min_margin: 15.5,
+          },
         },
-      ]
+      ],
     },
     {
       category: "Analytics",
       apis: [
-        { name: "Price Elasticity", method: "GET", path: "/api/analytics/elasticity?days=30" },
-        { name: "Forecast", method: "GET", path: "/api/analytics/forecast?historical_days=30&forecast_days=7" },
-        { name: "Competitors", method: "GET", path: "/api/analytics/competitors?limit=5" },
-      ]
+        {
+          name: "Price Elasticity",
+          method: "GET",
+          path: "/api/analytics/elasticity?days=30",
+        },
+        {
+          name: "Forecast",
+          method: "GET",
+          path: "/api/analytics/forecast?historical_days=30&forecast_days=7",
+        },
+        {
+          name: "Competitors",
+          method: "GET",
+          path: "/api/analytics/competitors?limit=5",
+        },
+      ],
     },
     {
       category: "Dashboard",
-      apis: [
-        { name: "KPIs", method: "GET", path: "/api/dashboard/kpis" },
-      ]
+      apis: [{ name: "KPIs", method: "GET", path: "/api/dashboard/kpis" }],
     },
     {
       category: "Mercado Livre",
@@ -55,18 +75,22 @@ export default function APITestPage() {
         { name: "ML Auth Status", method: "GET", path: "/api/ml/auth/status" },
         { name: "ML Products", method: "GET", path: "/api/ml/products" },
         // ML Orders requires integration_id - will be fetched dynamically
-      ]
+      ],
     },
   ];
 
-  const testAPI = async (endpoint: string, method: string, body?: Record<string, unknown>) => {
+  const testAPI = async (
+    endpoint: string,
+    method: string,
+    body?: Record<string, unknown>
+  ) => {
     const startTime = performance.now();
 
     try {
       const options: RequestInit = {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       };
 
@@ -80,7 +104,7 @@ export default function APITestPage() {
 
       let data;
       const contentType = response.headers.get("content-type");
-      
+
       try {
         // Only try to parse JSON if content-type indicates JSON
         if (contentType && contentType.includes("application/json")) {
@@ -111,7 +135,7 @@ export default function APITestPage() {
         result.error = data.error || data.message || `HTTP ${response.status}`;
       }
 
-      setResults(prev => [result, ...prev]);
+      setResults((prev) => [result, ...prev]);
       return result;
     } catch (error) {
       const endTime = performance.now();
@@ -122,11 +146,11 @@ export default function APITestPage() {
         method,
         status: 0,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         responseTime,
       };
 
-      setResults(prev => [result, ...prev]);
+      setResults((prev) => [result, ...prev]);
       return result;
     }
   };
@@ -139,7 +163,7 @@ export default function APITestPage() {
       for (const api of category.apis) {
         await testAPI(api.path, api.method, api.body);
         // Pequeno delay entre requisições
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
       }
     }
 
@@ -149,12 +173,12 @@ export default function APITestPage() {
   const testCategory = async (categoryName: string) => {
     setIsLoading(true);
 
-    const category = endpoints.find(c => c.category === categoryName);
+    const category = endpoints.find((c) => c.category === categoryName);
     if (!category) return;
 
     for (const api of category.apis) {
       await testAPI(api.path, api.method, api.body);
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
     }
 
     setIsLoading(false);
@@ -172,13 +196,14 @@ export default function APITestPage() {
     return "outline";
   };
 
-  const filteredResults = selectedTab === "all" 
-    ? results 
-    : results.filter(r => {
-        if (selectedTab === "success") return r.success;
-        if (selectedTab === "error") return !r.success;
-        return true;
-      });
+  const filteredResults =
+    selectedTab === "all"
+      ? results
+      : results.filter((r) => {
+          if (selectedTab === "success") return r.success;
+          if (selectedTab === "error") return !r.success;
+          return true;
+        });
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -191,15 +216,11 @@ export default function APITestPage() {
 
       {/* Actions */}
       <div className="flex gap-4 mb-6">
-        <Button 
-          onClick={testAllEndpoints} 
-          disabled={isLoading}
-          size="lg"
-        >
+        <Button onClick={testAllEndpoints} disabled={isLoading} size="lg">
           {isLoading ? "Testando..." : "🚀 Testar Todos"}
         </Button>
-        <Button 
-          onClick={clearResults} 
+        <Button
+          onClick={clearResults}
           variant="outline"
           disabled={results.length === 0}
         >
@@ -209,8 +230,11 @@ export default function APITestPage() {
 
       {/* Quick Test Buttons */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {endpoints.map(category => (
-          <Card key={category.category} className="cursor-pointer hover:border-primary transition-colors">
+        {endpoints.map((category) => (
+          <Card
+            key={category.category}
+            className="cursor-pointer hover:border-primary transition-colors"
+          >
             <CardHeader className="pb-3">
               <CardTitle className="text-sm">{category.category}</CardTitle>
               <CardDescription className="text-xs">
@@ -218,7 +242,7 @@ export default function APITestPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
+              <Button
                 onClick={() => testCategory(category.category)}
                 disabled={isLoading}
                 variant="secondary"
@@ -238,20 +262,19 @@ export default function APITestPage() {
           <CardHeader>
             <CardTitle>Resultados dos Testes</CardTitle>
             <CardDescription>
-              {results.length} teste{results.length !== 1 ? 's' : ''} executado{results.length !== 1 ? 's' : ''}
+              {results.length} teste{results.length !== 1 ? "s" : ""} executado
+              {results.length !== 1 ? "s" : ""}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
               <TabsList className="mb-4">
-                <TabsTrigger value="all">
-                  Todos ({results.length})
-                </TabsTrigger>
+                <TabsTrigger value="all">Todos ({results.length})</TabsTrigger>
                 <TabsTrigger value="success">
-                  Sucesso ({results.filter(r => r.success).length})
+                  Sucesso ({results.filter((r) => r.success).length})
                 </TabsTrigger>
                 <TabsTrigger value="error">
-                  Erros ({results.filter(r => !r.success).length})
+                  Erros ({results.filter((r) => !r.success).length})
                 </TabsTrigger>
               </TabsList>
 
@@ -264,13 +287,17 @@ export default function APITestPage() {
                           <div className="flex items-center gap-2">
                             <Badge variant="outline">{result.method}</Badge>
                             <Badge variant={getStatusColor(result.status)}>
-                              {result.status || 'ERROR'}
+                              {result.status || "ERROR"}
                             </Badge>
                             <span className="text-sm text-muted-foreground">
                               {result.responseTime}ms
                             </span>
                           </div>
-                          <span className={result.success ? "text-green-600" : "text-red-600"}>
+                          <span
+                            className={
+                              result.success ? "text-green-600" : "text-red-600"
+                            }
+                          >
                             {result.success ? "✓" : "✗"}
                           </span>
                         </div>
@@ -313,11 +340,10 @@ export default function APITestPage() {
               Nenhum teste executado ainda
             </p>
             <p className="text-sm text-muted-foreground mb-6">
-              Clique em &quot;Testar Todos&quot; ou selecione uma categoria específica
+              Clique em &quot;Testar Todos&quot; ou selecione uma categoria
+              específica
             </p>
-            <Button onClick={testAllEndpoints}>
-              Começar Testes
-            </Button>
+            <Button onClick={testAllEndpoints}>Começar Testes</Button>
           </CardContent>
         </Card>
       )}
@@ -330,7 +356,9 @@ export default function APITestPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-blue-600 dark:text-blue-400 space-y-2">
-          <p>• Esta página testa os endpoints usando sua sessão atual (cookies)</p>
+          <p>
+            • Esta página testa os endpoints usando sua sessão atual (cookies)
+          </p>
           <p>• Status 200 = Sucesso</p>
           <p>• Status 201 = Recurso criado com sucesso</p>
           <p>• Status 400 = Requisição inválida (verifique parâmetros)</p>
@@ -348,11 +376,21 @@ export default function APITestPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-yellow-600 dark:text-yellow-400 space-y-2">
-          <p><strong>As APIs de Analytics podem retornar erro 500 se:</strong></p>
-          <p>• Não há pedidos/vendas suficientes (precisa histórico de 30+ dias)</p>
-          <p>• Produtos foram sincronizados recentemente (aguarde dados acumularem)</p>
+          <p>
+            <strong>As APIs de Analytics podem retornar erro 500 se:</strong>
+          </p>
+          <p>
+            • Não há pedidos/vendas suficientes (precisa histórico de 30+ dias)
+          </p>
+          <p>
+            • Produtos foram sincronizados recentemente (aguarde dados
+            acumularem)
+          </p>
           <p>• Integração ML configurada mas sem vendas recentes</p>
-          <p><strong>Solução:</strong> Continue vendendo e aguarde acúmulo de dados para analytics funcionarem</p>
+          <p>
+            <strong>Solução:</strong> Continue vendendo e aguarde acúmulo de
+            dados para analytics funcionarem
+          </p>
         </CardContent>
       </Card>
     </div>

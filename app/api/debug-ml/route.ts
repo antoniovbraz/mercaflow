@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
+
+const integrationService = getMLIntegrationService();
 
 export async function GET() {
   // PROTEÇÃO: Bloquear em produção
@@ -33,9 +35,8 @@ export async function GET() {
       .select('*')
       .eq('tenant_id', profile?.tenant_id || user.id);
 
-    // Try with token manager
-    const tokenManager = new MLTokenManager();
-    const integration = await tokenManager.getIntegrationByTenant(profile?.tenant_id || user.id);
+  // Try with integration service
+  const integration = await integrationService.getActiveTenantIntegration(profile?.tenant_id || user.id);
 
     return NextResponse.json({
       debug: {
@@ -46,7 +47,7 @@ export async function GET() {
         tenantId: profile?.tenant_id || user.id,
         integrations: integrations || [],
         integrationsError: integrationsError?.message,
-        tokenManagerIntegration: integration ? {
+        activeIntegration: integration ? {
           id: integration.id,
           ml_user_id: integration.ml_user_id,
           ml_nickname: integration.ml_nickname,

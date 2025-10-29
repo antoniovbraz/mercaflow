@@ -10,13 +10,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager'
 import { logger } from '@/utils/logger'
 import { 
   OrdersSearchQuerySchema,
   validateQueryParams,
   ValidationError,
 } from '@/utils/validation'
+import { getMLIntegrationService } from '@/utils/mercadolivre/services'
+
+const integrationService = getMLIntegrationService()
 
 export async function GET(request: NextRequest) {
     try {
@@ -58,7 +60,7 @@ export async function GET(request: NextRequest) {
         // Verificar se a integração pertence ao usuário
         const { data: integration, error: integrationError } = await supabase
             .from('ml_integrations')
-            .select('id, access_token, user_id, ml_user_id')
+            .select('id, user_id, ml_user_id')
             .eq('id', integrationId)
             .eq('user_id', user.id)
             .single()
@@ -154,7 +156,7 @@ export async function POST(request: NextRequest) {
         // Verificar se a integração pertence ao usuário
         const { data: integration, error: integrationError } = await supabase
             .from('ml_integrations')
-            .select('id, access_token, ml_user_id')
+            .select('id, ml_user_id')
             .eq('id', integration_id)
             .eq('user_id', user.id)
             .single()
@@ -201,10 +203,11 @@ export async function POST(request: NextRequest) {
 }
 
 // Função para sincronizar pedidos da API ML
-async function syncOrdersFromML(integration: any, supabase: any) {
+async function syncOrdersFromML(
+  integration: { id: string; ml_user_id: number | string },
+  supabase: any
+) {
     try {
-        const tokenManager = new MLTokenManager()
-        
         // Construir query string para buscar pedidos
         const searchParams = new URLSearchParams({
             seller: integration.ml_user_id.toString(),
@@ -213,7 +216,7 @@ async function syncOrdersFromML(integration: any, supabase: any) {
         })
         
         // Buscar pedidos da API ML
-        const response = await tokenManager.makeMLRequest(
+        const response = await integrationService.fetch(
             integration.id,
             `/orders/search?${searchParams.toString()}`
         )

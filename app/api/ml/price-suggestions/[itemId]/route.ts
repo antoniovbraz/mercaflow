@@ -10,10 +10,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
 import { logger } from '@/utils/logger';
 
-const tokenManager = new MLTokenManager();
+const integrationService = getMLIntegrationService();
 
 interface PriceSuggestionResponse {
   item_id: string;
@@ -84,14 +84,24 @@ export async function GET(
     const tenantId = profile?.tenant_id || user.id;
 
     // Get ML integration for this tenant
-    const integration = await tokenManager.getIntegrationByTenant(tenantId);
+    const integrationResult = await integrationService
+      .getIntegrationWithToken(tenantId)
+      .catch(error => {
+        logger.warn('Failed to resolve active integration for tenant', {
+          tenantId,
+          error,
+        });
+        return null;
+      });
 
-    if (!integration) {
+    if (!integrationResult) {
       return NextResponse.json(
         { error: 'No active ML integration found' },
         { status: 404 }
       );
     }
+
+    const { integration, accessToken } = integrationResult;
 
     // Verify the item belongs to this user
     const { data: itemCheck } = await supabase
@@ -115,7 +125,7 @@ export async function GET(
 
     const response = await fetch(mlApiUrl, {
       headers: {
-        'Authorization': `Bearer ${integration.access_token}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       }

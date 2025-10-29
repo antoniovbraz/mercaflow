@@ -1,6 +1,7 @@
 # 🔑 Guia: Como Obter e Testar Token do Mercado Livre
 
 ## Objetivo
+
 Buscar seu token ML descriptografado e testar **todas as APIs do Mercado Livre** diretamente.
 
 ---
@@ -10,6 +11,7 @@ Buscar seu token ML descriptografado e testar **todas as APIs do Mercado Livre**
 ### **Passo 1: Obter Cookie de Autenticação**
 
 1. **Faça login no MercaFlow:**
+
    ```
    http://localhost:3000/login
    ou
@@ -91,18 +93,21 @@ Test 4: Questions (Perguntas)
 #### Opção A: Via SQL Editor (Recomendado)
 
 1. **Acesse Supabase:**
+
    ```
    https://supabase.com/dashboard
    ```
 
 2. **Abra SQL Editor:**
+
    - Clique no seu projeto
    - Menu lateral: "SQL Editor"
    - Clique em "New query"
 
 3. **Execute o SQL:**
+
    ```sql
-   SELECT 
+   SELECT
      id as integration_id,
      user_id,
      ml_user_id,
@@ -110,14 +115,14 @@ Test 4: Questions (Perguntas)
      refresh_token,
      token_expires_at,
      created_at,
-     CASE 
+     CASE
        WHEN token_expires_at > NOW() THEN '✓ Token válido'
        ELSE '✗ Token expirado'
      END as status
    FROM ml_integrations
    WHERE user_id = (
-     SELECT id 
-     FROM auth.users 
+     SELECT id
+     FROM auth.users
      WHERE email = 'peepers.shop@gmail.com'
    )
    ORDER BY created_at DESC
@@ -130,15 +135,18 @@ Test 4: Questions (Perguntas)
 #### Opção B: Via Table Editor
 
 1. **Acesse Supabase:**
+
    ```
    https://supabase.com/dashboard
    ```
 
 2. **Abra Table Editor:**
+
    - Menu lateral: "Table Editor"
    - Selecione tabela: `ml_integrations`
 
 3. **Encontre seu registro:**
+
    - Procure pela linha com seu `user_id`
    - Coluna `access_token`
 
@@ -162,7 +170,9 @@ Test 4: Questions (Perguntas)
 O script `test_ml_token.ps1` testa **5 APIs principais** do Mercado Livre:
 
 ### 1. **User Info** (`/users/me`)
+
 Informações do usuário autenticado:
+
 - ID do usuário ML
 - Nickname
 - Email
@@ -170,28 +180,36 @@ Informações do usuário autenticado:
 - Reputação
 
 ### 2. **Items/Produtos** (`/users/me/items/search`)
+
 Lista seus produtos:
+
 - Primeiros 5 produtos ativos
 - ID, título, preço
 - Status (active, paused, closed)
 - Total de produtos
 
 ### 3. **Orders/Pedidos** (`/orders/search`)
+
 Últimos pedidos:
+
 - 5 pedidos mais recentes
 - Status do pedido
 - Valor total
 - Data de criação
 
 ### 4. **Questions/Perguntas** (`/my/received_questions/search`)
+
 Perguntas recebidas:
+
 - 5 perguntas mais recentes
 - Status (answered, unanswered)
 - Texto da pergunta
 - Item relacionado
 
 ### 5. **Notifications** (`/myfeeds`)
+
 Notificações do sistema:
+
 - Últimas notificações
 - Tipo de evento
 - Tópico
@@ -278,11 +296,12 @@ Testes Completos!
 **Problema:** Token expirado ou inválido
 
 **Solução:**
+
 ```sql
 -- Verifique se o token expirou
-SELECT 
+SELECT
   token_expires_at,
-  CASE 
+  CASE
     WHEN token_expires_at > NOW() THEN 'Válido'
     ELSE 'Expirado'
   END as status
@@ -291,6 +310,7 @@ WHERE user_id = (SELECT id FROM auth.users WHERE email = 'peepers.shop@gmail.com
 ```
 
 Se expirado:
+
 1. Vá para `/ml/auth` na aplicação
 2. Reconecte com Mercado Livre
 3. Token será renovado automaticamente
@@ -300,6 +320,7 @@ Se expirado:
 **Problema:** Integração ML não configurada
 
 **Solução:**
+
 ```
 1. Acesse: https://mercaflow.vercel.app/ml/auth
 2. Clique "Conectar com Mercado Livre"
@@ -312,6 +333,7 @@ Se expirado:
 **Problema:** API do ML lenta ou indisponível
 
 **Solução:**
+
 - Tente novamente em alguns segundos
 - Verifique status: https://status.mercadolibre.com/
 
@@ -320,6 +342,7 @@ Se expirado:
 **Problema:** Limite de rate do ML excedido
 
 **Solução:**
+
 - Aguarde 1 minuto
 - Execute novamente
 - O script já tem delay de 500ms entre requisições
@@ -365,6 +388,7 @@ Deseja salvar as respostas completas em arquivo? (s/n): s
 Arquivo gerado: `ml_api_responses_YYYYMMDD_HHMMSS.json`
 
 Conteúdo:
+
 ```json
 [
   {
@@ -386,6 +410,7 @@ Conteúdo:
 ## 🎯 Casos de Uso
 
 ### **1. Verificar se Token Está Válido**
+
 ```powershell
 .\test_ml_token.ps1 -AccessToken "APP_USR-..."
 # Se retornar 200 em User Info → Token válido
@@ -393,6 +418,7 @@ Conteúdo:
 ```
 
 ### **2. Ver Dados Brutos do ML**
+
 ```powershell
 .\test_ml_token.ps1 -AccessToken "APP_USR-..."
 # Responda "s" para salvar
@@ -401,6 +427,7 @@ Conteúdo:
 ```
 
 ### **3. Debugar Integração ML**
+
 ```powershell
 .\test_ml_token.ps1 -AccessToken "APP_USR-..."
 # Veja quais APIs funcionam e quais falham
@@ -408,6 +435,7 @@ Conteúdo:
 ```
 
 ### **4. Gerar Comandos CURL**
+
 ```powershell
 .\test_ml_token.ps1 -AccessToken "APP_USR-..."
 # No final, copia os comandos curl
@@ -419,10 +447,12 @@ Conteúdo:
 ## 📚 Recursos Adicionais
 
 **Documentação ML:**
+
 - API Reference: https://developers.mercadolibre.com.br/pt_br/api-docs
 - OAuth Guide: https://developers.mercadolibre.com.br/pt_br/autenticacao-e-autorizacao
 
 **Scripts do Projeto:**
+
 - `test_ml_token.ps1` - Testa APIs ML diretamente
 - `scripts/get_ml_token.sql` - SQL para buscar token
 - `test_e2e_authenticated.ps1` - Testa via aplicação MercaFlow
@@ -432,18 +462,21 @@ Conteúdo:
 ## ✅ Checklist
 
 Antes de executar:
+
 - [ ] Integração ML configurada em `/ml/auth`
 - [ ] Token obtido do Supabase
 - [ ] Script `test_ml_token.ps1` no diretório do projeto
 - [ ] PowerShell aberto no diretório correto
 
 Durante execução:
+
 - [ ] Copiar token do Supabase
 - [ ] Executar script com token como parâmetro
 - [ ] Verificar sucessos/falhas
 - [ ] (Opcional) Salvar respostas em JSON
 
 Após execução:
+
 - [ ] Validar que User Info funcionou (200)
 - [ ] Verificar quantidade de produtos retornados
 - [ ] Conferir se tem pedidos recentes

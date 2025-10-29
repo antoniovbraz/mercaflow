@@ -4,7 +4,9 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
+
+const integrationService = getMLIntegrationService();
 
 export async function GET() {
   // PROTEÇÃO: Bloquear em produção
@@ -22,8 +24,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const supabase = await createClient();
-    const tokenManager = new MLTokenManager();
+  const supabase = await createClient();
 
     // Get user profile
     const { data: profile } = await supabase
@@ -40,12 +41,12 @@ export async function GET() {
       .select('*')
       .eq('tenant_id', tenantId);
 
-    // Test token manager
-    let tokenManagerResult = null;
+    // Test integration retrieval via service
+    let activeIntegration = null;
     try {
-      tokenManagerResult = await tokenManager.getIntegrationByTenant(tenantId);
+      activeIntegration = await integrationService.getActiveTenantIntegration(tenantId);
     } catch (error) {
-      tokenManagerResult = { error: error instanceof Error ? error.message : 'Unknown error' };
+      activeIntegration = { error: error instanceof Error ? error.message : 'Unknown error' };
     }
 
     return NextResponse.json({
@@ -56,7 +57,7 @@ export async function GET() {
       profile,
       tenantId,
       integrations: integrations || [],
-      tokenManager: tokenManagerResult,
+  integrationService: activeIntegration,
     });
 
   } catch (error) {

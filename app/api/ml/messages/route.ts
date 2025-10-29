@@ -9,9 +9,9 @@ import { logger } from '@/utils/logger';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
 
-const tokenManager = new MLTokenManager();
+const integrationService = getMLIntegrationService();
 
 interface SyncResult {
   integration_id: string;
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
           
           if (unread_only) {
             // Get unread messages count
-            const unreadRes = await tokenManager.makeMLRequest(
+            const unreadRes = await integrationService.fetch(
               integration.id,
               '/messages/unread?role=seller&tag=post_sale'
             );
@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
                 const resourcePath = result.resource; // e.g., "/packs/123/sellers/456"
                 
                 try {
-                  const messagesRes = await tokenManager.makeMLRequest(
+                  const messagesRes = await integrationService.fetch(
                     integration.id,
                     `/messages${resourcePath}?tag=post_sale&mark_as_read=false`
                   );
@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
             }
           } else if (pack_id) {
             // Fetch specific pack messages
-            const packRes = await tokenManager.makeMLRequest(
+            const packRes = await integrationService.fetch(
               integration.id,
               `/messages/packs/${pack_id}/sellers/${integration.ml_user_id}?tag=post_sale&mark_as_read=false`
             );
@@ -321,7 +321,7 @@ export async function POST(request: NextRequest) {
     logger.info('📤 Sending message to ML API:', { pack_id, to_user_id, text_length: message_text.length });
 
     // Send message through ML API
-    const res = await tokenManager.makeMLRequest(
+    const res = await integrationService.fetch(
       integration.id,
       `/messages/packs/${pack_id}/sellers/${integration.ml_user_id}?tag=post_sale`,
       {
@@ -383,7 +383,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log successful message send
-    await tokenManager['logSync'](integration.id, 'messages', 'success', {
+    await integrationService.logSyncEvent(integration.id, 'messages', 'success', {
       action: 'message_sent',
       pack_id: pack_id,
       to_user_id: to_user_id,

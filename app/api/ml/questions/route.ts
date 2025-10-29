@@ -12,14 +12,14 @@ import { getCached, buildCacheKey, CachePrefix, CacheTTL } from '@/utils/redis';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
 import {
   QuestionsSearchQuerySchema,
   validateQueryParams,
   ValidationError,
 } from '@/utils/validation';
 
-const tokenManager = new MLTokenManager();
+const integrationService = getMLIntegrationService();
 
 interface MLQuestion {
   id: number;
@@ -89,14 +89,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const tenantId = profile?.tenant_id || user.id;
 
     // Get active ML integration
-    const { data: integration, error } = await supabase
-      .from('ml_integrations')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('status', 'active')
-      .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
+    const integration = await integrationService.getActiveTenantIntegration(tenantId);
 
-    if (error || !integration) {
+    if (!integration) {
       logger.error('No ML integration found for tenant:', tenantId);
       return NextResponse.json(
         { error: 'No active ML integration found. Please connect your Mercado Livre account.' },
@@ -149,7 +144,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       async () => {
         // Make authenticated request to ML Questions API using the correct endpoint
         // According to ML docs, use /my/received_questions/search for user's questions
-        const mlResponse = await tokenManager.makeMLRequest(
+        const mlResponse = await integrationService.fetch(
           integration.id,
           `/my/received_questions/search?${searchParams.toString()}`
         );
@@ -243,14 +238,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const tenantId = profile?.tenant_id || user.id;
 
     // Get active ML integration
-    const { data: integration, error } = await supabase
-      .from('ml_integrations')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('status', 'active')
-      .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
+    const integration = await integrationService.getActiveTenantIntegration(tenantId);
 
-    if (error || !integration) {
+    if (!integration) {
       return NextResponse.json(
         { error: 'No active ML integration found' },
         { status: 404 }
@@ -260,7 +250,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     logger.info('💬 Answering question:', question_id);
 
     // Answer the question on ML
-    const mlResponse = await tokenManager.makeMLRequest(
+    const mlResponse = await integrationService.fetch(
       integration.id,
       `/questions/${question_id}`,
       {

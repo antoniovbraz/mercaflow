@@ -7,9 +7,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
 import { getCachedProducts, getProductStats } from '@/utils/mercadolivre/product-sync';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
 
-const tokenManager = new MLTokenManager();
+const integrationService = getMLIntegrationService();
 
 /**
  * GET /api/products - Get cached products with filtering
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const tenantId = profile?.tenant_id || user.id;
 
     // Get ML integration for this tenant
-    const integration = await tokenManager.getIntegrationByTenant(tenantId);
+    const integration = await integrationService.getActiveTenantIntegration(tenantId);
 
     if (!integration) {
       return NextResponse.json(

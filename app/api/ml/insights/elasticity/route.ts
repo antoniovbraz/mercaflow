@@ -10,11 +10,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
 import { logger } from '@/utils/logger';
 import { SupabaseClient } from '@supabase/supabase-js';
 
-const tokenManager = new MLTokenManager();
+const integrationService = getMLIntegrationService();
 
 interface ElasticityCalculation {
   elasticity_coefficient: number; // Price elasticity of demand
@@ -96,14 +96,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const tenantId = profile?.tenant_id || user.id;
 
     // Get ML integration for this tenant
-    const integration = await tokenManager.getIntegrationByTenant(tenantId);
+    const integrationResult = await integrationService
+      .getIntegrationWithToken(tenantId)
+      .catch(error => {
+        logger.warn('Failed to load ML integration for elasticity insights', {
+          tenantId,
+          error,
+        });
+        return null;
+      });
 
-    if (!integration) {
+    if (!integrationResult) {
       return NextResponse.json(
         { error: 'No active ML integration found' },
         { status: 404 }
       );
     }
+
+    const { integration, accessToken } = integrationResult;
 
     const { searchParams } = new URL(request.url);
     const itemId = searchParams.get('item_id');
@@ -147,7 +157,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Get visit data if requested
     if (includeVisits) {
-      await getVisitData(itemId, integration.access_token, periodDays);
+  await getVisitData(itemId, accessToken, periodDays);
     }
 
     // Generate insights and recommendations

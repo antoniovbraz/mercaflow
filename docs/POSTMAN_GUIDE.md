@@ -1,6 +1,7 @@
 # 🚀 Guia Completo: Testando APIs do Mercado Livre com Postman
 
 ## 📋 Índice
+
 1. [Instalação do Postman](#instalação)
 2. [Obtendo o Token ML](#obtendo-token)
 3. [Configurando o Postman](#configurando-postman)
@@ -36,6 +37,7 @@
 2. **Copie o token** clicando no botão "Copiar Token"
 
 3. O token será algo como:
+
    ```
    TG-67351d82e4b0ca001d002c95a10f90-669073070
    ```
@@ -74,11 +76,11 @@ Isso facilita reutilizar o token em múltiplas requisições.
 
 4. **Adicione as variáveis:**
 
-| Variable | Type | Initial Value | Current Value |
-|----------|------|---------------|---------------|
-| `ml_token` | default | `SEU_TOKEN_AQUI` | `SEU_TOKEN_AQUI` |
+| Variable      | Type    | Initial Value                  | Current Value                  |
+| ------------- | ------- | ------------------------------ | ------------------------------ |
+| `ml_token`    | default | `SEU_TOKEN_AQUI`               | `SEU_TOKEN_AQUI`               |
 | `ml_base_url` | default | `https://api.mercadolibre.com` | `https://api.mercadolibre.com` |
-| `ml_user_id` | default | `669073070` | `SEU_USER_ID` |
+| `ml_user_id`  | default | `669073070`                    | `SEU_USER_ID`                  |
 
 5. **Clique em "Save"**
 
@@ -97,11 +99,13 @@ Isso facilita reutilizar o token em múltiplas requisições.
 3. **Método:** `GET`
 
 4. **URL:**
+
    ```
    {{ml_base_url}}/users/me
    ```
 
 5. **Headers:**
+
    - Clique na aba "Headers"
    - Adicione:
      - **Key:** `Authorization`
@@ -165,15 +169,18 @@ Vou te mostrar como criar requisições para as **5 APIs mais importantes**.
 3. **Método:** `GET`
 
 4. **URL:**
+
    ```
    {{ml_base_url}}/users/me/items/search?status=active&limit=20
    ```
 
 5. **Headers:**
+
    - **Key:** `Authorization`
    - **Value:** `Bearer {{ml_token}}`
 
 6. **Params** (já incluídos na URL acima):
+
    - `status` = `active`
    - `limit` = `20`
 
@@ -183,11 +190,7 @@ Vou te mostrar como criar requisições para as **5 APIs mais importantes**.
 
 ```json
 {
-  "results": [
-    "MLB2015713558",
-    "MLB1984568597",
-    "MLB2015719431"
-  ],
+  "results": ["MLB2015713558", "MLB1984568597", "MLB2015719431"],
   "paging": {
     "total": 95,
     "offset": 0,
@@ -197,6 +200,7 @@ Vou te mostrar como criar requisições para as **5 APIs mais importantes**.
 ```
 
 **Explicação:**
+
 - `results`: IDs dos produtos ativos
 - `total`: Total de produtos ativos (95 no seu caso!)
 - Para ver detalhes, use `/items/{id}` depois
@@ -214,12 +218,15 @@ Vou te mostrar como criar requisições para as **5 APIs mais importantes**.
 3. **Método:** `GET`
 
 4. **URL:**
+
    ```
    {{ml_base_url}}/items/MLB2015713558
    ```
-   *(Substitua pelo ID de um dos seus produtos)*
+
+   _(Substitua pelo ID de um dos seus produtos)_
 
 5. **Headers:**
+
    - **Key:** `Authorization`
    - **Value:** `Bearer {{ml_token}}`
 
@@ -255,15 +262,18 @@ Vou te mostrar como criar requisições para as **5 APIs mais importantes**.
 3. **Método:** `GET`
 
 4. **URL:**
+
    ```
    {{ml_base_url}}/orders/search?seller={{ml_user_id}}&sort=date_desc&limit=10
    ```
 
 5. **Headers:**
+
    - **Key:** `Authorization`
    - **Value:** `Bearer {{ml_token}}`
 
 6. **Params:**
+
    - `seller` = `{{ml_user_id}}`
    - `sort` = `date_desc`
    - `limit` = `10`
@@ -279,7 +289,7 @@ Vou te mostrar como criar requisições para as **5 APIs mais importantes**.
       "id": 12345678901,
       "status": "paid",
       "date_created": "2025-10-20T10:30:00.000-03:00",
-      "total_amount": 49.80,
+      "total_amount": 49.8,
       "order_items": [
         {
           "item": {
@@ -287,7 +297,7 @@ Vou te mostrar como criar requisições para as **5 APIs mais importantes**.
             "title": "Cabo Usb Tipo C"
           },
           "quantity": 2,
-          "unit_price": 24.90
+          "unit_price": 24.9
         }
       ],
       "buyer": {
@@ -318,15 +328,18 @@ Vou te mostrar como criar requisições para as **5 APIs mais importantes**.
 3. **Método:** `GET`
 
 4. **URL:**
+
    ```
    {{ml_base_url}}/my/received_questions/search?api_version=4&status=UNANSWERED&limit=10
    ```
 
 5. **Headers:**
+
    - **Key:** `Authorization`
    - **Value:** `Bearer {{ml_token}}`
 
 6. **Params:**
+
    - `api_version` = `4` (importante!)
    - `status` = `UNANSWERED`
    - `limit` = `10`
@@ -369,17 +382,20 @@ Vou te mostrar como criar requisições para as **5 APIs mais importantes**.
 3. **Método:** `POST`
 
 4. **URL:**
+
    ```
    {{ml_base_url}}/answers
    ```
 
 5. **Headers:**
+
    - **Key:** `Authorization`
    - **Value:** `Bearer {{ml_token}}`
    - **Key:** `Content-Type`
    - **Value:** `application/json`
 
 6. **Body:**
+
    - Selecione **"raw"**
    - Tipo: **JSON**
    - Conteúdo:
@@ -443,11 +459,13 @@ Vou te mostrar como criar requisições para as **5 APIs mais importantes**.
 ### **Como Organizar:**
 
 1. **Crie pastas** dentro da collection:
+
    - Clique com botão direito na collection
    - "Add folder"
    - Nomeie: "User", "Products", etc.
 
 2. **Mova requests** para as pastas correspondentes:
+
    - Arraste e solte cada request na pasta correta
 
 3. **Adicione descrições** em cada request:
@@ -464,18 +482,21 @@ Se o token expirar, você pode automatizar a renovação:
 
 ```javascript
 // Na aba "Pre-request Script" da Collection
-pm.sendRequest({
-    url: 'https://mercaflow.vercel.app/api/ml/debug-token',
-    method: 'GET',
+pm.sendRequest(
+  {
+    url: "https://mercaflow.vercel.app/api/ml/debug-token",
+    method: "GET",
     header: {
-        'Cookie': 'sb-access-token=SEU_COOKIE'
-    }
-}, function (err, response) {
+      Cookie: "sb-access-token=SEU_COOKIE",
+    },
+  },
+  function (err, response) {
     if (!err) {
-        const data = response.json();
-        pm.environment.set("ml_token", data.token.access_token);
+      const data = response.json();
+      pm.environment.set("ml_token", data.token.access_token);
     }
-});
+  }
+);
 ```
 
 ---
@@ -487,13 +508,13 @@ Adicione na aba "Tests" para verificar respostas:
 ```javascript
 // Verificar se retornou 200 OK
 pm.test("Status code is 200", function () {
-    pm.response.to.have.status(200);
+  pm.response.to.have.status(200);
 });
 
 // Verificar se tem o campo 'id'
 pm.test("Response has id field", function () {
-    var jsonData = pm.response.json();
-    pm.expect(jsonData).to.have.property('id');
+  var jsonData = pm.response.json();
+  pm.expect(jsonData).to.have.property("id");
 });
 
 // Salvar user_id automaticamente
@@ -510,6 +531,7 @@ pm.environment.set("ml_user_id", jsonData.id);
 2. **Selecione** a collection "Mercado Livre API"
 
 3. **Configure:**
+
    - Environment: ML Production
    - Iterations: 1
    - Delay: 500ms
@@ -541,6 +563,7 @@ pm.environment.set("ml_user_id", jsonData.id);
 **Causa:** Token inválido ou expirado
 
 **Solução:**
+
 1. Vá em https://mercaflow.vercel.app/admin/ml-token
 2. Copie o novo token
 3. Atualize a variável `ml_token` no Postman
@@ -553,6 +576,7 @@ pm.environment.set("ml_user_id", jsonData.id);
 **Causa:** URL errada ou ID de produto/pedido inválido
 
 **Solução:**
+
 1. Verifique se a URL está correta
 2. Confirme se o ID existe (use `/items/search` antes)
 3. Veja a documentação: https://developers.mercadolibre.com.br/
@@ -564,6 +588,7 @@ pm.environment.set("ml_user_id", jsonData.id);
 **Causa:** Excedeu limite de rate (requests por minuto)
 
 **Solução:**
+
 1. Aguarde 1 minuto
 2. Adicione delays entre requests (500ms-1s)
 3. Use Collection Runner com delay configurado
@@ -575,6 +600,7 @@ pm.environment.set("ml_user_id", jsonData.id);
 **Causa:** Sem permissão para acessar esse recurso
 
 **Solução:**
+
 1. Verifique se o token tem os scopes necessários
 2. Alguns endpoints exigem permissões especiais
 3. Reconecte a integração ML se necessário
@@ -586,6 +612,7 @@ pm.environment.set("ml_user_id", jsonData.id);
 **Causa:** Problema de conexão ou API do ML fora
 
 **Solução:**
+
 1. Verifique sua internet
 2. Teste em: https://api.mercadolibre.com/sites/MLB
 3. Veja status: https://status.mercadolibre.com/
@@ -595,16 +622,19 @@ pm.environment.set("ml_user_id", jsonData.id);
 ## 8. 📚 Recursos Adicionais
 
 ### **Documentação Oficial ML:**
+
 - API Docs: https://developers.mercadolibre.com.br/pt_br/api-docs
 - Autenticação: https://developers.mercadolibre.com.br/pt_br/autenticacao-e-autorizacao
 - SDKs: https://developers.mercadolibre.com.br/pt_br/suporte
 
 ### **Postman Learning:**
+
 - Docs: https://learning.postman.com/docs/
 - Tutorials: https://www.youtube.com/@postman
 - Community: https://community.postman.com/
 
 ### **MercaFlow Docs:**
+
 - ML Integration: `docs/pt/ML_INTEGRATION.md`
 - API Testing: `docs/pt/API_TESTING.md`
 - Token Guide: `GUIA_ML_TOKEN_TESTER.md`
@@ -620,6 +650,7 @@ pm.environment.set("ml_user_id", jsonData.id);
 **Endpoint:** `GET /users/me/items/search?category=MLB1234`
 
 **Dicas:**
+
 1. Primeiro, descubra suas categorias com `/users/me/items/search`
 2. Pegue um `category_id` da resposta
 3. Filtre usando `?category=CATEGORY_ID`
@@ -633,13 +664,15 @@ pm.environment.set("ml_user_id", jsonData.id);
 **Endpoint:** `PUT /items/{item_id}`
 
 **Body:**
+
 ```json
 {
-  "price": 29.90
+  "price": 29.9
 }
 ```
 
 **Dicas:**
+
 1. Use um ID de produto real
 2. Método: PUT
 3. Header: `Content-Type: application/json`
@@ -653,6 +686,7 @@ pm.environment.set("ml_user_id", jsonData.id);
 **Endpoint:** `GET /orders/search?seller=me&order.status=payment_required`
 
 **Dicas:**
+
 1. Use filtro `order.status=payment_required`
 2. Veja outros status disponíveis na doc
 3. Combine com `sort=date_desc`

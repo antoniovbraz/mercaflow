@@ -10,11 +10,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { getCached, buildCacheKey, CachePrefix, CacheTTL } from '@/utils/redis';
 import { logger } from '@/utils/logger';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
+import type { MLIntegration } from '@/utils/mercadolivre/types';
 
-const tokenManager = new MLTokenManager();
+const integrationService = getMLIntegrationService();
 
 interface MetricsRequest {
   type: 'visits' | 'visits_time_window' | 'questions' | 'questions_time_window' | 'phone_views' | 'phone_views_time_window';
@@ -36,11 +37,7 @@ interface AggregatedMetricsRequest {
   user_id?: string;
 }
 
-interface MLIntegration {
-  access_token: string;
-  ml_user_id: string | number;
-  tenant_id: string;
-}
+type IntegrationContext = Pick<MLIntegration, 'id' | 'ml_user_id'>;
 
 interface MetricResult {
   data: Record<string, unknown>;
@@ -114,14 +111,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const tenantId = profile?.tenant_id || user.id;
 
     // Get ML integration for this tenant
-    const integration = await tokenManager.getIntegrationByTenant(tenantId);
+    const integrationResult = await integrationService
+      .getIntegrationWithToken(tenantId)
+      .catch(error => {
+        logger.warn('Failed to resolve integration for aggregated metrics', {
+          tenantId,
+          error,
+        });
+        return null;
+      });
 
-    if (!integration) {
+    if (!integrationResult) {
       return NextResponse.json(
         { error: 'No active ML integration found' },
         { status: 404 }
       );
     }
+
+    const { integration } = integrationResult;
 
     // Parse request parameters
     const { searchParams } = new URL(request.url);
@@ -195,7 +202,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Fetch from ML API if not cached
     if (!aggregatedData) {
-      aggregatedData = await fetchAggregatedMetrics(requestData, integration);
+  aggregatedData = await fetchAggregatedMetrics(requestData, integration);
     }
 
     // Calculate overall summary
@@ -249,7 +256,7 @@ function isRealTimeRequest(request: AggregatedMetricsRequest): boolean {
 /**
  * Fetch aggregated metrics from multiple ML API endpoints
  */
-async function fetchAggregatedMetrics(request: AggregatedMetricsRequest, integration: MLIntegration): Promise<Record<string, MetricResult>> {
+async function fetchAggregatedMetrics(request: AggregatedMetricsRequest, integration: IntegrationContext): Promise<Record<string, MetricResult>> {
   const results: Record<string, MetricResult> = {};
 
   // Fetch each metric type concurrently
@@ -265,7 +272,7 @@ async function fetchAggregatedMetrics(request: AggregatedMetricsRequest, integra
         user_id: request.user_id
       };
 
-      const data = await fetchMetricsFromML(metricsRequest, integration);
+  const data = await fetchMetricsFromML(metricsRequest, integration);
 
       // Calculate summary for this metric
       const summary = calculateMetricsSummary(data);
@@ -298,7 +305,7 @@ async function fetchAggregatedMetrics(request: AggregatedMetricsRequest, integra
 /**
  * Fetch metrics from ML API (simplified version for aggregation)
  */
-async function fetchMetricsFromML(request: MetricsRequest, integration: MLIntegration): Promise<MLApiResponse> {
+async function fetchMetricsFromML(request: MetricsRequest, integration: IntegrationContext): Promise<MLApiResponse> {
   const { type, period, date_from, date_to, item_ids, user_id } = request;
   const mlUserId = user_id || integration.ml_user_id;
 
@@ -362,12 +369,7 @@ async function fetchMetricsFromML(request: MetricsRequest, integration: MLIntegr
       throw new Error(`Unsupported metric type: ${type}`);
   }
 
-  const response = await fetch(apiUrl, {
-    headers: {
-      'Authorization': `Bearer ${integration.access_token}`,
-      'Accept': 'application/json'
-    }
-  });
+  const response = await integrationService.fetch(integration.id, apiUrl);
 
   if (!response.ok) {
     const errorText = await response.text();

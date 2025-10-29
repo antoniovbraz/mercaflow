@@ -10,11 +10,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { logger } from '@/utils/logger';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { getMLIntegrationService, getMLTokenService } from '@/utils/mercadolivre/services';
 
-const tokenManager = new MLTokenManager();
+const integrationService = getMLIntegrationService();
+const tokenService = getMLTokenService();
 
 interface AutomationRequest {
   item_id: string;
@@ -47,7 +48,6 @@ interface ItemData {
 
 interface IntegrationData {
   id: string;
-  access_token: string;
 }
 
 interface AutomationParameters {
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const tenantId = profile?.tenant_id || user.id;
 
     // Get ML integration for this tenant
-    const integration = await tokenManager.getIntegrationByTenant(tenantId);
+    const integration = await integrationService.getActiveTenantIntegration(tenantId);
 
     if (!integration) {
       return NextResponse.json(
@@ -158,7 +158,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Apply price change if not dry run and change is significant
     if (!dry_run && Math.abs(result.price_change_percentage) > 0.01) { // >1% change
       try {
-        await applyPriceChange(item_id, result.suggested_price, integration.access_token);
+        const accessToken = await tokenService.getValidToken(integration.id);
+        await applyPriceChange(item_id, result.suggested_price, accessToken);
         result.applied = true;
         result.applied_at = new Date().toISOString();
 
@@ -279,11 +280,13 @@ async function runCompetitorMatchingAutomation(
 ): Promise<AutomationResult> {
   try {
     // Buscar sugestões de preço do ML
+    const accessToken = await tokenService.getValidToken(integration.id);
+
     const suggestionsResponse = await fetch(
       `${process.env.NEXT_PUBLIC_APP_URL}/api/ml/price-suggestions/${itemData.ml_item_id}`,
       {
         headers: {
-          'Authorization': `Bearer ${integration.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         }
       }

@@ -59,11 +59,26 @@ try {
     $apiUrl = "$BaseUrl/api/ml/debug-token"
     
     Write-Host "  URL: $apiUrl" -ForegroundColor Gray
-    Write-Host "  Cookie: $($Cookie.Substring(0, [Math]::Min(50, $Cookie.Length)))..." -ForegroundColor Gray
+    
+    # Decode base64 cookie if needed
+    $decodedCookie = $Cookie
+    if ($Cookie.StartsWith("base64-")) {
+        Write-Host "  Detectado cookie em Base64, decodificando..." -ForegroundColor Cyan
+        $base64Part = $Cookie.Substring(7) # Remove "base64-" prefix
+        $decodedBytes = [System.Convert]::FromBase64String($base64Part)
+        $decodedCookie = [System.Text.Encoding]::UTF8.GetString($decodedBytes)
+        
+        # Extract access_token from JSON
+        $cookieJson = $decodedCookie | ConvertFrom-Json
+        $decodedCookie = $cookieJson.access_token
+        Write-Host "  ✅ Cookie decodificado" -ForegroundColor Green
+    }
+    
+    Write-Host "  Cookie: $($decodedCookie.Substring(0, [Math]::Min(50, $decodedCookie.Length)))..." -ForegroundColor Gray
     Write-Host ""
     
     $headers = @{
-        'Cookie' = "sb-access-token=$Cookie"
+        'Cookie' = "sb-access-token=$decodedCookie"
     }
     
     $response = Invoke-RestMethod -Uri $apiUrl -Method GET -Headers $headers -ErrorAction Stop

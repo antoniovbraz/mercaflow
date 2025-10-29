@@ -12,8 +12,8 @@ import { getCached, buildCacheKey, CachePrefix, CacheTTL } from '@/utils/redis';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { syncProducts, getCachedProducts } from '@/utils/mercadolivre/product-sync';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
 import {
   MLItemSchema,
   CreateMLItemSchema,
@@ -25,7 +25,7 @@ import {
   MLApiError,
 } from '@/utils/validation';
 
-const tokenManager = new MLTokenManager();
+const integrationService = getMLIntegrationService();
 
 /**
  * GET /api/ml/items - List user's items
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const tenantId = profile?.tenant_id || user.id;
     
     // Get ML integration for this tenant
-    const integration = await tokenManager.getIntegrationByTenant(tenantId);
+  const integration = await integrationService.getActiveTenantIntegration(tenantId);
     
     logger.info('ML Items Debug:', {
       userId: user.id,
@@ -186,7 +186,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     
     logger.info(`Initial fetch: ${initialUrl}`);
     
-    const initialResponse = await tokenManager.makeMLRequest(
+    const initialResponse = await integrationService.fetch(
       integration.id,
       initialUrl
     );
@@ -213,7 +213,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // Start scan mode
       const scanUrl = `/users/${integration.ml_user_id}/items/search?search_type=scan&limit=${limit}`;
       
-      const scanResponse = await tokenManager.makeMLRequest(
+      const scanResponse = await integrationService.fetch(
         integration.id,
         scanUrl
       );
@@ -233,7 +233,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           
           logger.info(`Fetching scroll batch: ${allItemIds.length}/${totalItems}`);
           
-          const scrollResponse = await tokenManager.makeMLRequest(
+          const scrollResponse = await integrationService.fetch(
             integration.id,
             scrollUrl
           );
@@ -270,7 +270,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         
         logger.info(`Fetching batch: ${offset}-${offset + limit}/${totalItems}`);
         
-        const batchResponse = await tokenManager.makeMLRequest(
+        const batchResponse = await integrationService.fetch(
           integration.id,
           paginatedUrl
         );
@@ -301,9 +301,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const paginatedItemIds = allItemIds.slice(requestedOffset, requestedOffset + requestedLimit);
     
     // Get detailed item data for paginated results
-    const itemDetailsPromises = paginatedItemIds.map(async (itemId: string) => {
+    const itemDetailsPromises = paginatedItemIds.map(async (itemId: string): Promise<Record<string, unknown> | null> => {
       try {
-        const itemResponse = await tokenManager.makeMLRequest(
+        const itemResponse = await integrationService.fetch(
           integration.id,
           `/items/${itemId}`
         );
@@ -321,7 +321,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
 
     const itemDetails = await Promise.all(itemDetailsPromises);
-    const validItems = itemDetails.filter(item => item !== null);
+    const validItems = itemDetails.filter((item): item is Record<string, unknown> => item !== null);
 
     logger.info(`Fetched ${validItems.length} item details out of ${paginatedItemIds.length} requested`);
     
@@ -356,7 +356,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       logger.info('Product sync result:', syncResult);
       
       // Log successful sync
-      await tokenManager['logSync'](integration.id, 'products', 'success', {
+      await integrationService.logSyncEvent(integration.id, 'products', 'success', {
         action: 'items_synced',
         count: validItems.length,
         total: allItemIds.length,
@@ -364,7 +364,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } catch (syncError) {
       logger.error('Product sync failed:', syncError);
       // Don't fail the request if sync fails, just log it
-      await tokenManager['logSync'](integration.id, 'products', 'error', {
+      await integrationService.logSyncEvent(integration.id, 'products', 'error', {
         action: 'items_sync_failed',
         error: syncError instanceof Error ? syncError.message : 'Unknown sync error',
       });
@@ -427,7 +427,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
     
     // Get ML integration using user ID as tenant ID
-    const integration = await tokenManager.getIntegrationByTenant(user.id);
+    const integration = await integrationService.getActiveTenantIntegration(user.id);
     
     if (!integration) {
       return NextResponse.json(
@@ -463,7 +463,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     };
 
     // Create item on ML
-    const mlResponse = await tokenManager.makeMLRequest(
+    const mlResponse = await integrationService.fetch(
       integration.id,
       '/items',
       {
@@ -481,7 +481,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       logger.error('ML Create Item Error:', mlResponse.status, responseText);
       
       // Log failed creation
-      await tokenManager['logSync'](integration.id, 'products', 'error', {
+      await integrationService.logSyncEvent(integration.id, 'products', 'error', {
         action: 'item_create_failed',
         error: responseText,
         status_code: mlResponse.status,
@@ -499,7 +499,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const createdItem = validateOutput(MLItemSchema, rawCreatedItem);
     
     // Log successful creation
-    await tokenManager['logSync'](integration.id, 'products', 'success', {
+    await integrationService.logSyncEvent(integration.id, 'products', 'success', {
       action: 'item_created',
       item_id: createdItem.id,
       title: createdItem.title,

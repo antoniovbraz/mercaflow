@@ -81,6 +81,32 @@ export class MLIntegrationRepository {
   }
 
   /**
+   * Find most recently updated active integration for tenant
+   */
+  async findActiveByTenant(tenantId: string): Promise<MLIntegration | null> {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from('ml_integrations')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'active')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      logger.error('Failed to find active integration by tenant', {
+        tenantId,
+        error,
+      });
+      throw new Error(`Failed to find active integration: ${error.message}`);
+    }
+
+    return data as MLIntegration | null;
+  }
+
+  /**
    * Create new integration
    */
   async create(input: CreateMLIntegrationInput): Promise<MLIntegration> {

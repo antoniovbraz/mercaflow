@@ -11,8 +11,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { requireRole } from '@/utils/supabase/roles';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { logger } from '@/utils/logger';
+import { getMLTokenService } from '@/utils/mercadolivre/services';
+
+const tokenService = getMLTokenService();
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,8 +54,7 @@ export async function GET(request: NextRequest) {
       }
       
       // Get decrypted token
-      const tokenManager = new MLTokenManager();
-      const accessToken = await tokenManager.getValidToken(integration.id);
+      const accessToken = await tokenService.getValidToken(integration.id);
       
       if (!accessToken) {
         return NextResponse.json(
@@ -93,8 +94,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Get specific integration
-    const tokenManager = new MLTokenManager();
-    const accessToken = await tokenManager.getValidToken(integrationId);
+    const accessToken = await tokenService.getValidToken(integrationId);
     
     if (!accessToken) {
       return NextResponse.json(

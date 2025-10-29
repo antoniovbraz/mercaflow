@@ -6,3 +6,4 @@
 
 export { MLTokenService, getMLTokenService } from './MLTokenService';
 export { MLProductService, getMLProductService } from './MLProductService';
+export { MLIntegrationService, getMLIntegrationService } from './MLIntegrationService';

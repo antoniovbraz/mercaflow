@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-import { MLTokenManager } from '@/utils/mercadolivre/token-manager';
 import { syncProducts } from '@/utils/mercadolivre/product-sync';
 import { headers } from 'next/headers';
 import { logger } from '@/utils/logger';
@@ -12,6 +11,9 @@ import {
   ValidationError,
   type MLWebhookTopic,
 } from '@/utils/validation';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
+
+const integrationService = getMLIntegrationService();
 
 // Enhanced notification data when we fetch from the resource URL
 interface ProcessedNotification extends MLWebhookNotification {
@@ -333,8 +335,7 @@ async function processItemNotification(
     }
 
     // Fetch updated item data from ML
-    const tokenManager = new MLTokenManager();
-    const mlResponse = await tokenManager.makeMLRequest(
+    const mlResponse = await integrationService.fetch(
       integration.id,
       `/items/${itemId}`
     );
