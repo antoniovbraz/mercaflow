@@ -1,9 +1,14 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ChevronRight } from "lucide-react";
 import { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { TooltipHelp } from "@/components/ui/tooltip-help";
+
+const TooltipHelp = dynamic(
+  () => import("@/components/ui/tooltip-help").then((mod) => mod.TooltipHelp),
+  { ssr: false }
+);
 
 interface BreadcrumbItem {
   label: string;
