@@ -6,6 +6,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, createClient } from '@/utils/supabase/server';
+import { getMLIntegrationService } from '@/utils/mercadolivre/services';
+import { logger } from '@/utils/logger';
 
 export interface QuestionTemplate {
   id: string;
@@ -21,9 +23,11 @@ export interface QuestionTemplate {
 /**
  * GET /api/ml/questions/templates - List question templates
  */
+const integrationService = getMLIntegrationService();
+
 export async function GET(): Promise<NextResponse> {
   try {
-    console.log('📋 ML Question Templates GET request received');
+    logger.info('Fetching ML question templates');
     
     const user = await getCurrentUser();
     if (!user) {
@@ -36,21 +40,23 @@ export async function GET(): Promise<NextResponse> {
     const supabase = await createClient();
 
     // Get user profile for tenant ID
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('tenant_id')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
+
+    if (profileError) {
+      logger.error('Failed to load profile for templates', { error: profileError, userId: user.id });
+      return NextResponse.json(
+        { error: 'Failed to load user profile' },
+        { status: 500 }
+      );
+    }
 
     const tenantId = profile?.tenant_id || user.id;
 
-    // Get active ML integration
-    const { data: integration } = await supabase
-      .from('ml_integrations')
-      .select('id')
-      .eq('tenant_id', tenantId)
-      .eq('status', 'active')
-      .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
+    const integration = await integrationService.getActiveTenantIntegration(tenantId);
 
     if (!integration) {
       return NextResponse.json(
@@ -68,18 +74,19 @@ export async function GET(): Promise<NextResponse> {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching templates:', error);
+      logger.error('Failed to fetch ML question templates', { error, integrationId: integration.id, tenantId });
       return NextResponse.json(
         { error: 'Failed to fetch templates' },
         { status: 500 }
       );
     }
 
-    console.log('✅ Successfully fetched', templates.length, 'templates');
-    return NextResponse.json({ templates });
+    const safeTemplates = templates ?? [];
+    logger.info('Question templates fetched', { templateCount: safeTemplates.length, integrationId: integration.id });
+    return NextResponse.json({ templates: safeTemplates });
 
   } catch (error) {
-    console.error('ML Question Templates GET Error:', error);
+    logger.error('ML Question Templates GET Error', { error });
     return NextResponse.json(
       { error: 'Internal server error while fetching templates' },
       { status: 500 }
@@ -92,7 +99,7 @@ export async function GET(): Promise<NextResponse> {
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    console.log('📝 ML Question Templates POST request received');
+    logger.info('Creating ML question template');
     
     const user = await getCurrentUser();
     if (!user) {
@@ -115,21 +122,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const supabase = await createClient();
 
     // Get user profile for tenant ID
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('tenant_id')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
+
+    if (profileError) {
+      logger.error('Failed to load profile for template creation', { error: profileError, userId: user.id });
+      return NextResponse.json(
+        { error: 'Failed to load user profile' },
+        { status: 500 }
+      );
+    }
 
     const tenantId = profile?.tenant_id || user.id;
 
-    // Get active ML integration
-    const { data: integration } = await supabase
-      .from('ml_integrations')
-      .select('id')
-      .eq('tenant_id', tenantId)
-      .eq('status', 'active')
-      .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
+    const integration = await integrationService.getActiveTenantIntegration(tenantId);
 
     if (!integration) {
       return NextResponse.json(
@@ -153,18 +162,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .single();
 
     if (error) {
-      console.error('Error creating template:', error);
+      logger.error('Failed to create ML question template', { error, integrationId: integration.id, tenantId });
       return NextResponse.json(
         { error: 'Failed to create template' },
         { status: 500 }
       );
     }
 
-    console.log('✅ Successfully created template:', template.id);
+    logger.info('Question template created', { templateId: template.id, integrationId: integration.id });
     return NextResponse.json({ template });
 
   } catch (error) {
-    console.error('ML Question Templates POST Error:', error);
+    logger.error('ML Question Templates POST Error', { error });
     return NextResponse.json(
       { error: 'Internal server error while creating template' },
       { status: 500 }
@@ -177,7 +186,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
  */
 export async function PUT(request: NextRequest): Promise<NextResponse> {
   try {
-    console.log('📝 ML Question Templates PUT request received');
+    logger.info('Updating ML question template');
     
     const user = await getCurrentUser();
     if (!user) {
@@ -200,21 +209,23 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     const supabase = await createClient();
 
     // Get user profile for tenant ID
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('tenant_id')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
+
+    if (profileError) {
+      logger.error('Failed to load profile for template update', { error: profileError, userId: user.id });
+      return NextResponse.json(
+        { error: 'Failed to load user profile' },
+        { status: 500 }
+      );
+    }
 
     const tenantId = profile?.tenant_id || user.id;
 
-    // Get active ML integration
-    const { data: integration } = await supabase
-      .from('ml_integrations')
-      .select('id')
-      .eq('tenant_id', tenantId)
-      .eq('status', 'active')
-      .maybeSingle(); // Use maybeSingle() to allow 0 results without 406 error
+    const integration = await integrationService.getActiveTenantIntegration(tenantId);
 
     if (!integration) {
       return NextResponse.json(
@@ -224,7 +235,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     }
 
     // Update template
-    const updateData: Record<string, string | number | boolean | Date> = { updated_at: new Date().toISOString() };
+    const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
     
     if (name !== undefined) updateData.name = name.trim();
     if (template_text !== undefined) updateData.template_text = template_text.trim();
@@ -241,7 +252,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       .single();
 
     if (error) {
-      console.error('Error updating template:', error);
+      logger.error('Failed to update ML question template', { error, templateId: id, integrationId: integration.id });
       return NextResponse.json(
         { error: 'Failed to update template' },
         { status: 500 }
@@ -255,11 +266,11 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    console.log('✅ Successfully updated template:', template.id);
+    logger.info('Question template updated', { templateId: template.id, integrationId: integration.id });
     return NextResponse.json({ template });
 
   } catch (error) {
-    console.error('ML Question Templates PUT Error:', error);
+    logger.error('ML Question Templates PUT Error', { error });
     return NextResponse.json(
       { error: 'Internal server error while updating template' },
       { status: 500 }

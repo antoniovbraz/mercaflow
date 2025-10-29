@@ -31,7 +31,21 @@ const MAX_LIMIT = 100;
 const DEFAULT_SORT = 'created_at';
 const DEFAULT_ORDER = 'desc';
 
-const VALID_STATUSES = ['PENDING', 'DISMISSED', 'COMPLETED', 'EXPIRED'];
+const STATUS_REQUEST_MAP = {
+  PENDING: 'PENDING',
+  ACTIVE: 'PENDING',
+  DISMISSED: 'DISMISSED',
+  COMPLETED: 'COMPLETED',
+  EXPIRED: 'EXPIRED',
+} as const;
+
+const STATUS_RESPONSE_MAP = {
+  PENDING: 'ACTIVE',
+  DISMISSED: 'DISMISSED',
+  COMPLETED: 'COMPLETED',
+  EXPIRED: 'DISMISSED',
+} as const;
+
 const VALID_CATEGORIES = [
   'PRICE_OPTIMIZATION',
   'AUTOMATION_OPPORTUNITY',
@@ -40,7 +54,13 @@ const VALID_CATEGORIES = [
   'QUALITY_IMPROVEMENT',
   'COMPETITOR_ALERT',
 ];
-const VALID_SORT_FIELDS = ['created_at', 'priority', 'roi_estimate', 'confidence'];
+
+const SORT_FIELD_MAP = {
+  created_at: 'created_at',
+  priority: 'priority',
+  roi_estimate: 'roi_estimate',
+  confidence_score: 'confidence',
+} as const;
 
 // ============================================================================
 // API ROUTE HANDLER
@@ -76,12 +96,12 @@ export async function GET(request: NextRequest) {
     // 3. Parse query parameters
     const searchParams = request.nextUrl.searchParams;
     
-    const status = searchParams.get('status');
+    const statusParam = searchParams.get('status');
     const category = searchParams.get('category');
-    const priorityStr = searchParams.get('priority');
+  const priorityStr = searchParams.get('priority');
     const limitStr = searchParams.get('limit');
     const offsetStr = searchParams.get('offset');
-    const sort = searchParams.get('sort') || DEFAULT_SORT;
+    const sortParam = searchParams.get('sort') || DEFAULT_SORT;
     const order = searchParams.get('order') || DEFAULT_ORDER;
 
     // Validate and parse parameters
@@ -90,15 +110,34 @@ export async function GET(request: NextRequest) {
       MAX_LIMIT
     );
     const offset = parseInt(offsetStr || '0', 10);
-    const priority = priorityStr ? parseInt(priorityStr, 10) : null;
+  const priority = priorityStr !== null ? parseInt(priorityStr, 10) : null;
 
-    // Validate status
-    if (status && !VALID_STATUSES.includes(status)) {
+    const normalizedStatus = statusParam
+      ? (statusParam.toUpperCase() as keyof typeof STATUS_REQUEST_MAP)
+      : null;
+
+    const validStatusKeys = Object.keys(STATUS_REQUEST_MAP);
+
+    if (
+      normalizedStatus &&
+      !Object.prototype.hasOwnProperty.call(STATUS_REQUEST_MAP, normalizedStatus)
+    ) {
       return NextResponse.json(
-        { error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` },
+        { error: `Invalid status. Must be one of: ${validStatusKeys.join(', ')}` },
         { status: 400 }
       );
     }
+
+    const dbStatus = normalizedStatus ? STATUS_REQUEST_MAP[normalizedStatus] : null;
+
+    const sortKey = sortParam as keyof typeof SORT_FIELD_MAP;
+    if (!Object.prototype.hasOwnProperty.call(SORT_FIELD_MAP, sortKey)) {
+      return NextResponse.json(
+        { error: `Invalid sort field. Must be one of: ${Object.keys(SORT_FIELD_MAP).join(', ')}` },
+        { status: 400 }
+      );
+    }
+    const sortField = SORT_FIELD_MAP[sortKey];
 
     // Validate category
     if (category && !VALID_CATEGORIES.includes(category)) {
@@ -109,19 +148,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Validate priority
-    if (priority && (priority < 1 || priority > 5)) {
+    if (priority !== null) {
+      if (Number.isNaN(priority) || priority < 1 || priority > 5) {
       return NextResponse.json(
         { error: 'Invalid priority. Must be between 1 and 5' },
         { status: 400 }
       );
-    }
-
-    // Validate sort field
-    if (!VALID_SORT_FIELDS.includes(sort)) {
-      return NextResponse.json(
-        { error: `Invalid sort field. Must be one of: ${VALID_SORT_FIELDS.join(', ')}` },
-        { status: 400 }
-      );
+      }
     }
 
     // Validate sort order
@@ -136,9 +169,9 @@ export async function GET(request: NextRequest) {
       ...context,
       userId: user.id,
       tenantId,
-      filters: { status, category, priority },
+  filters: { status: statusParam, category, priority },
       pagination: { limit, offset },
-      sorting: { sort, order },
+  sorting: { sort: sortParam, order },
     });
 
     // 4. Build query
@@ -149,8 +182,8 @@ export async function GET(request: NextRequest) {
       .eq('tenant_id', tenantId);
 
     // Apply filters
-    if (status) {
-      query = query.eq('status', status);
+    if (dbStatus) {
+      query = query.eq('status', dbStatus);
     }
 
     if (category) {
@@ -162,7 +195,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply sorting
-    query = query.order(sort, { ascending: order === 'asc' });
+    query = query.order(sortField, { ascending: order === 'asc' });
 
     // Apply pagination
     query = query.range(offset, offset + limit - 1);
@@ -181,10 +214,29 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const toUiPriority = (value?: number) => {
+      if (value === null || value === undefined) return 'LOW' as const;
+      if (value <= 2) return 'HIGH' as const;
+      if (value === 3) return 'MEDIUM' as const;
+      return 'LOW' as const;
+    };
+
+    const rawInsights = insights ?? [];
+    const transformedInsights = rawInsights.map((insight) => {
+      const statusKey = (insight.status as keyof typeof STATUS_RESPONSE_MAP) || 'PENDING';
+      return {
+        ...insight,
+        priority_value: insight.priority,
+        priority: toUiPriority(insight.priority),
+        status: STATUS_RESPONSE_MAP[statusKey] || 'ACTIVE',
+        confidence_score: (insight.confidence ?? 0) / 100,
+      };
+    });
+
     // 6. Calculate summary statistics
     const summary = {
       total: count || 0,
-      returned: insights?.length || 0,
+      returned: transformedInsights.length,
       has_more: (count || 0) > offset + limit,
     };
 
@@ -198,7 +250,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        insights: insights || [],
+        insights: transformedInsights,
+        count: summary.total,
+        has_more: summary.has_more,
         pagination: {
           limit,
           offset,
